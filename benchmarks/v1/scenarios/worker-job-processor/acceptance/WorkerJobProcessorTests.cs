@@ -15,23 +15,19 @@ public sealed class WorkerJobProcessorTests : IDisposable
 {
     private readonly string _assembly = EvaluationContext.FindApplicationAssembly();
     private readonly string _outputRoot = EvaluationContext.CreateTempDirectory();
-    private readonly List<string> _extraDirectories = new();
 
     public void Dispose()
     {
-        foreach (var dir in _extraDirectories.Append(_outputRoot))
+        try
         {
-            try
+            if (Directory.Exists(_outputRoot))
             {
-                if (Directory.Exists(dir))
-                {
-                    Directory.Delete(dir, recursive: true);
-                }
+                Directory.Delete(_outputRoot, recursive: true);
             }
-            catch (IOException)
-            {
-                // best effort
-            }
+        }
+        catch (IOException)
+        {
+            // best effort
         }
     }
 
@@ -43,28 +39,6 @@ public sealed class WorkerJobProcessorTests : IDisposable
     }
 
     private string ScenarioJobsDirectory => Path.Combine(EvaluationContext.FixturesDirectory, "jobs");
-
-    private AppResult RunWithFixtures(
-        IReadOnlyDictionary<string, string>? extraEnvironment = null,
-        int timeoutSeconds = 60)
-    {
-        var output = NewOutputDirectory();
-        var env = new Dictionary<string, string>
-        {
-            ["JOBS_DIRECTORY"] = ScenarioJobsDirectory,
-            ["OUTPUT_DIRECTORY"] = output,
-        };
-        if (extraEnvironment is not null)
-        {
-            foreach (var (k, v) in extraEnvironment)
-            {
-                env[k] = v;
-            }
-        }
-
-        var result = AppRunner.Run(_assembly, [], output, env, timeoutSeconds);
-        return result with { StandardOutput = result.StandardOutput, StandardError = result.StandardError };
-    }
 
     private static JsonElement[] LoadResults(string outputDirectory)
     {

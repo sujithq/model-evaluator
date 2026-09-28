@@ -76,7 +76,6 @@ public sealed class WebApiTaskMinimalTests
         Assert.Equal(1, task.Id);
         Assert.Equal("Buy milk", task.Title);
         Assert.False(task.Completed);
-        Assert.Equal(DateTimeKind.Utc, task.CreatedAt.UtcDateTime.Kind);
         Assert.Equal(TimeSpan.Zero, task.CreatedAt.Offset);
         Assert.Equal($"/tasks/{task.Id}", response.Headers.Location?.ToString());
         Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);

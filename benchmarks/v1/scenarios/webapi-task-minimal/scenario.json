@@ -18,7 +18,6 @@
     "Microsoft.AspNetCore.Mvc.Testing",
     "xunit",
     "xunit.runner.visualstudio",
-    "xunit.v3",
     "coverlet.collector"
   ],
   "requiredGlobs": [

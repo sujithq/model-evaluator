@@ -22,21 +22,21 @@ public static class EvaluationContext
     public static string FixturesDirectory { get; } =
         Environment.GetEnvironmentVariable("EVAL_FIXTURES") ?? Path.Combine(Workspace, "fixtures");
 
-    /// <summary>Finds the single runnable application assembly built from <c>src/</c>.</summary>
+    /// <summary>Finds the runnable application assembly built from <c>src/</c>, preferring the shallowest match.</summary>
     public static string FindApplicationAssembly(string? nameContains = null)
     {
         var candidates = EnumerateAssemblies(nameContains)
             .Where(path => File.Exists(Path.ChangeExtension(path, ".runtimeconfig.json")))
             .ToList();
 
-        return Single(candidates, "runnable application", nameContains);
+        return BestMatch(candidates, "runnable application", nameContains);
     }
 
-    /// <summary>Finds the single library assembly built from <c>src/</c>.</summary>
+    /// <summary>Finds the library assembly built from <c>src/</c>, preferring the shallowest match.</summary>
     public static string FindLibraryAssembly(string? nameContains = null)
     {
         var candidates = EnumerateAssemblies(nameContains).ToList();
-        return Single(candidates, "library", nameContains);
+        return BestMatch(candidates, "library", nameContains);
     }
 
     /// <summary>Creates an empty, disposable directory for one test.</summary>
@@ -73,7 +73,7 @@ public static class EvaluationContext
             .OrderBy(path => path.Length);
     }
 
-    private static string Single(IReadOnlyList<string> candidates, string kind, string? nameContains)
+    private static string BestMatch(IReadOnlyList<string> candidates, string kind, string? nameContains)
     {
         if (candidates.Count == 0)
         {
