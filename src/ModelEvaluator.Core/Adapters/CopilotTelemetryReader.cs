@@ -21,10 +21,40 @@ public static class CopilotTelemetryReader
         }
     }
 
-    public static AdapterUsage Parse(IEnumerable<string> lines)
+    public static AdapterUsage SupplementToolCalls(AdapterUsage usage, string path, bool runnerCompleted)
+    {
+        if (usage.ToolCalls is not null)
+        {
+            return usage;
+        }
+
+        string warning;
+        try
+        {
+            var snapshot = ParseSnapshot(File.ReadLines(path));
+            if (runnerCompleted && snapshot.ToolCountsFinalized)
+            {
+                return usage with { ToolCalls = snapshot.ToolCalls };
+            }
+            warning = "Tool-call telemetry is incomplete or invalid; toolCalls remains unavailable. Final usage measurements are unchanged.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            warning = $"Tool-call telemetry could not be read ({ex.GetType().Name}); toolCalls remains unavailable. Final usage measurements are unchanged.";
+        }
+        return usage with { Warnings = usage.Warnings.Append(warning).ToList() };
+    }
+
+    public static AdapterUsage Parse(IEnumerable<string> lines) => ParseSnapshot(lines).Usage;
+
+    private sealed record TelemetrySnapshot(AdapterUsage Usage, int ToolCalls, bool ToolCountsFinalized);
+
+    private static TelemetrySnapshot ParseSnapshot(IEnumerable<string> lines)
     {
         var calls = new List<JsonElement>();
         var ids = new HashSet<(string Trace, string Span)>();
+        var completedTraces = new HashSet<string>(StringComparer.Ordinal);
+        var observedTraces = new HashSet<string>(StringComparer.Ordinal);
         var tools = 0;
         var invalid = false;
         foreach (var line in lines.Where(line => !string.IsNullOrWhiteSpace(line)))
@@ -33,14 +63,17 @@ public static class CopilotTelemetryReader
             {
                 using var document = JsonDocument.Parse(line);
                 var root = document.RootElement;
-                if (Text(root, "type") != "span"
-                    || !root.TryGetProperty("attributes", out var attributes)
-                    || attributes.ValueKind != JsonValueKind.Object)
+                if (Text(root, "type") != "span")
                 {
                     continue;
                 }
+                if (!root.TryGetProperty("attributes", out var attributes) || attributes.ValueKind != JsonValueKind.Object)
+                {
+                    invalid = true;
+                    continue;
+                }
                 var operation = Text(attributes, "gen_ai.operation.name");
-                if (operation is not ("chat" or "execute_tool"))
+                if (operation is not ("chat" or "execute_tool" or "invoke_agent"))
                 {
                     continue;
                 }
@@ -53,6 +86,19 @@ public static class CopilotTelemetryReader
                 }
                 if (!ids.Add((trace, span)))
                 {
+                    continue;
+                }
+                observedTraces.Add(trace);
+                if (operation == "invoke_agent")
+                {
+                    var parent = Text(root, "parentSpanId");
+                    if ((string.IsNullOrEmpty(parent) || parent == "0000000000000000")
+                        && root.TryGetProperty("endTime", out var endTime) && endTime.ValueKind == JsonValueKind.Array
+                        && endTime.GetArrayLength() == 2
+                        && endTime.EnumerateArray().All(part => part.ValueKind == JsonValueKind.Number))
+                    {
+                        completedTraces.Add(trace);
+                    }
                     continue;
                 }
                 if (operation == "chat")
@@ -134,7 +180,8 @@ public static class CopilotTelemetryReader
         {
             warnings.Add("No completed model/tool spans were captured.");
         }
-        return usage with { Warnings = warnings };
+        return new TelemetrySnapshot(usage with { Warnings = warnings }, tools,
+            !invalid && completedTraces.Count > 0 && observedTraces.IsSubsetOf(completedTraces));
     }
 
     /// <summary>Recovers the latest cumulative credit checkpoint from this attempt's fresh session only.</summary>

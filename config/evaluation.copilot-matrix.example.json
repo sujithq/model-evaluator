@@ -41,18 +41,6 @@
       }
     },
     {
-      "id": "copilot-claude-opus-4.7",
-      "adapter": "command-line",
-      "description": "Claude Opus 4.7 generating projects through GitHub Copilot CLI.",
-      "settings": {
-        "command": "copilot",
-        "arguments": "--model claude-opus-4.7 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
-        "runnerName": "github-copilot-cli",
-        "usageFile": "usage.json",
-        "usageFormat": "copilot-cli"
-      }
-    },
-    {
       "id": "copilot-claude-opus-4.8",
       "adapter": "command-line",
       "description": "Claude Opus 4.8 generating projects through GitHub Copilot CLI.",
@@ -95,30 +83,6 @@
       "settings": {
         "command": "copilot",
         "arguments": "--model claude-sonnet-5 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
-        "runnerName": "github-copilot-cli",
-        "usageFile": "usage.json",
-        "usageFormat": "copilot-cli"
-      }
-    },
-    {
-      "id": "copilot-gemini-3.5-flash",
-      "adapter": "command-line",
-      "description": "Gemini 3.5 Flash generating projects through GitHub Copilot CLI.",
-      "settings": {
-        "command": "copilot",
-        "arguments": "--model gemini-3.5-flash --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
-        "runnerName": "github-copilot-cli",
-        "usageFile": "usage.json",
-        "usageFormat": "copilot-cli"
-      }
-    },
-    {
-      "id": "copilot-gemini-3.6-flash",
-      "adapter": "command-line",
-      "description": "Gemini 3.6 Flash generating projects through GitHub Copilot CLI.",
-      "settings": {
-        "command": "copilot",
-        "arguments": "--model gemini-3.6-flash --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
         "runnerName": "github-copilot-cli",
         "usageFile": "usage.json",
         "usageFormat": "copilot-cli"

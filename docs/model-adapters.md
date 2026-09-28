@@ -103,7 +103,8 @@ to the agent. The example does not disable path verification with `--allow-all-p
 This configuration passes `--usage-output-file "{usageFile}"` to Copilot and selects
 `"usageFormat": "copilot-cli"`. Native usage is retained as `usage.json` in each attempt's artifacts
 and read into the report, including AI credits, tokens, cache metrics and API requests when reported.
-The native export does not supply tool-call counts or invoice USD; those remain unavailable.
+The native export does not supply tool-call counts or invoice USD. Completed-run telemetry supplements
+tool-call counts when available; invoice USD remains unavailable.
 The default configuration and CI self-checks continue to use the local reference samples.
 The on-demand evaluation workflow also needs Copilot CLI installation and authentication before
 it can run this example; selecting this file alone is not sufficient.
@@ -126,17 +127,21 @@ model access; evaluation consumes Copilot usage. The default configuration remai
 
 #### All app-listed models with GitHub Copilot CLI
 
-Separate `config/evaluation.<model-id>.example.json` files cover every model ID offered by the
-Copilot app in the September 28, 2026 session catalog. This is a static snapshot, not live model
+Separate `config/evaluation.<model-id>.example.json` files cover the non-deprecated model IDs from the
+Copilot app's September 28, 2026 session catalog. This is a static snapshot, not live model
 discovery or a claim that each model is available to your standalone Copilot CLI account.
 Each file selects one `copilot-<model-id>` entry, with the same runner flags, three repetitions,
 scenario selection and budget defaults as the Astra and Luna examples.
 
+The individual examples for `claude-opus-4.7`, `gemini-3.5-flash` and `gemini-3.6-flash`
+are archived under `config/deprecated/` and excluded from the active examples and matrix.
+The active matrix contains 25 named models; Auto remains a separate example.
+
 | Family | Model IDs |
 | --- | --- |
-| Claude | `claude-sonnet-5`, `claude-fable-5.1`, `claude-fable-5`, `claude-opus-5`, `claude-opus-4.8`, `claude-opus-4.7`, `claude-haiku-4.5`, `claude-opus-5.5` |
+| Claude | `claude-sonnet-5`, `claude-fable-5.1`, `claude-fable-5`, `claude-opus-5`, `claude-opus-4.8`, `claude-haiku-4.5`, `claude-opus-5.5` |
 | GPT | `gpt-6-astra`, `gpt-6-luna`, `gpt-6-sol`, `gpt-5.6-sol`, `gpt-5.6-sol-fast`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.3-codex`, `gpt-5-mini` |
-| Gemini | `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash` |
+| Gemini | `gemini-3.8-flash`, `gemini-3.7-flash` |
 | Grok | `grok-4.5`, `grok-4.6`, `grok-4.7` |
 | MAI | `mai-code-1.1-flash` |
 | Automatic routing | `auto` |
@@ -176,8 +181,8 @@ dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\eval
 ```
 
 This runs six independent attempts and includes both models in one report. Without `--models`,
-the matrix selects all 28 named models (including IDs that may be unavailable to your account).
-Without either filter it schedules 28 models x 5 scenarios x 3 repetitions = 420 attempts.
+the matrix selects all 25 named models (including IDs that may be unavailable to your account).
+Without either filter it schedules 25 models x 5 scenarios x 3 repetitions = 375 attempts.
 Auto is intentionally excluded from the matrix. Separately executed runs are not automatically
 merged; use the matrix when you want a single comparison report.
 
@@ -241,6 +246,13 @@ are unchanged; no shutdown grace period or extra model request is added.
 If the final export is missing, malformed or contains no recognized measurements, completed `chat`
 and `execute_tool` spans provide a best-effort fallback saved as `usage.partial.json`.
 The native `usage.json` is never overwritten, and valid final usage always takes precedence.
+For a normally completed runner with valid final usage, telemetry supplements only the missing
+`toolCalls` field. It counts distinct completed `execute_tool` spans by trace/span ID, including
+subagent tool executions, and ignores cumulative metric snapshots. A count (including zero) requires
+well-formed telemetry and completed root agent spans for all observed traces. Missing, truncated or
+unfinished telemetry leaves `toolCalls` unavailable with a warning; it never downgrades final credits
+or tokens to partial usage or disables their ranking eligibility. The count measures exported tool
+executions, not model API requests or proposed tool calls.
 Spans are deduplicated by trace/span ID; parent `invoke_agent` totals and periodic metric snapshots
 are not added again. A truncated final JSONL line is ignored with a warning.
 

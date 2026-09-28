@@ -175,6 +175,10 @@ public sealed class CommandLineAdapter(ProcessRunner processRunner) : IModelAdap
                 usage = usage with { Warnings = usage.Warnings.Append($"Could not persist partial usage: {ex.Message}").ToList() };
             }
         }
+        else if (usageFormat == "copilot-cli")
+        {
+            usage = CopilotTelemetryReader.SupplementToolCalls(usage, telemetryPath, result.Succeeded);
+        }
 
         return new ModelAttemptOutput
         {

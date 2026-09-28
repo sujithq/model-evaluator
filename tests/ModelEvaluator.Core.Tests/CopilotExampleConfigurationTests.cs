@@ -10,12 +10,13 @@ public sealed class CopilotExampleConfigurationTests
     {
         var directory = Path.Combine(RepositoryLocator.Root, "config");
         var matrix = EvaluationConfiguration.Load(Path.Combine(directory, "evaluation.copilot-matrix.example.json"));
-        Assert.Equal(28, matrix.Models.Count);
+        Assert.Equal(25, matrix.Models.Count);
         Assert.Equal(matrix.Models.Count, matrix.Models.Select(m => m.Id).Distinct().Count());
         Assert.DoesNotContain(matrix.Models, m => m.Id == "copilot-auto");
 
-        var exampleCount = 0;
-        foreach (var path in Directory.EnumerateFiles(directory, "evaluation.*.example.json"))
+        var exampleIds = new List<string>();
+        var examplePaths = Directory.EnumerateFiles(directory, "evaluation.*.example.json");
+        foreach (var path in examplePaths)
         {
             var config = EvaluationConfiguration.Load(path);
             if (config.Models.Count != 1 || config.Models[0].GetSetting("runnerName") != "github-copilot-cli")
@@ -23,8 +24,11 @@ public sealed class CopilotExampleConfigurationTests
                 continue;
             }
 
-            exampleCount++;
             var model = config.Models[0];
+            exampleIds.Add(model.Id);
+            Assert.Equal(Path.Combine(RepositoryLocator.Root, "benchmarks", "v1"), config.BenchmarkRoot);
+            Assert.True(Directory.Exists(config.BenchmarkRoot), $"Benchmark root does not exist for {path}");
+            Assert.Equal(Path.Combine(RepositoryLocator.Root, "artifacts", "evaluations"), config.OutputDirectory);
             Assert.Equal("copilot-cli", model.GetSetting("usageFormat"));
             Assert.Equal("usage.json", model.GetSetting("usageFile"));
             var arguments = ArgumentParser.Split(model.GetSetting("arguments")).ToList();
@@ -40,6 +44,16 @@ public sealed class CopilotExampleConfigurationTests
             }
         }
 
-        Assert.Equal(29, exampleCount);
+        Assert.Equal(26, exampleIds.Count);
+        Assert.Equal(exampleIds.Count, exampleIds.Distinct().Count());
+        Assert.Equal(
+            matrix.Models.Select(m => m.Id).Append("copilot-auto").Order(StringComparer.Ordinal),
+            exampleIds.Order(StringComparer.Ordinal));
+        foreach (var path in Directory.EnumerateFiles(Path.Combine(directory, "deprecated"), "evaluation.*.example.json"))
+        {
+            var deprecated = EvaluationConfiguration.Load(path);
+            Assert.All(deprecated.Models, model => Assert.DoesNotContain(model.Id, exampleIds));
+            Assert.All(deprecated.Models, model => Assert.DoesNotContain(matrix.Models, active => active.Id == model.Id));
+        }
     }
 }

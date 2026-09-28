@@ -172,6 +172,9 @@ public sealed class UsageReportReaderTests
         try
         {
             await File.WriteAllTextAsync(Path.Combine(root, "native usage.json"), NativeUsage);
+            await File.WriteAllTextAsync(Path.Combine(root, "usage.telemetry.jsonl"), """
+                {"type":"span","traceId":"trace","spanId":"root","endTime":[123,0],"attributes":{"gen_ai.operation.name":"invoke_agent"}}
+                """);
             var runnerPath = Path.Combine(root, OperatingSystem.IsWindows() ? "runner.ps1" : "runner.sh");
             await File.WriteAllTextAsync(runnerPath, "exit 0");
             var scenario = new ScenarioPackage(new ScenarioDefinition
@@ -214,6 +217,7 @@ public sealed class UsageReportReaderTests
             Assert.Equal(15944, output.CacheWriteTokens);
             Assert.Equal(["gpt-6-luna"], output.ReportedModels);
             Assert.Empty(output.UsageWarnings);
+            Assert.Equal(0, output.ToolCalls);
         }
         finally
         {

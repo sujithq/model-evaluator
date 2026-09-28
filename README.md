@@ -74,7 +74,7 @@ total time. Cost is used only when every ranked model has complete credit measur
 values never become zero. AI credits represent consumption, not necessarily invoice spend.
 Infrastructure failures are excluded from ranking metrics and reported separately.
 
-Use explicit `--models` and `--scenarios` filters: the unfiltered matrix schedules 420 attempts,
+Use explicit `--models` and `--scenarios` filters: the unfiltered matrix schedules 375 attempts,
 consumes real usage, and includes model IDs your CLI account may not support. Auto routing is not
 in this named-model matrix. See [ranking rules and limitations](docs/interpreting-results.md#per-task-rankings).
 

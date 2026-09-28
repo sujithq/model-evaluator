@@ -20,10 +20,72 @@ public sealed class CopilotTelemetryTests : IDisposable
     private const string Checkpoint = """
         {"type":"session.usage_checkpoint","data":{"totalNanoAiu":250000000}}
         """;
+    private const string Tool = """
+        {"type":"span","traceId":"trace","spanId":"tool1","attributes":{"gen_ai.operation.name":"execute_tool"}}
+        """;
+    private const string CompletedRoot = """
+        {"type":"span","traceId":"trace","spanId":"root","endTime":[123,0],"attributes":{"gen_ai.operation.name":"invoke_agent"}}
+        """;
 
     public CopilotTelemetryTests() => Directory.CreateDirectory(_root);
 
     public void Dispose() => Directory.Delete(_root, recursive: true);
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Supplement_CountsUniqueToolsIncludingSubagentsWithoutReplacingFinalUsage(bool withTools)
+    {
+        var path = Path.Combine(_root, "telemetry.jsonl");
+        var lines = new List<string> { Chat, CompletedRoot };
+        if (withTools)
+        {
+            lines.AddRange([Tool, Tool, Tool.Replace("tool1", "child-tool"),
+                """{"type":"metric","name":"github.copilot.tool.call.count","value":99}"""]);
+        }
+        File.WriteAllLines(path, lines);
+        var final = UsageReportReader.Parse(FinalUsage, "copilot-cli");
+
+        var merged = CopilotTelemetryReader.SupplementToolCalls(final, path, runnerCompleted: true);
+
+        Assert.Equal(final with { ToolCalls = withTools ? 2 : 0 }, merged);
+        Assert.False(merged.UsageIsPartial);
+        Assert.Empty(merged.Warnings);
+        Assert.DoesNotContain("toolCalls", merged.UnavailableMetrics);
+        Assert.Contains("estimatedCostUsd", merged.UnavailableMetrics);
+    }
+
+    [Theory]
+    [InlineData("missing")]
+    [InlineData("empty")]
+    [InlineData("truncated")]
+    [InlineData("no-root")]
+    [InlineData("other-trace")]
+    [InlineData("interrupted")]
+    public void Supplement_UnreliableTelemetryLeavesFinalUsageIntact(string mode)
+    {
+        var path = Path.Combine(_root, "telemetry.jsonl");
+        var lines = new List<string> { Tool, CompletedRoot };
+        if (mode == "empty") { lines.Clear(); }
+        if (mode == "no-root") { lines.Remove(CompletedRoot); }
+        if (mode == "truncated") { lines.Add("{truncated"); }
+        if (mode == "other-trace") { lines.Add(Tool.Replace("\"trace\"", "\"unclosed-trace\"")); }
+        if (mode != "missing") { File.WriteAllLines(path, lines); }
+        var final = UsageReportReader.Parse(FinalUsage, "copilot-cli");
+
+        var merged = CopilotTelemetryReader.SupplementToolCalls(final, path, runnerCompleted: mode != "interrupted");
+
+        Assert.Null(merged.ToolCalls);
+        Assert.Equal(final, merged with { Warnings = final.Warnings });
+        Assert.Contains(merged.Warnings, warning => warning.Contains("toolCalls remains unavailable", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Supplement_PreservesAlreadyReportedToolCount()
+    {
+        var final = UsageReportReader.Parse(FinalUsage, "copilot-cli") with { ToolCalls = 7 };
+        Assert.Equal(final, CopilotTelemetryReader.SupplementToolCalls(final, "missing.jsonl", runnerCompleted: true));
+    }
 
     [Fact]
     public void Parse_DeduplicatesSpansAndIgnoresParentTotalsAndMetricSnapshots()
@@ -147,11 +209,12 @@ public sealed class CopilotTelemetryTests : IDisposable
     [InlineData("selected")]
     public async Task Adapter_PreservesIncrementalUsageAndPrefersFinalExport(string mode)
     {
+        var telemetry = string.Join('\n', Chat, Tool, Tool, CompletedRoot);
         var script = OperatingSystem.IsWindows()
             ? "$session = Join-Path $env:COPILOT_HOME ('session-state\\' + $args[-1]); " +
               "[IO.Directory]::CreateDirectory($session) | Out-Null; " +
               $"[IO.File]::WriteAllText((Join-Path $session 'events.jsonl'), '{Checkpoint}'); " +
-              $"[IO.File]::WriteAllText($env:COPILOT_OTEL_FILE_EXPORTER_PATH, '{Chat}'); " +
+              $"[IO.File]::WriteAllText($env:COPILOT_OTEL_FILE_EXPORTER_PATH, '{telemetry}'); " +
               "if ($env:COPILOT_OTEL_EXPORTER_TYPE -ne 'file' -or " +
               "$env:OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT -ne 'false') { exit 7 }; " +
               (mode is "complete" or "malformed"
@@ -159,7 +222,7 @@ public sealed class CopilotTelemetryTests : IDisposable
                   : mode == "selected" ? "" : "[Console]::WriteLine('ready'); Start-Sleep -Seconds 60")
             : "mkdir -p \"$COPILOT_HOME/session-state/$2\"; " +
               $"printf '%s\\n' '{Checkpoint}' > \"$COPILOT_HOME/session-state/$2/events.jsonl\"; " +
-              $"printf '%s\\n' '{Chat}' > \"$COPILOT_OTEL_FILE_EXPORTER_PATH\"; " +
+              $"printf '%s\\n' '{telemetry}' > \"$COPILOT_OTEL_FILE_EXPORTER_PATH\"; " +
               "[ \"$COPILOT_OTEL_EXPORTER_TYPE\" = file ] || exit 7; " +
               "[ \"$OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT\" = false ] || exit 7; " +
               (mode is "complete" or "malformed"
@@ -222,6 +285,13 @@ public sealed class CopilotTelemetryTests : IDisposable
         Assert.Equal(mode == "complete" ? 2m : mode == "selected" ? (decimal?)null : 0.25m, output.AiCredits);
         Assert.Equal(mode != "complete", File.Exists(Path.Combine(_root, "usage.partial.json")));
         Assert.True(File.Exists(Path.Combine(_root, "usage.telemetry.jsonl")));
+        Assert.Equal(1, output.ToolCalls);
+        Assert.DoesNotContain("toolCalls", output.UnavailableMetrics);
+        if (mode == "complete")
+        {
+            Assert.Empty(output.UsageWarnings);
+            Assert.Equal(FinalUsage, File.ReadAllText(Path.Combine(_root, "usage.json")));
+        }
         if (mode != "complete")
         {
             using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(_root, "usage.partial.json")));
