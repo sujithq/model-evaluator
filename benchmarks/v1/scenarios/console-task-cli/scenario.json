@@ -1,0 +1,47 @@
+{
+  "id": "console-task-cli",
+  "name": "Console task-management CLI",
+  "projectType": "Console",
+  "benchmarkVersion": "1.0.0",
+  "targetFramework": "net9.0",
+  "sdkVersion": "9.0.100",
+  "instructionsFile": "instructions.md",
+  "contractsFile": "contracts.md",
+  "starterDirectory": "starter",
+  "acceptanceProject": "acceptance/ConsoleTaskCli.Acceptance.csproj",
+  "allowedPackages": [
+    "Microsoft.NET.Test.Sdk",
+    "xunit",
+    "xunit.runner.visualstudio",
+    "xunit.v3",
+    "coverlet.collector"
+  ],
+  "requiredGlobs": [
+    "*.sln",
+    "src/**/*.csproj",
+    "tests/**/*.csproj",
+    "README.md"
+  ],
+  "preservedPaths": [
+    "global.json",
+    ".editorconfig",
+    "BENCHMARK.md"
+  ],
+  "budget": {
+    "generationTimeoutSeconds": 1800,
+    "buildTimeoutSeconds": 600,
+    "testTimeoutSeconds": 600,
+    "acceptanceTimeoutSeconds": 900
+  },
+  "samples": {
+    "good": {
+      "path": "samples/good",
+      "description": "Reference implementation that satisfies the full contract."
+    },
+    "broken": {
+      "path": "samples/good",
+      "overlay": "samples/broken-overlay",
+      "description": "Reference implementation with deliberate contract violations (wrong exit codes and lost deletes)."
+    }
+  }
+}

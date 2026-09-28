@@ -1,0 +1,12 @@
+## .NET build output
+bin/
+obj/
+
+## Evaluation output
+artifacts/
+.workspaces/
+
+## Tooling
+.vs/
+.idea/
+*.user

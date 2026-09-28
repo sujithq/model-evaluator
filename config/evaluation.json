@@ -1,0 +1,26 @@
+{
+  "benchmarkRoot": "../benchmarks/v1",
+  "outputDirectory": "../artifacts/evaluations",
+  "repetitions": 3,
+  "scenarios": [],
+  "models": [
+    {
+      "id": "reference-good",
+      "adapter": "local-sample",
+      "description": "Known-good reference implementation. Used to verify the harness itself.",
+      "settings": {
+        "variant": "good"
+      }
+    },
+    {
+      "id": "reference-broken",
+      "adapter": "local-sample",
+      "description": "Deliberately broken reference implementation. Must fail the relevant checks.",
+      "settings": {
+        "variant": "broken"
+      }
+    }
+  ],
+  "budgets": {},
+  "keepWorkspaces": false
+}
