@@ -84,6 +84,10 @@ public sealed class AttemptRunner(
             _log($"[{attemptId}] generating with model '{model.Id}' via '{model.Adapter}'");
             generation = await adapter.GenerateAsync(context, cancellationToken).ConfigureAwait(false);
             runner = generation.Runner;
+            foreach (var warning in generation.UsageWarnings)
+            {
+                _log($"[{attemptId}] warning: {warning}");
+            }
             debugLog?.Invoke(
                 $"Generation completed: succeeded={generation.Succeeded}, timedOut={generation.TimedOut}, " +
                 $"duration={generation.DurationSeconds:0.0}s; runner={runner.Name} ({runner.Version}).");
@@ -213,7 +217,16 @@ public sealed class AttemptRunner(
                 InputTokens = generation?.InputTokens,
                 OutputTokens = generation?.OutputTokens,
                 EstimatedCostUsd = generation?.EstimatedCostUsd,
-                UnavailableMetrics = generation?.UnavailableMetrics ?? ["toolCalls", "inputTokens", "outputTokens", "estimatedCostUsd"],
+                AiCredits = generation?.AiCredits,
+                PremiumRequests = generation?.PremiumRequests,
+                CacheReadTokens = generation?.CacheReadTokens,
+                CacheWriteTokens = generation?.CacheWriteTokens,
+                ReasoningTokens = generation?.ReasoningTokens,
+                ApiRequests = generation?.ApiRequests,
+                ApiDurationSeconds = generation?.ApiDurationSeconds,
+                ReportedModels = generation?.ReportedModels ?? [],
+                UsageWarnings = generation?.UsageWarnings ?? [],
+                UnavailableMetrics = generation?.UnavailableMetrics ?? new AdapterUsage().UnavailableMetrics,
             },
             ArtifactsPath = artifactsPath,
         };

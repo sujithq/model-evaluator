@@ -57,10 +57,45 @@ public static class MarkdownReportWriter
 
         builder.AppendLine();
 
-        foreach (var scenarioGroup in summaries.GroupBy(s => s.ScenarioId))
+        builder.AppendLine("## Per-task rankings");
+        builder.AppendLine();
+        builder.AppendLine("Order: success rate, mean acceptance accuracy, lower mean AI credits (only with complete coverage), then lower mean total wall time.");
+        builder.AppendLine("Infrastructure failures are excluded from ranking metrics and shown separately. Missing acceptance execution scores 0; skipped tests count against accuracy.");
+        builder.AppendLine("AI credits measure consumption, not invoice charges. Premium requests and reported USD are separate units, never substituted for credits.");
+        builder.AppendLine("Ranks based on fewer than three evaluable attempts are provisional. Equal scores share a rank; reference samples are not ranked.");
+        builder.AppendLine();
+        foreach (var ranking in ScenarioRanker.Rank(report))
+        {
+            builder.AppendLine($"### `{ranking.ScenarioId}` ({ranking.BenchmarkVersion}, `{ranking.RunnerLabel}`)");
+            builder.AppendLine();
+            builder.AppendLine($"Prompt hash: `{ranking.PromptHash}`");
+            builder.AppendLine(ranking.UsesAiCredits
+                ? "AI-credit tie-breaker: enabled (complete measurements for every ranked model)."
+                : "AI-credit tie-breaker: disabled for this group (missing measurements or no ranked models); time breaks accuracy ties.");
+            builder.AppendLine();
+            builder.AppendLine("| Rank | Model | Success | Acceptance accuracy | Mean AI credits | Credit coverage | Mean total / generation seconds | Infra failures | Notes |");
+            builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+            foreach (var model in ranking.Models)
+            {
+                builder.AppendLine(Row(
+                    Optional(model.Rank),
+                    model.ModelId,
+                    $"{model.SuccessfulAttempts}/{model.EvaluatedAttempts}",
+                    model.AcceptanceAccuracy is null ? "n/a" : Percent(model.AcceptanceAccuracy.Value),
+                    Optional(model.MeanAiCredits),
+                    $"{model.AiCreditsReportedAttempts}/{model.EvaluatedAttempts}",
+                    $"{Seconds(model.MeanElapsedSeconds)} / {Seconds(model.MeanGenerationSeconds)}",
+                    model.InfrastructureFailures.ToString(CultureInfo.InvariantCulture),
+                    model.ExclusionReason ?? (model.Provisional ? "provisional" : "-")));
+            }
+
+            builder.AppendLine();
+        }
+
+        foreach (var scenarioGroup in summaries.GroupBy(s => (s.ScenarioId, s.BenchmarkVersion, s.PromptHash, s.RunnerLabel)))
         {
             var first = scenarioGroup.First();
-            builder.AppendLine($"## Scenario `{scenarioGroup.Key}`");
+            builder.AppendLine($"## Scenario `{scenarioGroup.Key.ScenarioId}`");
             builder.AppendLine();
             builder.AppendLine($"- Benchmark version: `{first.BenchmarkVersion}`");
             builder.AppendLine($"- Prompt hash: `{first.PromptHash}`");
@@ -72,7 +107,9 @@ public static class MarkdownReportWriter
             {
                 var efficiency =
                     $"{summary.MeanElapsedSeconds:0.0} s avg; tokens {Optional(summary.TotalTokens)}; " +
-                    $"tool calls {Optional(summary.TotalToolCalls)}; cost {OptionalCost(summary.TotalCostUsd)}";
+                    $"tool calls {Optional(summary.TotalToolCalls)}; reported USD {OptionalCost(summary.TotalCostUsd)}; " +
+                    $"AI credits {Optional(summary.TotalAiCredits)} ({summary.AiCreditsReportedAttempts}/{summary.TotalAttempts} attempts); " +
+                    $"premium requests {Optional(summary.TotalPremiumRequests)}; API requests {Optional(summary.TotalApiRequests)}";
 
                 builder.AppendLine(Row(
                     summary.ModelId,
@@ -82,6 +119,12 @@ public static class MarkdownReportWriter
                     $"{summary.CodeQualityPassing}/{summary.TotalAttempts} clean",
                     efficiency,
                     $"{Percent(summary.SuccessRate)} over {summary.TotalAttempts} attempts (sd {summary.ElapsedStandardDeviation:0.0} s)"));
+            }
+
+            builder.AppendLine();
+            foreach (var summary in scenarioGroup.Where(s => s.ReportedModels.Count > 0))
+            {
+                builder.AppendLine($"- `{summary.ModelId}` reported contributing models: {string.Join(", ", summary.ReportedModels.Select(m => $"`{m}`"))}.");
             }
 
             builder.AppendLine();
@@ -127,6 +170,22 @@ public static class MarkdownReportWriter
             builder.AppendLine();
         }
 
+        var usageWarnings = report.Attempts.Where(a => a.Efficiency.UsageWarnings.Count > 0).ToList();
+        if (usageWarnings.Count > 0)
+        {
+            builder.AppendLine("## Usage collection warnings");
+            builder.AppendLine();
+            foreach (var attempt in usageWarnings)
+            {
+                foreach (var warning in attempt.Efficiency.UsageWarnings)
+                {
+                    builder.AppendLine($"- `{attempt.AttemptId}`: {Escape(warning)}");
+                }
+            }
+
+            builder.AppendLine();
+        }
+
         builder.AppendLine("Optional qualitative review is intentionally excluded from these automated results.");
         return builder.ToString();
     }
@@ -134,6 +193,8 @@ public static class MarkdownReportWriter
     private static string Row(params string[] cells) => "| " + string.Join(" | ", cells) + " |";
 
     private static string Percent(double value) => (value * 100).ToString("0.#", CultureInfo.InvariantCulture) + "%";
+
+    private static string Seconds(double? value) => value?.ToString("0.0", CultureInfo.InvariantCulture) ?? "n/a";
 
     private static string Optional<T>(T? value) where T : struct =>
         value is null ? "n/a" : Convert.ToString(value.Value, CultureInfo.InvariantCulture) ?? "n/a";

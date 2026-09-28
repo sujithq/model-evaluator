@@ -59,6 +59,25 @@ Matching examples for all 28 app-listed model IDs, plus Auto routing, use the fi
 `config/evaluation.<model-id>.example.json`. See the
 [model inventory and CLI availability caveats](docs/model-adapters.md#all-app-listed-models-with-github-copilot-cli).
 
+### Rank models on a task
+
+Copilot examples export native `usage.json` files so reports can compare measured AI-credit
+consumption, tokens and time alongside acceptance-test correctness. To rank Astra and Luna together:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.copilot-matrix.example.json --models copilot-gpt-6-astra,copilot-gpt-6-luna --scenarios console-task-cli --repetitions 3 --debug
+```
+
+This runs six attempts and writes **per-task rankings** to `report.md` and `results.json`.
+The ranking order is success rate, acceptance accuracy, lower mean AI credits, then faster mean
+total time. Cost is used only when every ranked model has complete credit measurements; missing
+values never become zero. AI credits represent consumption, not necessarily invoice spend.
+Infrastructure failures are excluded from ranking metrics and reported separately.
+
+Use explicit `--models` and `--scenarios` filters: the unfiltered matrix schedules 420 attempts,
+consumes real usage, and includes model IDs your CLI account may not support. Auto routing is not
+in this named-model matrix. See [ranking rules and limitations](docs/interpreting-results.md#per-task-rankings).
+
 ## CLI
 
 ```text

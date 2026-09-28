@@ -10,8 +10,10 @@
       "description": "Grok 4.7 generating projects through GitHub Copilot CLI.",
       "settings": {
         "command": "copilot",
-        "arguments": "--model grok-4.7 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update",
-        "runnerName": "github-copilot-cli"
+        "arguments": "--model grok-4.7 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
       }
     }
   ],

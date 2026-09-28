@@ -49,6 +49,12 @@ public sealed class DebugLoggingTests : IDisposable
 
         var attempt = Assert.Single(report.Attempts);
         Assert.Equal(AttemptOutcome.ModelFailure, attempt.Outcome);
+        Assert.Equal(2m, attempt.Efficiency.AiCredits);
+        Assert.Equal(100, attempt.Efficiency.InputTokens);
+        Assert.Equal(5, attempt.Efficiency.ApiRequests);
+        Assert.Equal(["reported-test-model"], attempt.Efficiency.ReportedModels);
+        Assert.Contains("test usage warning", attempt.Efficiency.UsageWarnings);
+        Assert.Contains(messages, m => m.Contains("warning: test usage warning", StringComparison.Ordinal));
         Assert.Contains(attempt.Checks, c => c.Id == "build.restore" && c.Status == CheckStatus.Failed);
         Assert.NotNull(attempt.ArtifactsPath);
         Assert.True(File.Exists(Path.Combine(attempt.ArtifactsPath, "result.json")));
@@ -157,6 +163,11 @@ public sealed class DebugLoggingTests : IDisposable
             {
                 Succeeded = true,
                 Runner = new RunnerInfo { Name = Key, Version = "test" },
+                AiCredits = 2m,
+                InputTokens = 100,
+                ApiRequests = 5,
+                ReportedModels = ["reported-test-model"],
+                UsageWarnings = ["test usage warning"],
             });
         }
     }

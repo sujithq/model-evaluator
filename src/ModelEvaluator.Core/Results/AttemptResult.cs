@@ -57,6 +57,25 @@ public sealed record EfficiencyMetrics
 
     public decimal? EstimatedCostUsd { get; init; }
 
+    /// <summary>Reported Copilot consumption, not an invoice charge.</summary>
+    public decimal? AiCredits { get; init; }
+
+    public decimal? PremiumRequests { get; init; }
+
+    public long? CacheReadTokens { get; init; }
+
+    public long? CacheWriteTokens { get; init; }
+
+    public long? ReasoningTokens { get; init; }
+
+    public long? ApiRequests { get; init; }
+
+    public double? ApiDurationSeconds { get; init; }
+
+    public IReadOnlyList<string> ReportedModels { get; init; } = [];
+
+    public IReadOnlyList<string> UsageWarnings { get; init; } = [];
+
     /// <summary>Metric names the adapter could not supply, reported explicitly.</summary>
     public IReadOnlyList<string> UnavailableMetrics { get; init; } = [];
 }

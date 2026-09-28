@@ -53,6 +53,24 @@ public sealed record ModelAttemptOutput
 
     public decimal? EstimatedCostUsd { get; init; }
 
+    public decimal? AiCredits { get; init; }
+
+    public decimal? PremiumRequests { get; init; }
+
+    public long? CacheReadTokens { get; init; }
+
+    public long? CacheWriteTokens { get; init; }
+
+    public long? ReasoningTokens { get; init; }
+
+    public long? ApiRequests { get; init; }
+
+    public double? ApiDurationSeconds { get; init; }
+
+    public IReadOnlyList<string> ReportedModels { get; init; } = [];
+
+    public IReadOnlyList<string> UsageWarnings { get; init; } = [];
+
     public required RunnerInfo Runner { get; init; }
 
     /// <summary>Metrics the adapter cannot supply, reported explicitly instead of as zero.</summary>

@@ -99,8 +99,10 @@ and execute commands without confirmation; a temporary workspace is not a securi
 Do not expose unrelated credentials or the evaluator's acceptance tests and sample implementations
 to the agent. The example does not disable path verification with `--allow-all-paths`.
 
-This configuration does not convert Copilot's native usage output into the adapter's usage schema.
-Elapsed time is recorded, while token counts, tool-call counts and cost remain unavailable.
+This configuration passes `--usage-output-file "{usageFile}"` to Copilot and selects
+`"usageFormat": "copilot-cli"`. Native usage is retained as `usage.json` in each attempt's artifacts
+and read into the report, including AI credits, tokens, cache metrics and API requests when reported.
+The native export does not supply tool-call counts or invoice USD; those remain unavailable.
 The default configuration and CI self-checks continue to use the local reference samples.
 The on-demand evaluation workflow also needs Copilot CLI installation and authentication before
 it can run this example; selecting this file alone is not sufficient.
@@ -144,8 +146,9 @@ policy. The evaluator passes the selected ID unchanged; local validation does no
 Authenticate and check the model picker in your standalone Copilot CLI before evaluating a model.
 
 `evaluation.auto.example.json` is included separately for the app's Auto option. **Auto is a
-routing strategy, not a fixed model.** Its report ID is `copilot-auto`; this configuration does not
-capture which underlying model was selected. Do not present its results as a named-model baseline.
+routing strategy, not a fixed model.** Its report ID is `copilot-auto`; `reportedModels` in usage
+records the contributing model IDs when exported by the CLI. Do not present Auto results as a
+named-model baseline.
 
 For example, select a model ID from the table and run:
 
@@ -163,9 +166,24 @@ consistent and record any overrides when comparing models. Evaluation consumes r
 these examples do not automatically run a combined model matrix or change the default reference
 configuration.
 
+For a shared per-task ranking, use
+[`evaluation.copilot-matrix.example.json`](../config/evaluation.copilot-matrix.example.json) and
+explicitly select the model IDs your CLI account supports:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.copilot-matrix.example.json --models copilot-gpt-6-astra,copilot-gpt-6-luna --scenarios console-task-cli --repetitions 3
+```
+
+This runs six independent attempts and includes both models in one report. Without `--models`,
+the matrix selects all 28 named models (including IDs that may be unavailable to your account).
+Without either filter it schedules 28 models x 5 scenarios x 3 repetitions = 420 attempts.
+Auto is intentionally excluded from the matrix. Separately executed runs are not automatically
+merged; use the matrix when you want a single comparison report.
+
 #### Reporting usage
 
-If the runner writes `usageFile` as JSON, the values feed the efficiency dimension:
+For custom runners, `usageFormat` defaults to `normalized`. If the runner writes `usageFile` as
+JSON, the values feed the efficiency dimension:
 
 ```json
 { "toolCalls": 42, "inputTokens": 18234, "outputTokens": 5120, "estimatedCostUsd": 0.42 }
@@ -174,6 +192,41 @@ If the runner writes `usageFile` as JSON, the values feed the efficiency dimensi
 Every field is optional. Missing fields are never guessed: they are listed under
 `efficiency.unavailableMetrics` and surfaced in the "Unavailable measurements" section of the
 Markdown report.
+
+For Copilot CLI, set the following settings and append the usage option to the runner arguments:
+
+```json
+{
+  "arguments": "--model gpt-6-luna --prompt \"{prompt}\" --allow-all-tools --usage-output-file \"{usageFile}\"",
+  "usageFile": "usage.json",
+  "usageFormat": "copilot-cli"
+}
+```
+
+The complete example files also include the isolation/reproducibility flags discussed above.
+The parser uses the export shape verified with Copilot CLI `1.0.87-0`:
+
+| Export field | Report metric | Meaning |
+| --- | --- | --- |
+| `totalNanoAiu` | `aiCredits` | Divide by 1,000,000,000; consumption, not an invoice charge. |
+| `totalPremiumRequestCost` | `premiumRequests` | Preserve legacy request units; never substitute for credits or USD. |
+| `modelMetrics.*.usage.inputTokens` / `outputTokens` | `inputTokens` / `outputTokens` | Sum across reported models, not agent breakdowns. |
+| `modelMetrics.*.usage.cacheReadTokens` / `cacheWriteTokens` | `cacheReadTokens` / `cacheWriteTokens` | Cache detail, not extra tokens added to the input/output total. |
+| `modelMetrics.*.usage.reasoningTokens` | `reasoningTokens` | Report separately; do not add to output tokens again. |
+| `modelMetrics.*.requests.count` | `apiRequests` | Model API requests, not tool calls or user requests. |
+| `totalApiDurationMs` | `apiDurationSeconds` | Model API time, not total generation or evaluator wall time. |
+| `modelMetrics` keys | `reportedModels` | Model IDs contributing to the session, including routing/subagent use when exported. |
+
+`agentMetrics` and per-model credit breakdowns are not added to session totals: that would count the
+same work twice. Each token/request sum requires the field on every reported model; partial data is
+unavailable rather than an artificially low total. Top-level `tokenDetails.input` is not used as total
+input: the observed export excludes cached/written tokens there, unlike `modelMetrics.*.usage.inputTokens`.
+
+An absent usage file (for example, a killed runner), malformed JSON or invalid measurements produces
+a visible warning and persisted `efficiency.usageWarnings`. It does not change the functional grade.
+The original JSON remains in the artifacts for inspection. No USD is inferred from credits or token
+pricing: included consumption and paid overage depend on billing/account state not present in this
+session export. See [GitHub's billing documentation](https://docs.github.com/en/copilot/concepts/billing-and-usage/organizations-and-enterprises/billing).
 
 #### Runner consistency
 

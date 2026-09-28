@@ -40,11 +40,18 @@ public static class JsonReportWriter
                 s.AcceptanceFailed,
                 s.AcceptanceSkipped,
                 s.MeanElapsedSeconds,
+                s.MeanGenerationSeconds,
                 s.ElapsedStandardDeviation,
                 s.TotalTokens,
                 s.TotalToolCalls,
                 s.TotalCostUsd,
+                s.TotalAiCredits,
+                s.AiCreditsReportedAttempts,
+                s.TotalPremiumRequests,
+                s.TotalApiRequests,
+                s.ReportedModels,
             }),
+            Rankings = ScenarioRanker.Rank(report),
             report.Attempts,
         };
 

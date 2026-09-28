@@ -25,8 +25,8 @@ public sealed class ReportingTests
         Assert.Equal(0, bad.SuccessfulAttempts);
         Assert.Equal(1, bad.ModelFailures);
         Assert.Equal(1, bad.BudgetExceeded);
-        Assert.Equal(1500, bad.TotalTokens);
-        Assert.Equal(0.25m, bad.TotalCostUsd);
+        Assert.Null(bad.TotalTokens);
+        Assert.Null(bad.TotalCostUsd);
     }
 
     [Fact]
@@ -212,6 +212,7 @@ public sealed class ReportingTests
             {
                 ElapsedSecondsTotal = 60 + repetition,
                 InputTokens = tokens,
+                OutputTokens = tokens is null ? null : 0,
                 EstimatedCostUsd = cost,
                 UnavailableMetrics = tokens is null ? ["inputTokens", "outputTokens"] : ["toolCalls"],
             },
