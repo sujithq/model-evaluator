@@ -63,6 +63,9 @@ public sealed record EvaluationConfiguration
     /// <summary>Keep attempt workspaces on disk for debugging.</summary>
     public bool KeepWorkspaces { get; init; }
 
+    /// <summary>Print detailed progress and live child-process output during evaluation.</summary>
+    public bool Debug { get; init; }
+
     public static EvaluationConfiguration Load(string path)
     {
         var fullPath = Path.GetFullPath(path);

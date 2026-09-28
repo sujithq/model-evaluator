@@ -49,6 +49,15 @@ self-verification models: `reference-good` (the known-good sample, which must su
 real models with the `command-line` adapter - see
 [`config/evaluation.models.example.json`](config/evaluation.models.example.json) and
 [docs/model-adapters.md](docs/model-adapters.md).
+For a concrete GPT-6 Astra example using GitHub Copilot CLI, see
+[`config/evaluation.gpt-6-astra.example.json`](config/evaluation.gpt-6-astra.example.json) and the
+[setup and run instructions](docs/model-adapters.md#gpt-6-astra-with-github-copilot-cli).
+A matching GPT-6 Luna example is available in
+[`config/evaluation.gpt-6-luna.example.json`](config/evaluation.gpt-6-luna.example.json), with
+[Luna run instructions](docs/model-adapters.md#gpt-6-luna-with-github-copilot-cli).
+Matching examples for all 28 app-listed model IDs, plus Auto routing, use the filename pattern
+`config/evaluation.<model-id>.example.json`. See the
+[model inventory and CLI availability caveats](docs/model-adapters.md#all-app-listed-models-with-github-copilot-cli).
 
 ## CLI
 
@@ -61,8 +70,29 @@ model-evaluator version                   Print the harness version.
 
 Options: `--config`, `--benchmark-root`, `--models`, `--scenarios`, `--repetitions`, `--output`,
 `--workspace-root`, `--execution-image`, `--generation-timeout`, `--build-timeout`, `--test-timeout`,
-`--acceptance-timeout`, `--keep-workspaces`. Exit codes: `0` success, `1` usage or validation
+`--acceptance-timeout`, `--keep-workspaces`, `--debug`. Exit codes: `0` success, `1` usage or validation
 problems, `2` error, `3` at least one infrastructure failure.
+
+### Debug output
+
+Add `--debug` to see the selected evaluation matrix, environment details, workspace and artifact
+paths, time budgets, stage start/completion messages, check results and live runner/build/test output:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.gpt-6-luna.example.json --scenarios console-task-cli --debug
+```
+
+Debug messages are prefixed with `[debug]`. The run also writes one
+`<output-directory>/<run-id>/scenario-details.md` file containing metadata, effective budgets,
+constraints, samples and the full resolved prompt for every selected scenario. Diagnostics are off
+by default; `"debug": true` in the evaluation configuration also enables them. This is evaluator
+logging, not a change to the model's prompt, reasoning settings or the runner's own logging level.
+Output appears as the child process emits lines; a silent or buffering runner may still have pauses.
+
+Transcripts and command logs are saved with or without `--debug`. Combine it with
+`--keep-workspaces` to retain generated workspaces. The evaluator does not dump environment
+variables or provider command arguments, but live child-process output is not redacted and may
+contain sensitive data; review logs before sharing them.
 
 ## How an attempt runs
 

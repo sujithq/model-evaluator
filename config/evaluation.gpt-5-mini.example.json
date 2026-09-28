@@ -1,0 +1,20 @@
+{
+  "benchmarkRoot": "../benchmarks/v1",
+  "outputDirectory": "../artifacts/evaluations",
+  "repetitions": 3,
+  "scenarios": [],
+  "models": [
+    {
+      "id": "copilot-gpt-5-mini",
+      "adapter": "command-line",
+      "description": "GPT-5 mini generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-5-mini --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update",
+        "runnerName": "github-copilot-cli"
+      }
+    }
+  ],
+  "budgets": {},
+  "keepWorkspaces": false
+}

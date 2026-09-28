@@ -74,6 +74,7 @@ public sealed class CommandLineAdapter(ProcessRunner processRunner) : IModelAdap
 
         var transcriptPath = Path.Combine(context.ArtifactsPath, "transcript.log");
         await using var transcript = new StreamWriter(transcriptPath, append: true);
+        var outputLock = new object();
 
         // The agent runner keeps its provider credentials; generated code never does.
         var result = await _processRunner.RunAsync(
@@ -83,7 +84,14 @@ public sealed class CommandLineAdapter(ProcessRunner processRunner) : IModelAdap
             context.Timeout,
             environment,
             stripCredentials: false,
-            onOutput: line => transcript.WriteLine(line),
+            onOutput: line =>
+            {
+                lock (outputLock)
+                {
+                    transcript.WriteLine(line);
+                    context.OnOutput?.Invoke(line);
+                }
+            },
             cancellationToken).ConfigureAwait(false);
 
         await transcript.FlushAsync(cancellationToken).ConfigureAwait(false);

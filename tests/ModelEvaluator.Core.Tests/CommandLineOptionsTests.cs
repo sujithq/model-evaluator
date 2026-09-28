@@ -20,12 +20,13 @@ public sealed class CommandLineOptionsTests
     public void Parse_ReadsKnownOptions()
     {
         var options = CommandLineOptions.Parse(
-            ["--models", "alpha, beta", "--scenarios", "one", "--repetitions", "5", "--keep-workspaces"]);
+            ["--models", "alpha, beta", "--scenarios", "one", "--repetitions", "5", "--keep-workspaces", "--debug"]);
 
         Assert.Equal(["alpha", "beta"], options.Models);
         Assert.Equal(["one"], options.Scenarios);
         Assert.Equal(5, options.Repetitions);
         Assert.True(options.KeepWorkspaces);
+        Assert.True(options.Debug);
     }
 
     [Fact]
@@ -72,7 +73,21 @@ public sealed class CommandLineOptionsTests
         Assert.Equal(BaseConfiguration.Models.Count, configuration.Models.Count);
         Assert.Equal(BaseConfiguration.Repetitions, configuration.Repetitions);
         Assert.Equal(BaseConfiguration.BenchmarkRoot, configuration.BenchmarkRoot);
+        Assert.False(configuration.Debug);
     }
+
+    [Fact]
+    public void Apply_DebugEnablesDiagnosticsWithoutChangingOtherOptions()
+    {
+        var configuration = CommandLineOptions.Parse(["--debug"]).Apply(BaseConfiguration);
+
+        Assert.True(configuration.Debug);
+        Assert.Equal(BaseConfiguration, configuration with { Debug = false });
+    }
+
+    [Fact]
+    public void Apply_PreservesDebugEnabledInConfiguration() =>
+        Assert.True(CommandLineOptions.Parse([]).Apply(BaseConfiguration with { Debug = true }).Debug);
 
     [Fact]
     public void Load_ResolvesPathsRelativeToTheConfigurationFile()
@@ -86,6 +101,7 @@ public sealed class CommandLineOptionsTests
               "benchmarkRoot": "../benchmarks/v1",
               "outputDirectory": "out",
               "repetitions": 4,
+              "debug": true,
               "models": [ { "id": "alpha", "adapter": "local-sample", "settings": { "variant": "good" } } ]
             }
             """);
@@ -95,6 +111,7 @@ public sealed class CommandLineOptionsTests
             var configuration = EvaluationConfiguration.Load(path);
 
             Assert.Equal(4, configuration.Repetitions);
+            Assert.True(configuration.Debug);
             Assert.Equal(Path.GetFullPath(Path.Combine(directory, "out")), configuration.OutputDirectory);
             Assert.Equal(
                 Path.GetFullPath(Path.Combine(directory, "../benchmarks/v1")),

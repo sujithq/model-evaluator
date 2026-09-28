@@ -74,6 +74,11 @@ public static class Program
         Console.WriteLine();
         Console.WriteLine($"JSON report:     {jsonPath}");
         Console.WriteLine($"Markdown report: {markdownPath}");
+        if (configuration.Debug)
+        {
+            Console.WriteLine(
+                $"Scenario details: {Path.Combine(outputDirectory, ScenarioDetailsMarkdownWriter.FileName)}");
+        }
 
         foreach (var summary in ReportAggregator.Summarise(report))
         {
@@ -216,6 +221,7 @@ public static class Program
               --test-timeout <sec>         Override the generated test budget.
               --acceptance-timeout <sec>   Override the acceptance check budget.
               --keep-workspaces            Keep attempt workspaces for debugging.
+              --debug                      Print detailed progress and write scenario-details.md.
             """);
     }
 }

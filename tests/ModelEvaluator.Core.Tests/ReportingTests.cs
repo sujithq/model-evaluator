@@ -1,5 +1,7 @@
+using ModelEvaluator.Core.Configuration;
 using ModelEvaluator.Core.Reporting;
 using ModelEvaluator.Core.Results;
+using ModelEvaluator.Core.Scenarios;
 
 namespace ModelEvaluator.Core.Tests;
 
@@ -61,6 +63,45 @@ public sealed class ReportingTests
             Assert.True(File.Exists(markdown));
             Assert.Contains("\"promptHash\": \"prompt-hash-1\"", File.ReadAllText(json), StringComparison.Ordinal);
             Assert.StartsWith("#", File.ReadAllText(markdown), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ScenarioDetailsRender_ContainsMetadataEffectiveBudgetsAndResolvedPrompt()
+        {
+            var scenario = new ScenarioPackage(
+                new ScenarioDefinition
+                {
+                    Id = "scenario-one",
+                    Name = "Scenario one",
+                    ProjectType = "Console",
+                    BenchmarkVersion = "1.0.0",
+                    AllowedPackages = ["Example.Package"],
+                    RequiredGlobs = ["src/**/*.cs"],
+                    PreservedPaths = ["global.json"],
+                    Budget = new ScenarioBudget { GenerationTimeoutSeconds = 30 },
+                    Samples = new Dictionary<string, SampleVariantDefinition>
+                    {
+                        ["good"] = new()
+                        {
+                            Path = "samples/good",
+                            Description = "Known-good implementation.",
+                        },
+                    },
+                },
+                "/benchmarks/scenario-one",
+                "# Prompt\n\nUse this contract.\n\n```csharp\nConsole.WriteLine();\n```");
+
+            var markdown = ScenarioDetailsMarkdownWriter.Render(
+                [scenario],
+                new BudgetOverrides { GenerationTimeoutSeconds = 45 });
+
+            Assert.Contains("## `scenario-one` - Scenario one", markdown, StringComparison.Ordinal);
+            Assert.Contains("| Generation | 45 |", markdown, StringComparison.Ordinal);
+            Assert.Contains("`Example.Package`", markdown, StringComparison.Ordinal);
+            Assert.Contains("`samples/good`", markdown, StringComparison.Ordinal);
+            Assert.Contains("### Resolved prompt", markdown, StringComparison.Ordinal);
+            Assert.Contains("````markdown", markdown, StringComparison.Ordinal);
+            Assert.Contains("Console.WriteLine();", markdown, StringComparison.Ordinal);
         }
         finally
         {

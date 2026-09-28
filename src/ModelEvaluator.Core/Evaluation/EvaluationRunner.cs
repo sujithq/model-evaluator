@@ -2,6 +2,7 @@ using System.Diagnostics;
 using ModelEvaluator.Core.Adapters;
 using ModelEvaluator.Core.Configuration;
 using ModelEvaluator.Core.Execution;
+using ModelEvaluator.Core.Reporting;
 using ModelEvaluator.Core.Results;
 using ModelEvaluator.Core.Scenarios;
 using ModelEvaluator.Core.Util;
@@ -32,13 +33,30 @@ public sealed class EvaluationRunner(
             ? catalog.Scenarios.OrderBy(s => s.Id, StringComparer.Ordinal).ToList()
             : configuration.Scenarios.Select(catalog.Get).ToList();
 
+        Action<string>? debugLog = configuration.Debug ? message => _log($"[debug] {message}") : null;
+        debugLog?.Invoke($"Benchmark root: {configuration.BenchmarkRoot}");
+        debugLog?.Invoke($"Output directory: {configuration.OutputDirectory}");
+        debugLog?.Invoke(
+            $"Matrix: {scenarios.Count} scenario(s) x {configuration.Models.Count} model(s) x " +
+            $"{Math.Max(1, configuration.Repetitions)} repetition(s), executed sequentially.");
+        debugLog?.Invoke($"Scenarios: {string.Join(", ", scenarios.Select(s => s.Id))}");
+        debugLog?.Invoke($"Models: {string.Join(", ", configuration.Models.Select(m => m.Id))}");
         var environment = await ProbeEnvironmentAsync(configuration, cancellationToken).ConfigureAwait(false);
-        var attemptRunner = new AttemptRunner(_adapterFactory, _processRunner, _log);
+        debugLog?.Invoke($"Environment: {environment.OperatingSystem}; SDK {environment.DotnetSdkVersion}; git {environment.GitCommit}");
+        var attemptRunner = new AttemptRunner(_adapterFactory, _processRunner, _log, debugLog);
         var startedAt = DateTimeOffset.UtcNow;
         var runId = $"run-{startedAt:yyyyMMdd-HHmmss}";
         var attempts = new List<AttemptResult>();
 
         Directory.CreateDirectory(configuration.OutputDirectory);
+        if (configuration.Debug)
+        {
+            var scenarioDetailsPath = ScenarioDetailsMarkdownWriter.Write(
+                scenarios,
+                configuration.Budgets,
+                Path.Combine(configuration.OutputDirectory, runId));
+            debugLog?.Invoke($"Scenario details: {scenarioDetailsPath}");
+        }
 
         foreach (var scenario in scenarios)
         {
@@ -47,6 +65,7 @@ public sealed class EvaluationRunner(
                 for (var repetition = 1; repetition <= Math.Max(1, configuration.Repetitions); repetition++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
+                    debugLog?.Invoke($"Starting {scenario.Id} / {model.Id}, repetition {repetition}.");
                     var attempt = await attemptRunner.RunAsync(
                         scenario, model, repetition, configuration, environment, cancellationToken).ConfigureAwait(false);
                     attempts.Add(attempt);

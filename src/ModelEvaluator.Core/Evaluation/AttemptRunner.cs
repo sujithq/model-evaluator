@@ -13,7 +13,8 @@ namespace ModelEvaluator.Core.Evaluation;
 public sealed class AttemptRunner(
     ModelAdapterFactory adapterFactory,
     ProcessRunner processRunner,
-    Action<string>? log = null)
+    Action<string>? log = null,
+    Action<string>? debugLog = null)
 {
     private const string DotnetFileName = "dotnet";
 
@@ -38,6 +39,13 @@ public sealed class AttemptRunner(
         var artifactsPath = Path.Combine(configuration.OutputDirectory, "attempts", attemptId);
         var workspaceRoot = configuration.WorkspaceRoot ?? Path.Combine(Path.GetTempPath(), "model-evaluator");
         var workspacePath = Path.Combine(workspaceRoot, attemptId, "workspace");
+
+        debugLog?.Invoke($"[{attemptId}] Workspace: {workspacePath}");
+        debugLog?.Invoke($"[{attemptId}] Artifacts: {artifactsPath}");
+        debugLog?.Invoke($"Benchmark {scenario.Definition.BenchmarkVersion}; prompt SHA-256: {scenario.PromptHash}");
+        debugLog?.Invoke(
+            $"Budgets: generation={budget.GenerationTimeoutSeconds}s, restore/build/format={budget.BuildTimeoutSeconds}s each, " +
+            $"generated tests={budget.TestTimeoutSeconds}s, acceptance={budget.AcceptanceTimeoutSeconds}s.");
 
         Directory.CreateDirectory(artifactsPath);
         FileSystemHelper.DeleteDirectoryIfExists(workspacePath);
@@ -70,11 +78,15 @@ public sealed class AttemptRunner(
                 PromptFilePath = promptFilePath,
                 Timeout = TimeSpan.FromSeconds(budget.GenerationTimeoutSeconds),
                 Repetition = repetition,
+                OnOutput = debugLog is null ? null : line => debugLog($"[generation] {line}"),
             };
 
             _log($"[{attemptId}] generating with model '{model.Id}' via '{model.Adapter}'");
             generation = await adapter.GenerateAsync(context, cancellationToken).ConfigureAwait(false);
             runner = generation.Runner;
+            debugLog?.Invoke(
+                $"Generation completed: succeeded={generation.Succeeded}, timedOut={generation.TimedOut}, " +
+                $"duration={generation.DurationSeconds:0.0}s; runner={runner.Name} ({runner.Version}).");
 
             if (!generation.Succeeded)
             {
@@ -92,7 +104,13 @@ public sealed class AttemptRunner(
                     "generation.completed", CheckCategory.BuildAndExecution,
                     $"Generation finished in {generation.DurationSeconds:0.0} s."));
 
-                checks.AddRange(_instructionChecker.Check(workspacePath, scenario));
+                debugLog?.Invoke("Checking instruction adherence.");
+                var instructionChecks = _instructionChecker.Check(workspacePath, scenario).ToList();
+                checks.AddRange(instructionChecks);
+                foreach (var check in instructionChecks)
+                {
+                    debugLog?.Invoke($"{check.Id}: {check.Status} - {check.Details}");
+                }
 
                 var restore = await RunDotnetAsync(
                     ["restore"], workspacePath, budget.BuildTimeoutSeconds, artifactsPath, "restore", cancellationToken)
@@ -201,6 +219,12 @@ public sealed class AttemptRunner(
         };
 
         await PersistAsync(result, workspacePath, artifactsPath, configuration, cancellationToken).ConfigureAwait(false);
+        foreach (var check in checks.Where(c => c.Category != CheckCategory.InstructionAdherence))
+        {
+            debugLog?.Invoke($"{check.Id}: {check.Status} - {check.Details}");
+        }
+
+        debugLog?.Invoke($"Attempt duration: {stopwatch.Elapsed.TotalSeconds:0.0}s; outcome={result.Outcome}; reason={failureReason ?? "none"}.");
         _log($"[{attemptId}] outcome: {result.Outcome}");
         return result;
     }
@@ -214,6 +238,7 @@ public sealed class AttemptRunner(
     {
         try
         {
+            debugLog?.Invoke($"Saving generated code and result.json to {artifactsPath}");
             var generatedCodePath = Path.Combine(artifactsPath, "generated");
             if (Directory.Exists(workspacePath))
             {
@@ -233,6 +258,11 @@ public sealed class AttemptRunner(
         if (!configuration.KeepWorkspaces)
         {
             FileSystemHelper.DeleteDirectoryIfExists(Path.GetDirectoryName(workspacePath)!);
+            debugLog?.Invoke($"Removed temporary workspace: {workspacePath}");
+        }
+        else
+        {
+            debugLog?.Invoke($"Kept workspace: {workspacePath}");
         }
     }
 
@@ -245,15 +275,21 @@ public sealed class AttemptRunner(
         CancellationToken cancellationToken,
         IReadOnlyDictionary<string, string>? environment = null)
     {
+        var argumentList = arguments.ToList();
+        debugLog?.Invoke($"[{logName}] Starting dotnet {string.Join(' ', argumentList)}");
+        debugLog?.Invoke($"[{logName}] Working directory: {workingDirectory}; timeout={timeoutSeconds}s.");
         var result = await processRunner.RunAsync(
             DotnetFileName,
-            arguments,
+            argumentList,
             workingDirectory,
             TimeSpan.FromSeconds(timeoutSeconds),
             environment,
             stripCredentials: true,
+            onOutput: debugLog is null ? null : line => debugLog($"[{logName}] {line}"),
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
+        debugLog?.Invoke(
+            $"[{logName}] Completed: exit={result.ExitCode}, timedOut={result.TimedOut}, duration={result.DurationSeconds:0.0}s.");
         var logsPath = Path.Combine(artifactsPath, "commands");
         Directory.CreateDirectory(logsPath);
         await File.WriteAllTextAsync(

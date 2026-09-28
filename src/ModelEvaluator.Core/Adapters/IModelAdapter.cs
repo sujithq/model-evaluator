@@ -26,6 +26,9 @@ public sealed record ModelAttemptContext
     public required TimeSpan Timeout { get; init; }
 
     public required int Repetition { get; init; }
+
+    /// <summary>Optional observer for live runner output; transcripts are saved independently.</summary>
+    public Action<string>? OnOutput { get; init; }
 }
 
 /// <summary>What an adapter reports back after producing a candidate solution.</summary>

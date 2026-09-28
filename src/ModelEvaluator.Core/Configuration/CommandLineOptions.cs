@@ -31,6 +31,8 @@ public sealed record CommandLineOptions
 
     public bool KeepWorkspaces { get; init; }
 
+    public bool Debug { get; init; }
+
     public static CommandLineOptions Parse(IEnumerable<string> arguments)
     {
         var options = new CommandLineOptions();
@@ -80,6 +82,9 @@ public sealed record CommandLineOptions
                 case "--keep-workspaces":
                     options = options with { KeepWorkspaces = true };
                     break;
+                case "--debug":
+                    options = options with { Debug = true };
+                    break;
                 default:
                     throw new FormatException($"Unknown option '{argument}'.");
             }
@@ -115,6 +120,7 @@ public sealed record CommandLineOptions
             Scenarios = Scenarios.Count > 0 ? Scenarios : configuration.Scenarios,
             Models = models,
             KeepWorkspaces = KeepWorkspaces || configuration.KeepWorkspaces,
+            Debug = Debug || configuration.Debug,
             Budgets = new BudgetOverrides
             {
                 GenerationTimeoutSeconds = GenerationTimeoutSeconds ?? configuration.Budgets.GenerationTimeoutSeconds,
