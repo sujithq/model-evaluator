@@ -14,7 +14,7 @@ execution environment, and budgets.
 | `promptHash` | SHA-256 of the fully resolved prompt (shared + scenario instructions + contracts) |
 | `modelId`, `adapter` | Model configuration that produced the code |
 | `runner.name`, `runner.version` | Agent runner used for generation |
-| `environment` | OS, architecture, .NET SDK version, evaluator version, execution image, git commit |
+| `environment` | OS, architecture, .NET SDK version, evaluator version, execution image, git commit, `maxParallel` |
 | `repetition`, `startedAt`, `completedAt` | Attempt identity and timing |
 
 The per-attempt artifact directory (`artifacts/evaluations/run-*/attempts/<attemptId>/`) additionally
@@ -33,7 +33,7 @@ the test result files and the attempt's own `result.json`.
 
    The printed prompt hash must match `promptHash` in the report. A different hash means a different
    benchmark; results are not comparable.
-4. Rerun the same matrix, using the same model ids, repetitions and budgets:
+4. Rerun the same matrix, using the same model ids, repetitions, concurrency limit and budgets:
 
    ```bash
    dotnet run --project src/ModelEvaluator.Cli -- evaluate \
@@ -41,6 +41,7 @@ the test result files and the attempt's own `result.json`.
      --scenarios console-task-cli \
      --models reference-good,reference-broken \
      --repetitions 3 \
+     --max-parallel 1 \
      --execution-image ubuntu-latest
    ```
 
@@ -58,6 +59,9 @@ Use `--execution-image` to record the image or runner label the evaluation ran o
   fewer are configured.
 * Each attempt gets a fresh workspace and a fresh model context; nothing carries over between
   repetitions.
+* Match `environment.maxParallel` when reproducing a run. Prefer `--max-parallel 1` for controlled
+  timing comparisons. A higher value runs independent attempts concurrently and can introduce CPU,
+  disk, memory and provider contention, even though workspaces and artifacts are separate.
 
 ## Determinism and variance
 

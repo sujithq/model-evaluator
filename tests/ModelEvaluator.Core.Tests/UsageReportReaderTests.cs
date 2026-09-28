@@ -172,6 +172,8 @@ public sealed class UsageReportReaderTests
         try
         {
             await File.WriteAllTextAsync(Path.Combine(root, "native usage.json"), NativeUsage);
+            var runnerPath = Path.Combine(root, OperatingSystem.IsWindows() ? "runner.ps1" : "runner.sh");
+            await File.WriteAllTextAsync(runnerPath, "exit 0");
             var scenario = new ScenarioPackage(new ScenarioDefinition
             {
                 Id = "test",
@@ -188,8 +190,10 @@ public sealed class UsageReportReaderTests
                     Adapter = "command-line",
                     Settings = new Dictionary<string, string>
                     {
-                        ["command"] = "dotnet",
-                        ["arguments"] = "--version",
+                        ["command"] = OperatingSystem.IsWindows() ? "powershell.exe" : "sh",
+                        ["arguments"] = OperatingSystem.IsWindows()
+                            ? $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{runnerPath}\""
+                            : $"\"{runnerPath}\"",
                         ["usageFile"] = "native usage.json",
                         ["usageFormat"] = "copilot-cli",
                     },

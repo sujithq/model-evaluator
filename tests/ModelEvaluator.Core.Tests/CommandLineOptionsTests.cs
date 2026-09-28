@@ -44,6 +44,25 @@ public sealed class CommandLineOptionsTests
     public void Parse_RejectsNonPositiveRepetitions(string value) =>
         Assert.Throws<FormatException>(() => CommandLineOptions.Parse(["--repetitions", value]));
 
+    [Theory]
+    [InlineData("0")]
+    [InlineData("-1")]
+    [InlineData("many")]
+    public void Parse_RejectsInvalidParallelLimit(string value) =>
+        Assert.Throws<FormatException>(() => CommandLineOptions.Parse(["--max-parallel", value]));
+
+    [Fact]
+    public void Parse_ParallelLimitRequiresValue() =>
+        Assert.Throws<FormatException>(() => CommandLineOptions.Parse(["--max-parallel"]));
+
+    [Fact]
+    public void Apply_ParallelLimitDefaultsToOneAndOverridesConfiguration()
+    {
+        Assert.Equal(1, CommandLineOptions.Parse([]).Apply(BaseConfiguration).MaxParallel);
+        Assert.Equal(4, CommandLineOptions.Parse([]).Apply(BaseConfiguration with { MaxParallel = 4 }).MaxParallel);
+        Assert.Equal(2, CommandLineOptions.Parse(["--max-parallel", "2"]).Apply(BaseConfiguration with { MaxParallel = 4 }).MaxParallel);
+    }
+
     [Fact]
     public void Apply_FiltersModelsAndOverridesBudgets()
     {
@@ -102,6 +121,7 @@ public sealed class CommandLineOptionsTests
               "outputDirectory": "out",
               "repetitions": 4,
               "debug": true,
+              "maxParallel": 2,
               "models": [ { "id": "alpha", "adapter": "local-sample", "settings": { "variant": "good" } } ]
             }
             """);
@@ -112,6 +132,7 @@ public sealed class CommandLineOptionsTests
 
             Assert.Equal(4, configuration.Repetitions);
             Assert.True(configuration.Debug);
+            Assert.Equal(2, configuration.MaxParallel);
             Assert.Equal(Path.GetFullPath(Path.Combine(directory, "out")), configuration.OutputDirectory);
             Assert.Equal(
                 Path.GetFullPath(Path.Combine(directory, "../benchmarks/v1")),

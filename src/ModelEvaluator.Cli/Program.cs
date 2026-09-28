@@ -17,6 +17,11 @@ public static class Program
         {
             return await RunAsync(args).ConfigureAwait(false);
         }
+        catch (OperationCanceledException)
+        {
+            Console.Error.WriteLine("warning: evaluation cancelled before a report could be created.");
+            return 130;
+        }
         catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException
                                        or KeyNotFoundException or InvalidDataException or InvalidOperationException
                                        or FormatException)
@@ -58,14 +63,22 @@ public static class Program
         }
 
         using var cancellation = new CancellationTokenSource();
-        Console.CancelKeyPress += (_, e) =>
+        ConsoleCancelEventHandler cancelHandler = (_, e) =>
         {
             e.Cancel = true;
             cancellation.Cancel();
         };
-
-        var runner = new EvaluationRunner(log: Console.WriteLine);
-        var report = await runner.RunAsync(configuration, cancellation.Token).ConfigureAwait(false);
+        Console.CancelKeyPress += cancelHandler;
+        EvaluationReport report;
+        try
+        {
+            var runner = new EvaluationRunner(log: Console.WriteLine);
+            report = await runner.RunAsync(configuration, cancellation.Token).ConfigureAwait(false);
+        }
+        finally
+        {
+            Console.CancelKeyPress -= cancelHandler;
+        }
 
         var outputDirectory = Path.Combine(configuration.OutputDirectory, report.RunId);
         var jsonPath = JsonReportWriter.Write(report, outputDirectory);
@@ -88,6 +101,12 @@ public static class Program
         }
 
         var infrastructureFailures = report.Attempts.Count(a => a.Outcome == AttemptOutcome.InfrastructureFailure);
+        if (report.Cancelled)
+        {
+            Console.Error.WriteLine($"warning: partial report saved; {report.NotStartedAttempts} attempt(s) were not started.");
+            return 130;
+        }
+
         if (infrastructureFailures > 0)
         {
             Console.Error.WriteLine($"warning: {infrastructureFailures} attempt(s) failed for infrastructure reasons.");
@@ -125,6 +144,10 @@ public static class Program
         var catalog = ScenarioCatalog.Load(configuration.BenchmarkRoot);
         var adapters = ModelAdapterFactory.CreateDefault().Keys;
         var problems = new List<string>();
+        if (configuration.MaxParallel < 1)
+        {
+            problems.Add("maxParallel must be a positive integer.");
+        }
 
         foreach (var scenario in catalog.Scenarios)
         {
@@ -213,6 +236,7 @@ public static class Program
               --models <a,b>               Restrict the run to these model ids.
               --scenarios <a,b>            Restrict the run to these scenario ids.
               --repetitions <n>            Independent attempts per model and scenario.
+              --max-parallel <n>           Maximum concurrent attempts (default: 1).
               --output <path>              Output directory for reports and artifacts.
               --workspace-root <path>      Root for disposable per-attempt workspaces.
               --execution-image <name>     Record the execution image or runner label.

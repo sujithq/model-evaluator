@@ -36,9 +36,22 @@ tests pass.
 ## Per-task rankings
 
 Both reports include a ranking for each comparable scenario/benchmark-version/prompt-hash/runner
-group. The JSON `rankings` array contains the same ordering and measurements as Markdown.
+and concurrency-limit group. The JSON `rankings` array contains the same ordering and measurements as Markdown.
 Run several models in one evaluation matrix to compare them; individual run reports are not
 automatically merged.
+
+`environment.maxParallel` records the configured concurrency limit, not guaranteed simultaneous
+activity or a speed-up factor. Parallel attempts compete for machine resources and provider
+capacity; timing cannot be compared directly with sequential runs. Summaries and rankings keep
+different concurrency limits separate. A cancelled run is explicitly marked as partial; queued
+attempts that never started are counted in `notStartedAttempts`, not treated as model failures.
+
+If the final Copilot usage export is missing, the evaluator can recover completed-call telemetry
+as partial usage. `efficiency.usageIsPartial` marks these observations in JSON; Markdown lists them
+separately. Partial values never qualify as complete consumption totals or AI-credit ranking coverage.
+Partial AI credits require a persisted usage checkpoint from this attempt's fresh Copilot session;
+token counts and legacy request multipliers cannot substitute for it. In-flight calls or unflushed
+records may be missing. Unknown consumption must not be interpreted as a free run.
 
 Ranking is lexicographic, not an arbitrary weighted score:
 

@@ -87,10 +87,44 @@ model-evaluator validate [options]        Validate scenario packages and model c
 model-evaluator version                   Print the harness version.
 ```
 
-Options: `--config`, `--benchmark-root`, `--models`, `--scenarios`, `--repetitions`, `--output`,
+Options: `--config`, `--benchmark-root`, `--models`, `--scenarios`, `--repetitions`, `--max-parallel`, `--output`,
 `--workspace-root`, `--execution-image`, `--generation-timeout`, `--build-timeout`, `--test-timeout`,
 `--acceptance-timeout`, `--keep-workspaces`, `--debug`. Exit codes: `0` success, `1` usage or validation
-problems, `2` error, `3` at least one infrastructure failure.
+problems, `2` error, `3` at least one infrastructure failure, `130` cancelled.
+
+### Bounded parallel attempts
+
+Use `--max-parallel 2` to run up to two independent attempts at once:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.copilot-matrix.example.json --models copilot-gpt-5-mini,copilot-claude-haiku-4.5 --scenarios console-task-cli --repetitions 1 --generation-timeout 300 --max-parallel 2 --debug
+```
+
+The default is `1` (sequential). The configuration equivalent is `"maxParallel": 2`; CLI options
+override the file. Limits must be positive integers. The limit applies across the entire selected
+matrix, including different models, scenarios and repetitions. Each attempt still runs generation,
+restore, build, tests, formatting and acceptance checks sequentially in its own workspace.
+
+Jobs are queued in scenario/model/repetition order. Reports retain this order even when attempts
+finish out of order. Debug process output is tagged with its attempt number, and each attempt has
+unique workspace/artifact paths. Existing per-stage timeouts begin when that stage runs, not while
+the attempt is queued.
+
+Parallel execution increases CPU, memory, disk and provider demand; it is useful for smoke tests,
+but may distort timing rankings or trigger rate limits. Reports record `environment.maxParallel`
+and warn about parallel timing. Use `--max-parallel 1` for controlled timing comparisons.
+
+Ctrl+C stops admitting queued attempts and cancels active work. Started attempts retain their
+artifacts and are cleaned up unless `--keep-workspaces` is set. Once active work stops, partial
+reports record `cancelled`, `plannedAttempts` and `notStartedAttempts`; cancelled attempts are
+infrastructure failures rather than model failures. The CLI exits with `130`. Cancellation during
+initial setup may occur before a report can be created.
+
+Copilot attempts also save incremental `usage.telemetry.jsonl`. If termination prevents the final
+`usage.json` export, available completed-call measurements are saved as `usage.partial.json` and
+reported as **partial**, never as complete cost totals. Partial AI credits are recovered when the
+CLI has persisted a usage checkpoint for that attempt;
+see [timeout usage collection](docs/model-adapters.md#usage-when-a-runner-times-out-or-is-cancelled).
 
 ### Debug output
 

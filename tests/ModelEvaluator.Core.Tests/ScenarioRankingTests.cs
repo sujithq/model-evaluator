@@ -25,6 +25,40 @@ public sealed class ScenarioRankingTests
     }
 
     [Fact]
+    public void Rank_PartialUsageIsVisibleButNeverUsedAsCompleteCost()
+    {
+        var attempt = Attempt("partial", AttemptOutcome.BudgetExceeded, 0.01m, 300);
+        attempt = attempt with
+        {
+            Efficiency = attempt.Efficiency with
+            {
+                UsageIsPartial = true,
+                InputTokens = 100,
+                OutputTokens = 20,
+                ToolCalls = 2,
+                PremiumRequests = 1,
+                ApiRequests = 1,
+                EstimatedCostUsd = 0.01m,
+            },
+        };
+        var report = Report(attempt, Attempt("complete", AttemptOutcome.Success, 2m, 10));
+        var ranking = Assert.Single(ScenarioRanker.Rank(report));
+        Assert.False(ranking.UsesAiCredits);
+        var partial = ranking.Models.Single(m => m.ModelId == "partial");
+        Assert.Null(partial.MeanAiCredits);
+        Assert.Equal(0, partial.AiCreditsReportedAttempts);
+        var summary = ReportAggregator.Summarise(report).Single(s => s.ModelId == "partial");
+        Assert.Null(summary.TotalAiCredits);
+        Assert.Null(summary.TotalTokens);
+        Assert.Null(summary.TotalCostUsd);
+        Assert.Null(summary.TotalToolCalls);
+        Assert.Null(summary.TotalPremiumRequests);
+        Assert.Null(summary.TotalApiRequests);
+        Assert.Contains("## Partial usage measurements", MarkdownReportWriter.Render(report));
+        Assert.Contains("0.01", MarkdownReportWriter.Render(report));
+    }
+
+    [Fact]
     public void Rank_MissingCreditDataDisablesCostTierForWholeGroup()
     {
         var ranking = Assert.Single(ScenarioRanker.Rank(Report(
@@ -93,7 +127,7 @@ public sealed class ScenarioRankingTests
     }
 
     [Fact]
-    public void Rank_DoesNotMixTasksVersionsPromptsOrRunners()
+    public void Rank_DoesNotMixTasksVersionsPromptsRunnersOrConcurrency()
     {
         var attempt = Attempt("model", AttemptOutcome.Success, 1m, 10);
         var report = Report(
@@ -101,10 +135,12 @@ public sealed class ScenarioRankingTests
             attempt with { ScenarioId = "other-task" },
             attempt with { BenchmarkVersion = "2" },
             attempt with { PromptHash = "other-prompt" },
-            attempt with { Runner = new RunnerInfo { Name = "other-runner", Version = "1" } });
+            attempt with { Runner = new RunnerInfo { Name = "other-runner", Version = "1" } },
+            attempt with { Environment = attempt.Environment with { MaxParallel = 2 } });
 
-        Assert.Equal(5, ReportAggregator.Summarise(report).Count);
-        Assert.Equal(5, ScenarioRanker.Rank(report).Count);
+        Assert.Equal(6, ReportAggregator.Summarise(report).Count);
+        Assert.Equal(6, ScenarioRanker.Rank(report).Count);
+        Assert.Contains(ScenarioRanker.Rank(report), ranking => ranking.MaxParallel == 2);
     }
 
     [Fact]

@@ -36,6 +36,8 @@ public sealed record ModelRanking
 
 public sealed record ScenarioRanking
 {
+    public int MaxParallel { get; init; } = 1;
+
     public required string ScenarioId { get; init; }
 
     public required string BenchmarkVersion { get; init; }
@@ -54,7 +56,7 @@ public static class ScenarioRanker
 {
     public static IReadOnlyList<ScenarioRanking> Rank(EvaluationReport report) =>
         ReportAggregator.Summarise(report)
-            .GroupBy(s => (s.ScenarioId, s.BenchmarkVersion, s.PromptHash, s.RunnerLabel))
+            .GroupBy(s => (s.ScenarioId, s.BenchmarkVersion, s.PromptHash, s.RunnerLabel, s.MaxParallel))
             .Select(group =>
             {
                 var models = group.Select(CreateModelRanking).ToList();
@@ -81,6 +83,7 @@ public static class ScenarioRanker
                     BenchmarkVersion = group.Key.BenchmarkVersion,
                     PromptHash = group.Key.PromptHash,
                     RunnerLabel = group.Key.RunnerLabel,
+                    MaxParallel = group.Key.MaxParallel,
                     UsesAiCredits = useCredits,
                     Models = ranked,
                 };
@@ -94,7 +97,7 @@ public static class ScenarioRanker
     private static ModelRanking CreateModelRanking(ModelScenarioSummary summary)
     {
         var evaluated = summary.Attempts.Where(a => a.Outcome != AttemptOutcome.InfrastructureFailure).ToList();
-        var coverage = evaluated.Count(a => a.Efficiency.AiCredits is not null);
+        var coverage = evaluated.Count(a => !a.Efficiency.UsageIsPartial && a.Efficiency.AiCredits is not null);
         var exclusion = summary.Attempts.Any(a => a.Adapter.Equals(LocalSampleAdapter.AdapterKey, StringComparison.OrdinalIgnoreCase))
             ? "Reference samples are not model generations."
             : evaluated.Count == 0 ? "No evaluable attempts (infrastructure failures only)." : null;

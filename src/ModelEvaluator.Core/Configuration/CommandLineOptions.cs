@@ -21,6 +21,8 @@ public sealed record CommandLineOptions
 
     public int? Repetitions { get; init; }
 
+    public int? MaxParallel { get; init; }
+
     public int? GenerationTimeoutSeconds { get; init; }
 
     public int? BuildTimeoutSeconds { get; init; }
@@ -66,6 +68,9 @@ public sealed record CommandLineOptions
                     break;
                 case "--repetitions":
                     options = options with { Repetitions = Int(queue, argument) };
+                    break;
+                case "--max-parallel":
+                    options = options with { MaxParallel = Int(queue, argument) };
                     break;
                 case "--generation-timeout":
                     options = options with { GenerationTimeoutSeconds = Int(queue, argument) };
@@ -117,6 +122,7 @@ public sealed record CommandLineOptions
             WorkspaceRoot = WorkspaceRoot ?? configuration.WorkspaceRoot,
             ExecutionImage = ExecutionImage ?? configuration.ExecutionImage,
             Repetitions = Repetitions ?? configuration.Repetitions,
+            MaxParallel = MaxParallel ?? configuration.MaxParallel,
             Scenarios = Scenarios.Count > 0 ? Scenarios : configuration.Scenarios,
             Models = models,
             KeepWorkspaces = KeepWorkspaces || configuration.KeepWorkspaces,

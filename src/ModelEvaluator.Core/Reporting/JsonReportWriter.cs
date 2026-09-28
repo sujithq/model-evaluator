@@ -20,6 +20,9 @@ public static class JsonReportWriter
             report.CompletedAt,
             report.Runner,
             report.Environment,
+            report.Cancelled,
+            report.PlannedAttempts,
+            report.NotStartedAttempts,
             Summaries = ReportAggregator.Summarise(report).Select(s => new
             {
                 s.ScenarioId,
@@ -27,6 +30,7 @@ public static class JsonReportWriter
                 s.BenchmarkVersion,
                 s.PromptHash,
                 s.RunnerLabel,
+                s.MaxParallel,
                 s.TotalAttempts,
                 s.SuccessfulAttempts,
                 s.SuccessRate,

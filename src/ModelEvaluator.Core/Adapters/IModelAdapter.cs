@@ -45,6 +45,8 @@ public sealed record ModelAttemptOutput
 
     public double DurationSeconds { get; init; }
 
+    public bool UsageIsPartial { get; init; }
+
     public int? ToolCalls { get; init; }
 
     public long? InputTokens { get; init; }
@@ -77,7 +79,7 @@ public sealed record ModelAttemptOutput
     public IReadOnlyList<string> UnavailableMetrics { get; init; } = [];
 }
 
-/// <summary>A pluggable model/provider integration.</summary>
+/// <summary>A pluggable model/provider integration. Implementations must support concurrent attempts.</summary>
 public interface IModelAdapter
 {
     /// <summary>Adapter key used in configuration.</summary>

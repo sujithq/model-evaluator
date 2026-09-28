@@ -29,6 +29,15 @@ public static class MarkdownReportWriter
                            $".NET SDK {report.Environment.DotnetSdkVersion}");
         builder.AppendLine($"- Execution image: {Value(report.Environment.ExecutionImage)}");
         builder.AppendLine($"- Git commit: {Value(report.Environment.GitCommit)}");
+        builder.AppendLine($"- Maximum parallel attempts: {report.Environment.MaxParallel}");
+        if (report.Environment.MaxParallel > 1)
+        {
+            builder.AppendLine("- Timing caveat: concurrent attempts share machine/provider resources; do not compare timing directly with sequential runs.");
+        }
+        if (report.Cancelled)
+        {
+            builder.AppendLine($"- **Cancelled run: partial results.** {report.Attempts.Count} started / {Optional(report.PlannedAttempts)} planned; {Optional(report.NotStartedAttempts)} not started.");
+        }
         builder.AppendLine();
 
         if (summaries.Count == 0)
@@ -69,6 +78,7 @@ public static class MarkdownReportWriter
             builder.AppendLine($"### `{ranking.ScenarioId}` ({ranking.BenchmarkVersion}, `{ranking.RunnerLabel}`)");
             builder.AppendLine();
             builder.AppendLine($"Prompt hash: `{ranking.PromptHash}`");
+            builder.AppendLine($"Maximum parallel attempts: {ranking.MaxParallel}");
             builder.AppendLine(ranking.UsesAiCredits
                 ? "AI-credit tie-breaker: enabled (complete measurements for every ranked model)."
                 : "AI-credit tie-breaker: disabled for this group (missing measurements or no ranked models); time breaks accuracy ties.");
@@ -92,13 +102,14 @@ public static class MarkdownReportWriter
             builder.AppendLine();
         }
 
-        foreach (var scenarioGroup in summaries.GroupBy(s => (s.ScenarioId, s.BenchmarkVersion, s.PromptHash, s.RunnerLabel)))
+        foreach (var scenarioGroup in summaries.GroupBy(s => (s.ScenarioId, s.BenchmarkVersion, s.PromptHash, s.RunnerLabel, s.MaxParallel)))
         {
             var first = scenarioGroup.First();
             builder.AppendLine($"## Scenario `{scenarioGroup.Key.ScenarioId}`");
             builder.AppendLine();
             builder.AppendLine($"- Benchmark version: `{first.BenchmarkVersion}`");
             builder.AppendLine($"- Prompt hash: `{first.PromptHash}`");
+            builder.AppendLine($"- Maximum parallel attempts: {first.MaxParallel}");
             builder.AppendLine();
             builder.AppendLine("| Model | Build & execution | Functional correctness | Instruction adherence | Code quality | Efficiency | Reliability |");
             builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- |");
@@ -150,6 +161,24 @@ public static class MarkdownReportWriter
                     Escape(attempt.FailureReason ?? "-")));
             }
 
+            builder.AppendLine();
+        }
+
+        var partialUsage = report.Attempts.Where(a => a.Efficiency.UsageIsPartial).ToList();
+        if (partialUsage.Count > 0)
+        {
+            builder.AppendLine("## Partial usage measurements");
+            builder.AppendLine();
+            builder.AppendLine("Observed usage only, not final totals. In-flight calls may be missing. Excluded from complete consumption totals and AI-credit ranking.");
+            builder.AppendLine();
+            builder.AppendLine("| Attempt | Observed AI credits | Input tokens | Output tokens | API requests |");
+            builder.AppendLine("| --- | --- | --- | --- | --- |");
+            foreach (var attempt in partialUsage)
+            {
+                builder.AppendLine(Row($"`{attempt.AttemptId}`", Optional(attempt.Efficiency.AiCredits),
+                    Optional(attempt.Efficiency.InputTokens), Optional(attempt.Efficiency.OutputTokens),
+                    Optional(attempt.Efficiency.ApiRequests)));
+            }
             builder.AppendLine();
         }
 

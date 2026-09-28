@@ -43,6 +43,9 @@ public sealed record GeneratedTestSummary
 /// <summary>Efficiency measurements. Null values mean "not reported by the adapter".</summary>
 public sealed record EfficiencyMetrics
 {
+    /// <summary>Usage is an incomplete snapshot, excluded from complete consumption totals and cost ranking.</summary>
+    public bool UsageIsPartial { get; init; }
+
     public double ElapsedSecondsTotal { get; init; }
 
     public double ElapsedSecondsGeneration { get; init; }
@@ -91,6 +94,8 @@ public sealed record RunnerInfo
 /// <summary>Execution environment captured for traceability.</summary>
 public sealed record EnvironmentInfo
 {
+    public int MaxParallel { get; init; } = 1;
+
     public required string OperatingSystem { get; init; }
 
     public required string Architecture { get; init; }
@@ -155,6 +160,12 @@ public sealed record AttemptResult
 /// <summary>Full report for one evaluation run (matrix of models x scenarios x repetitions).</summary>
 public sealed record EvaluationReport
 {
+    public bool Cancelled { get; init; }
+
+    public int? PlannedAttempts { get; init; }
+
+    public int? NotStartedAttempts => PlannedAttempts is int planned ? Math.Max(0, planned - Attempts.Count) : null;
+
     public required string RunId { get; init; }
 
     public required DateTimeOffset StartedAt { get; init; }

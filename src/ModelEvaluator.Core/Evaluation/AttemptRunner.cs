@@ -30,7 +30,7 @@ public sealed class AttemptRunner(
         CancellationToken cancellationToken = default)
     {
         var attemptId =
-            $"{scenario.Id}__{Sanitize(model.Id)}__rep{repetition:00}__{DateTime.UtcNow:yyyyMMddHHmmssfff}";
+            $"{scenario.Id}__{Sanitize(model.Id)}__rep{repetition:00}__{Guid.NewGuid():N}";
 
         var startedAt = DateTimeOffset.UtcNow;
         var stopwatch = Stopwatch.StartNew();
@@ -47,10 +47,6 @@ public sealed class AttemptRunner(
             $"Budgets: generation={budget.GenerationTimeoutSeconds}s, restore/build/format={budget.BuildTimeoutSeconds}s each, " +
             $"generated tests={budget.TestTimeoutSeconds}s, acceptance={budget.AcceptanceTimeoutSeconds}s.");
 
-        Directory.CreateDirectory(artifactsPath);
-        FileSystemHelper.DeleteDirectoryIfExists(workspacePath);
-        Directory.CreateDirectory(workspacePath);
-
         var checks = new List<CheckResult>();
         var acceptance = new AcceptanceSummary();
         var generatedTests = new GeneratedTestSummary();
@@ -61,6 +57,9 @@ public sealed class AttemptRunner(
 
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            Directory.CreateDirectory(artifactsPath);
+            Directory.CreateDirectory(workspacePath);
             _log($"[{attemptId}] preparing workspace");
             FileSystemHelper.CopyDirectory(scenario.StarterPath, workspacePath);
 
@@ -88,6 +87,7 @@ public sealed class AttemptRunner(
             {
                 _log($"[{attemptId}] warning: {warning}");
             }
+            cancellationToken.ThrowIfCancellationRequested();
             debugLog?.Invoke(
                 $"Generation completed: succeeded={generation.Succeeded}, timedOut={generation.TimedOut}, " +
                 $"duration={generation.DurationSeconds:0.0}s; runner={runner.Name} ({runner.Version}).");
@@ -210,6 +210,7 @@ public sealed class AttemptRunner(
             GeneratedTests = generatedTests,
             Efficiency = new EfficiencyMetrics
             {
+                UsageIsPartial = generation?.UsageIsPartial ?? false,
                 ElapsedSecondsTotal = stopwatch.Elapsed.TotalSeconds,
                 ElapsedSecondsGeneration = generationSeconds,
                 ElapsedSecondsEvaluation = Math.Max(0, stopwatch.Elapsed.TotalSeconds - generationSeconds),
@@ -231,7 +232,7 @@ public sealed class AttemptRunner(
             ArtifactsPath = artifactsPath,
         };
 
-        await PersistAsync(result, workspacePath, artifactsPath, configuration, cancellationToken).ConfigureAwait(false);
+        await PersistAsync(result, workspacePath, artifactsPath, configuration).ConfigureAwait(false);
         foreach (var check in checks.Where(c => c.Category != CheckCategory.InstructionAdherence))
         {
             debugLog?.Invoke($"{check.Id}: {check.Status} - {check.Details}");
@@ -246,11 +247,11 @@ public sealed class AttemptRunner(
         AttemptResult result,
         string workspacePath,
         string artifactsPath,
-        EvaluationConfiguration configuration,
-        CancellationToken cancellationToken)
+        EvaluationConfiguration configuration)
     {
         try
         {
+            Directory.CreateDirectory(artifactsPath);
             debugLog?.Invoke($"Saving generated code and result.json to {artifactsPath}");
             var generatedCodePath = Path.Combine(artifactsPath, "generated");
             if (Directory.Exists(workspacePath))
@@ -261,7 +262,7 @@ public sealed class AttemptRunner(
             await File.WriteAllTextAsync(
                 Path.Combine(artifactsPath, "result.json"),
                 JsonSerializer.Serialize(result, JsonDefaults.Options),
-                cancellationToken).ConfigureAwait(false);
+                CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -271,7 +272,14 @@ public sealed class AttemptRunner(
         if (!configuration.KeepWorkspaces)
         {
             FileSystemHelper.DeleteDirectoryIfExists(Path.GetDirectoryName(workspacePath)!);
-            debugLog?.Invoke($"Removed temporary workspace: {workspacePath}");
+            if (Directory.Exists(Path.GetDirectoryName(workspacePath)))
+            {
+                _log($"[{result.AttemptId}] warning: temporary workspace could not be removed: {workspacePath}");
+            }
+            else
+            {
+                debugLog?.Invoke($"Removed temporary workspace: {workspacePath}");
+            }
         }
         else
         {
@@ -302,15 +310,16 @@ public sealed class AttemptRunner(
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         debugLog?.Invoke(
-            $"[{logName}] Completed: exit={result.ExitCode}, timedOut={result.TimedOut}, duration={result.DurationSeconds:0.0}s.");
+            $"[{logName}] Completed: exit={result.ExitCode}, timedOut={result.TimedOut}, cancelled={result.Cancelled}, duration={result.DurationSeconds:0.0}s.");
         var logsPath = Path.Combine(artifactsPath, "commands");
         Directory.CreateDirectory(logsPath);
         await File.WriteAllTextAsync(
             Path.Combine(logsPath, $"{logName}.log"),
-            $"$ dotnet {result.Arguments}{Environment.NewLine}exit={result.ExitCode} timedOut={result.TimedOut} " +
+            $"$ dotnet {result.Arguments}{Environment.NewLine}exit={result.ExitCode} timedOut={result.TimedOut} cancelled={result.Cancelled} " +
             $"duration={result.DurationSeconds:0.0}s{Environment.NewLine}{result.CombinedOutput}",
-            cancellationToken).ConfigureAwait(false);
+            CancellationToken.None).ConfigureAwait(false);
 
+        cancellationToken.ThrowIfCancellationRequested();
         return result;
     }
 
