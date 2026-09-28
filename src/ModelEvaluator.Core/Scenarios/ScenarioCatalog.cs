@@ -40,9 +40,9 @@ public sealed record ScenarioDefinition
 
     public required string BenchmarkVersion { get; init; }
 
-    public string TargetFramework { get; init; } = "net9.0";
+    public string TargetFramework { get; init; } = "net10.0";
 
-    public string SdkVersion { get; init; } = "9.0.100";
+    public string SdkVersion { get; init; } = "10.0.100";
 
     public string InstructionsFile { get; init; } = "instructions.md";
 

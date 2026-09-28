@@ -3,9 +3,9 @@
 Build a Blazor Web App that manages a personal task list through a browser-facing task board and persists
 the tasks as JSON on disk.
 
-- Target framework: `net9.0`, pinned SDK `9.0.100` (see `global.json`).
+- Target framework: `net10.0`, pinned SDK `10.0.100` (see `global.json`).
 - Application project: `src/TaskBoard/TaskBoard.csproj`, created from the Blazor Web App template
-  (`dotnet new blazor -f net9.0`). The task pages must use **static server-side rendering** — no
+  (`dotnet new blazor -f net10.0`). The task pages must use **static server-side rendering** — no
   WebAssembly, and every user journey must work without JavaScript, driven by plain HTML `<form>` posts.
 - Allowed dependencies: only the .NET/ASP.NET Core framework references for the application project. The
   test project may reference `Microsoft.NET.Test.Sdk`, `xunit`, `xunit.runner.visualstudio`,

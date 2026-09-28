@@ -74,7 +74,7 @@ public sealed class ReportingTests
         {
             OperatingSystem = "linux",
             Architecture = "X64",
-            DotnetSdkVersion = "9.0.100",
+            DotnetSdkVersion = "10.0.100",
             EvaluatorVersion = "1.0.0",
             ExecutionImage = "ubuntu-24.04",
             GitCommit = "abc123",

@@ -17,7 +17,7 @@ public static class EvaluationContext
         ?? throw new InvalidOperationException("EVAL_WORKSPACE is not set; acceptance tests must be started by the evaluator.");
 
     public static string TargetFramework { get; } =
-        Environment.GetEnvironmentVariable("EVAL_TARGET_FRAMEWORK") ?? "net9.0";
+        Environment.GetEnvironmentVariable("EVAL_TARGET_FRAMEWORK") ?? "net10.0";
 
     public static string FixturesDirectory { get; } =
         Environment.GetEnvironmentVariable("EVAL_FIXTURES") ?? Path.Combine(Workspace, "fixtures");

@@ -10,7 +10,7 @@ public sealed class InstructionAdherenceCheckerTests : IDisposable
         """
         {
           "sdk": {
-            "version": "9.0.100"
+            "version": "10.0.100"
           }
         }
         """;
@@ -72,7 +72,7 @@ public sealed class InstructionAdherenceCheckerTests : IDisposable
     public void DisabledNullable_IsReported()
     {
         CreateCompliantWorkspace();
-        Write(Path.Combine(Workspace, "src", "App", "App.csproj"), Project("net9.0", "disable"));
+        Write(Path.Combine(Workspace, "src", "App", "App.csproj"), Project("net10.0", "disable"));
 
         var results = _checker.Check(Workspace, CreatePackage());
 
@@ -87,7 +87,7 @@ public sealed class InstructionAdherenceCheckerTests : IDisposable
             """
             <Project Sdk="Microsoft.NET.Sdk">
               <PropertyGroup>
-                <TargetFramework>net9.0</TargetFramework>
+                <TargetFramework>net10.0</TargetFramework>
               </PropertyGroup>
             </Project>
             """);
@@ -113,7 +113,7 @@ public sealed class InstructionAdherenceCheckerTests : IDisposable
             """
             <Project Sdk="Microsoft.NET.Sdk">
               <PropertyGroup>
-                <TargetFramework>net9.0</TargetFramework>
+                <TargetFramework>net10.0</TargetFramework>
                 <Nullable>enable</Nullable>
               </PropertyGroup>
               <ItemGroup>
@@ -190,19 +190,19 @@ public sealed class InstructionAdherenceCheckerTests : IDisposable
         Write(Path.Combine(Workspace, "BENCHMARK.md"), "do not modify");
         Write(Path.Combine(Workspace, "README.md"), "# App");
         Write(Path.Combine(Workspace, "App.sln"), "Microsoft Visual Studio Solution File");
-        Write(Path.Combine(Workspace, "src", "App", "App.csproj"), Project("net9.0", "enable"));
+        Write(Path.Combine(Workspace, "src", "App", "App.csproj"), Project("net10.0", "enable"));
         Write(Path.Combine(Workspace, "src", "App", "Program.cs"), "// app");
         Write(
             Path.Combine(Workspace, "tests", "App.Tests", "App.Tests.csproj"),
             """
             <Project Sdk="Microsoft.NET.Sdk">
               <PropertyGroup>
-                <TargetFramework>net9.0</TargetFramework>
+                <TargetFramework>net10.0</TargetFramework>
                 <Nullable>enable</Nullable>
               </PropertyGroup>
               <ItemGroup>
-                <PackageReference Include="xunit" Version="2.9.2" />
-                <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+                <PackageReference Include="xunit" Version="2.9.3" />
+                <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
               </ItemGroup>
             </Project>
             """);

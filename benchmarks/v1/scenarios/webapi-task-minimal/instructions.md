@@ -3,7 +3,7 @@
 Build a .NET web application that exposes a task-management HTTP API using ASP.NET Core Minimal APIs and
 persists tasks in a SQLite database file.
 
-- Target framework: `net9.0`, pinned SDK `9.0.100` (see `global.json`).
+- Target framework: `net10.0`, pinned SDK `10.0.100` (see `global.json`).
 - Application project SDK: `Microsoft.NET.Sdk.Web`, located at `src/TaskApi/TaskApi.csproj`.
 - Allowed dependencies for the application project: only the ASP.NET Core shared framework and, for SQLite
   access, `Microsoft.Data.Sqlite` (recommended) or, alternatively, the trio

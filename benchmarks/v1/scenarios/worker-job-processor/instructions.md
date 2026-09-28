@@ -3,7 +3,7 @@
 Build a .NET Worker Service that processes job files from a local directory, retries transient failures and
 shuts down gracefully.
 
-- Target framework: `net9.0`, pinned SDK `9.0.100` (see `global.json`).
+- Target framework: `net10.0`, pinned SDK `10.0.100` (see `global.json`).
 - Project type: Worker Service (`Microsoft.NET.Sdk.Worker`) with a `BackgroundService` implementation.
 - Allowed dependencies: `Microsoft.Extensions.Hosting` (and, if referenced explicitly,
   `Microsoft.Extensions.Hosting.Abstractions` and `Microsoft.Extensions.Logging.Abstractions`) for the
