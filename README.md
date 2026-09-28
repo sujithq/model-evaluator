@@ -59,13 +59,16 @@ Matching examples for all 28 app-listed model IDs, plus Auto routing, use the fi
 `config/evaluation.<model-id>.example.json`. See the
 [model inventory and CLI availability caveats](docs/model-adapters.md#all-app-listed-models-with-github-copilot-cli).
 
-### Minimal smoke test across two models
+### Minimal smoke test across all active models
 
 ```powershell
 dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.smoke.example.json
 ```
 
-This runs **one attempt each for GPT-5 mini and Claude Haiku 4.5**, at most two concurrently.
+This runs **one attempt for each of the 25 active named models** in the main Copilot matrix,
+at most two concurrently. Auto routing and deprecated models are excluded. CLI/account availability
+still applies; an unavailable model may fail. The unfiltered command consumes usage across all 25
+models, so use `--models copilot-gpt-5-mini,copilot-claude-haiku-4.5` for a smaller two-model check.
 Each model edits one method to add two integers in a supplied solution. No project scaffolding,
 test authoring, UI, storage or external services are required. Generation is limited to 120 seconds
 per model; restore/build/format and acceptance each have 120-second stage limits, tests 60 seconds.
@@ -84,11 +87,10 @@ Reports and usage artifacts go to `artifacts/smoke`. To check the harness withou
 dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.smoke.reference.json
 ```
 
-The good reference must pass and the deliberately broken reference must fail. To smoke-test other
-models from the existing matrix:
+The good reference must pass and the deliberately broken reference must fail. To select a subset:
 
 ```powershell
-dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.copilot-matrix.example.json --benchmark-root .\benchmarks\smoke-v1 --scenarios smoke-add --models copilot-gpt-5.4-mini,copilot-gemini-3.7-flash --repetitions 1 --max-parallel 2 --output .\artifacts\smoke
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.smoke.example.json --models copilot-gpt-5.4-mini,copilot-gemini-3.7-flash
 ```
 
 ### Rank models on a task
