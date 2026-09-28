@@ -59,6 +59,38 @@ Matching examples for all 28 app-listed model IDs, plus Auto routing, use the fi
 `config/evaluation.<model-id>.example.json`. See the
 [model inventory and CLI availability caveats](docs/model-adapters.md#all-app-listed-models-with-github-copilot-cli).
 
+### Minimal smoke test across two models
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.smoke.example.json
+```
+
+This runs **one attempt each for GPT-5 mini and Claude Haiku 4.5**, at most two concurrently.
+Each model edits one method to add two integers in a supplied solution. No project scaffolding,
+test authoring, UI, storage or external services are required. Generation is limited to 120 seconds
+per model; restore/build/format and acceptance each have 120-second stage limits, tests 60 seconds.
+These are stage limits, not an overall two-minute deadline; CLI startup and SDK work still take time.
+
+The separate `benchmarks/smoke-v1` package leaves the full five-scenario suite unchanged.
+Three supplied tests and six evaluator-owned acceptance cases cover positive/negative values, zero
+and overflow. The normal grading pipeline remains enabled. The report's existing "generated tests"
+field refers to the **supplied** tests in this smoke scenario, not model-authored tests.
+Rankings from this deliberately trivial, single-repetition task are provisional connectivity/editing
+checks, not evidence of broad model capability. Runs consume real Copilot usage.
+
+Reports and usage artifacts go to `artifacts/smoke`. To check the harness without AI calls:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.smoke.reference.json
+```
+
+The good reference must pass and the deliberately broken reference must fail. To smoke-test other
+models from the existing matrix:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.copilot-matrix.example.json --benchmark-root .\benchmarks\smoke-v1 --scenarios smoke-add --models copilot-gpt-5.4-mini,copilot-gemini-3.7-flash --repetitions 1 --max-parallel 2 --output .\artifacts\smoke
+```
+
 ### Rank models on a task
 
 Copilot examples export native `usage.json` files so reports can compare measured AI-credit

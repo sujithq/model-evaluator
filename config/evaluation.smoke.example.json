@@ -1,0 +1,31 @@
+{
+  "benchmarkRoot": "../benchmarks/smoke-v1",
+  "outputDirectory": "../artifacts/smoke",
+  "repetitions": 1,
+  "maxParallel": 2,
+  "scenarios": ["smoke-add"],
+  "models": [
+    {
+      "id": "copilot-gpt-5-mini",
+      "adapter": "command-line",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-5-mini --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-claude-haiku-4.5",
+      "adapter": "command-line",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model claude-haiku-4.5 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    }
+  ]
+}
