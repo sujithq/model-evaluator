@@ -131,7 +131,12 @@ public static class ScenarioDetailsMarkdownWriter
 
         var fence = new string('`', Math.Max(3, longestRun + 1));
         builder.AppendLine($"{fence}markdown");
-        builder.AppendLine(content.TrimEnd());
+        builder.Append(content);
+        if (!content.EndsWith('\n'))
+        {
+            builder.AppendLine();
+        }
+
         builder.AppendLine(fence);
     }
 
