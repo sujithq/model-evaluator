@@ -205,7 +205,10 @@ failures, and a model exceeding its budget counts as an unsuccessful attempt
 
 * [`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds the harness, runs its unit tests,
   validates the benchmark packages, and runs the reference evaluation for every scenario, asserting
-  that known-good samples pass and deliberately broken variants fail.
+  that known-good samples pass and deliberately broken variants fail. A separate reference smoke
+  job validates and runs `smoke-add` with both local samples and retains its artifacts for 14 days.
+  It makes no AI calls; the all-model smoke configuration remains opt-in because it consumes credits
+  and requires Copilot CLI authentication and model access.
 * [`.github/workflows/evaluate.yml`](.github/workflows/evaluate.yml) runs a selected evaluation
   matrix on demand and retains the reports and attempt artifacts.
 

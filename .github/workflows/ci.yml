@@ -41,6 +41,48 @@ jobs:
           path: artifacts/test-results
           retention-days: 14
 
+  smoke-evaluation:
+    name: Reference smoke evaluation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Build the harness
+        run: dotnet build --configuration Release
+
+      - name: Validate the smoke benchmark package
+        run: dotnet run --project src/ModelEvaluator.Cli --configuration Release --no-build -- validate --config config/evaluation.smoke.reference.json
+
+      - name: Evaluate the smoke reference implementations
+        run: |
+          dotnet run --project src/ModelEvaluator.Cli --configuration Release --no-build -- \
+            evaluate --config config/evaluation.smoke.reference.json --execution-image ubuntu-latest
+
+      - name: Assert both smoke reference outcomes
+        run: |
+          results=(artifacts/smoke-reference/*/results.json)
+          test "${#results[@]}" -eq 1
+          jq -e '
+            (.attempts | length == 2) and
+            ([.attempts[] | select(.scenarioId == "smoke-add" and .modelId == "reference-good" and .outcome == "Success")] | length == 1) and
+            ([.attempts[] | select(.scenarioId == "smoke-add" and .modelId == "reference-broken" and .outcome == "ModelFailure")] | length == 1)
+          ' "${results[0]}"
+
+      - name: Upload smoke evaluation artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: smoke-reference-evaluation
+          path: artifacts/smoke-reference/**
+          retention-days: 14
+          if-no-files-found: warn
+
   reference-evaluation:
     name: Reference evaluation (${{ matrix.scenario }})
     runs-on: ubuntu-latest
