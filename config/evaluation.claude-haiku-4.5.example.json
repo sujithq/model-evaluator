@@ -1,0 +1,22 @@
+{
+  "benchmarkRoot": "../benchmarks/v1",
+  "outputDirectory": "../artifacts/evaluations",
+  "repetitions": 3,
+  "scenarios": [],
+  "models": [
+    {
+      "id": "copilot-claude-haiku-4.5",
+      "adapter": "command-line",
+      "description": "Claude Haiku 4.5 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model claude-haiku-4.5 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    }
+  ],
+  "budgets": {},
+  "keepWorkspaces": false
+}

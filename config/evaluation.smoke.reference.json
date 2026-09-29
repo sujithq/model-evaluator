@@ -1,0 +1,11 @@
+{
+  "benchmarkRoot": "../benchmarks/smoke-v1",
+  "outputDirectory": "../artifacts/smoke-reference",
+  "repetitions": 1,
+  "maxParallel": 2,
+  "scenarios": ["smoke-add"],
+  "models": [
+    { "id": "reference-good", "adapter": "local-sample", "settings": { "variant": "good" } },
+    { "id": "reference-broken", "adapter": "local-sample", "settings": { "variant": "broken" } }
+  ]
+}

@@ -67,5 +67,5 @@ public sealed class LocalSampleAdapter : IModelAdapter
         });
     }
 
-    private static readonly string[] AllMetrics = ["toolCalls", "inputTokens", "outputTokens", "estimatedCostUsd"];
+    private static readonly IReadOnlyList<string> AllMetrics = new AdapterUsage().UnavailableMetrics;
 }

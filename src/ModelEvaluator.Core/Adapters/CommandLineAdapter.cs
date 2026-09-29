@@ -1,4 +1,3 @@
-using System.Text.Json;
 using ModelEvaluator.Core.Execution;
 using ModelEvaluator.Core.Results;
 using ModelEvaluator.Core.Util;
@@ -8,6 +7,8 @@ namespace ModelEvaluator.Core.Adapters;
 /// <summary>Usage data an agent runner may write so efficiency can be reported.</summary>
 public sealed record AdapterUsage
 {
+    public bool UsageIsPartial { get; init; }
+
     public int? ToolCalls { get; init; }
 
     public long? InputTokens { get; init; }
@@ -15,6 +16,33 @@ public sealed record AdapterUsage
     public long? OutputTokens { get; init; }
 
     public decimal? EstimatedCostUsd { get; init; }
+
+    public decimal? AiCredits { get; init; }
+
+    public decimal? PremiumRequests { get; init; }
+
+    public long? CacheReadTokens { get; init; }
+
+    public long? CacheWriteTokens { get; init; }
+
+    public long? ReasoningTokens { get; init; }
+
+    public long? ApiRequests { get; init; }
+
+    public double? ApiDurationSeconds { get; init; }
+
+    public IReadOnlyList<string> ReportedModels { get; init; } = [];
+
+    public IReadOnlyList<string> Warnings { get; init; } = [];
+
+    public IReadOnlyList<string> UnavailableMetrics =>
+        new (string Name, object? Value)[]
+        {
+            ("toolCalls", ToolCalls), ("inputTokens", InputTokens), ("outputTokens", OutputTokens),
+            ("estimatedCostUsd", EstimatedCostUsd), ("aiCredits", AiCredits), ("premiumRequests", PremiumRequests),
+            ("cacheReadTokens", CacheReadTokens), ("cacheWriteTokens", CacheWriteTokens),
+            ("reasoningTokens", ReasoningTokens), ("apiRequests", ApiRequests), ("apiDurationSeconds", ApiDurationSeconds),
+        }.Where(metric => metric.Value is null).Select(metric => metric.Name).ToList();
 }
 
 /// <summary>
@@ -24,6 +52,7 @@ public sealed record AdapterUsage
 /// <remarks>
 /// Supported settings: <c>command</c>, <c>arguments</c> (space separated, quoted values supported),
 /// <c>runnerName</c>, <c>runnerVersion</c>, <c>usageFile</c> (relative to the artifacts directory).
+/// <c>usageFormat</c> selects <c>normalized</c> (default) or <c>copilot-cli</c>.
 /// Placeholders replaced in arguments: <c>{workspace}</c>, <c>{promptFile}</c>, <c>{prompt}</c>,
 /// <c>{artifacts}</c>, <c>{timeoutSeconds}</c>, <c>{scenario}</c>, <c>{model}</c>, <c>{usageFile}</c>.
 /// </remarks>
@@ -42,16 +71,19 @@ public sealed class CommandLineAdapter(ProcessRunner processRunner) : IModelAdap
         var runnerName = settings.GetSetting("runnerName", command.Length == 0 ? AdapterKey : command);
         var runnerVersion = settings.GetSetting("runnerVersion", "unknown");
         var runner = new RunnerInfo { Name = runnerName, Version = runnerVersion };
+        var usageFormat = settings.GetSetting("usageFormat", "normalized");
 
-        if (string.IsNullOrWhiteSpace(command))
+        if (string.IsNullOrWhiteSpace(command) || usageFormat is not ("normalized" or "copilot-cli"))
         {
             return new ModelAttemptOutput
             {
                 Succeeded = false,
                 InfrastructureFailure = true,
-                FailureReason = $"Model '{settings.Id}' uses the command-line adapter but defines no 'command' setting.",
+                FailureReason = string.IsNullOrWhiteSpace(command)
+                    ? $"Model '{settings.Id}' uses the command-line adapter but defines no 'command' setting."
+                    : $"Model '{settings.Id}' has unsupported usageFormat '{usageFormat}'.",
                 Runner = runner,
-                UnavailableMetrics = ["toolCalls", "inputTokens", "outputTokens", "estimatedCostUsd"],
+                UnavailableMetrics = new AdapterUsage().UnavailableMetrics,
             };
         }
 
@@ -60,6 +92,8 @@ public sealed class CommandLineAdapter(ProcessRunner processRunner) : IModelAdap
             .Split(settings.GetSetting("arguments"))
             .Select(a => Substitute(a, context, usageFile))
             .ToList();
+        var telemetryPath = Path.Combine(context.ArtifactsPath, "usage.telemetry.jsonl");
+        string? sessionEventsPath = null;
 
         var environment = new Dictionary<string, string>(settings.Environment)
         {
@@ -71,9 +105,33 @@ public sealed class CommandLineAdapter(ProcessRunner processRunner) : IModelAdap
             ["EVAL_MODEL"] = settings.Id,
             ["EVAL_TIMEOUT_SECONDS"] = ((int)context.Timeout.TotalSeconds).ToString(),
         };
+        if (usageFormat == "copilot-cli")
+        {
+            environment["COPILOT_OTEL_ENABLED"] = "true";
+            environment["COPILOT_OTEL_EXPORTER_TYPE"] = "file";
+            environment["COPILOT_OTEL_FILE_EXPORTER_PATH"] = telemetryPath;
+            environment["OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"] = "false";
+            // Only read state for a new session we own; never inspect an explicitly resumed session.
+            if (!arguments.Any(a => a is "--continue" or "--resume" or "-r" or "--session-id" or "--connect"
+                || a.StartsWith("--resume=", StringComparison.Ordinal)
+                || a.StartsWith("--session-id=", StringComparison.Ordinal)
+                || a.StartsWith("--connect=", StringComparison.Ordinal)
+                || a.StartsWith("-r=", StringComparison.Ordinal)))
+            {
+                var sessionId = Guid.NewGuid().ToString();
+                arguments.AddRange(["--session-id", sessionId]);
+                var home = environment.TryGetValue("COPILOT_HOME", out var configuredHome)
+                    ? configuredHome : Environment.GetEnvironmentVariable("COPILOT_HOME");
+                home = string.IsNullOrWhiteSpace(home)
+                    ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".copilot")
+                    : Path.GetFullPath(home, context.WorkspacePath);
+                sessionEventsPath = Path.Combine(home, "session-state", sessionId, "events.jsonl");
+            }
+        }
 
         var transcriptPath = Path.Combine(context.ArtifactsPath, "transcript.log");
         await using var transcript = new StreamWriter(transcriptPath, append: true);
+        var outputLock = new object();
 
         // The agent runner keeps its provider credentials; generated code never does.
         var result = await _processRunner.RunAsync(
@@ -83,49 +141,74 @@ public sealed class CommandLineAdapter(ProcessRunner processRunner) : IModelAdap
             context.Timeout,
             environment,
             stripCredentials: false,
-            onOutput: line => transcript.WriteLine(line),
+            onOutput: line =>
+            {
+                lock (outputLock)
+                {
+                    transcript.WriteLine(line);
+                    context.OnOutput?.Invoke(line);
+                }
+            },
             cancellationToken).ConfigureAwait(false);
 
-        await transcript.FlushAsync(cancellationToken).ConfigureAwait(false);
+        await transcript.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
-        var usage = ReadUsage(usageFile);
-        var unavailable = new List<string>();
-        if (usage?.ToolCalls is null)
+        var usage = UsageReportReader.Read(usageFile, usageFormat);
+        if (usageFormat == "copilot-cli"
+            && usage.UnavailableMetrics.Count == new AdapterUsage().UnavailableMetrics.Count)
         {
-            unavailable.Add("toolCalls");
+            var partial = CopilotTelemetryReader.Read(telemetryPath);
+            partial = sessionEventsPath is null
+                ? partial with { Warnings = partial.Warnings.Append("Credit checkpoint recovery skipped for an explicitly selected/resumed session.").ToList() }
+                : CopilotTelemetryReader.ReadCheckpoints(partial, sessionEventsPath,
+                    Path.Combine(context.ArtifactsPath, "usage.checkpoints.jsonl"));
+            usage = partial with { Warnings = usage.Warnings.Concat(partial.Warnings).ToList() };
+            try
+            {
+                await File.WriteAllTextAsync(
+                    Path.Combine(context.ArtifactsPath, "usage.partial.json"),
+                    System.Text.Json.JsonSerializer.Serialize(usage, JsonDefaults.Options),
+                    CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                usage = usage with { Warnings = usage.Warnings.Append($"Could not persist partial usage: {ex.Message}").ToList() };
+            }
         }
-
-        if (usage?.InputTokens is null)
+        else if (usageFormat == "copilot-cli")
         {
-            unavailable.Add("inputTokens");
-        }
-
-        if (usage?.OutputTokens is null)
-        {
-            unavailable.Add("outputTokens");
-        }
-
-        if (usage?.EstimatedCostUsd is null)
-        {
-            unavailable.Add("estimatedCostUsd");
+            usage = CopilotTelemetryReader.SupplementToolCalls(usage, telemetryPath, result.Succeeded);
         }
 
         return new ModelAttemptOutput
         {
             Succeeded = result.Succeeded,
+            InfrastructureFailure = result.Cancelled,
             TimedOut = result.TimedOut,
             FailureReason = result.Succeeded
                 ? null
-                : result.TimedOut
+                : result.Cancelled
+                    ? "The evaluation run was cancelled."
+                    : result.TimedOut
                     ? $"Agent runner exceeded the generation budget of {context.Timeout.TotalSeconds:0} s."
                     : $"Agent runner exited with code {result.ExitCode}.",
             DurationSeconds = result.DurationSeconds,
-            ToolCalls = usage?.ToolCalls,
-            InputTokens = usage?.InputTokens,
-            OutputTokens = usage?.OutputTokens,
-            EstimatedCostUsd = usage?.EstimatedCostUsd,
+            UsageIsPartial = usage.UsageIsPartial,
+            ToolCalls = usage.ToolCalls,
+            InputTokens = usage.InputTokens,
+            OutputTokens = usage.OutputTokens,
+            EstimatedCostUsd = usage.EstimatedCostUsd,
+            AiCredits = usage.AiCredits,
+            PremiumRequests = usage.PremiumRequests,
+            CacheReadTokens = usage.CacheReadTokens,
+            CacheWriteTokens = usage.CacheWriteTokens,
+            ReasoningTokens = usage.ReasoningTokens,
+            ApiRequests = usage.ApiRequests,
+            ApiDurationSeconds = usage.ApiDurationSeconds,
+            ReportedModels = usage.ReportedModels,
+            UsageWarnings = usage.Warnings,
             Runner = runner,
-            UnavailableMetrics = unavailable,
+            UnavailableMetrics = usage.UnavailableMetrics,
         };
     }
 
@@ -139,20 +222,4 @@ public sealed class CommandLineAdapter(ProcessRunner processRunner) : IModelAdap
         .Replace("{model}", context.Model.Id, StringComparison.Ordinal)
         .Replace("{timeoutSeconds}", ((int)context.Timeout.TotalSeconds).ToString(), StringComparison.Ordinal);
 
-    private static AdapterUsage? ReadUsage(string usageFile)
-    {
-        if (!File.Exists(usageFile))
-        {
-            return null;
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize<AdapterUsage>(File.ReadAllText(usageFile), JsonDefaults.Options);
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
 }

@@ -50,6 +50,9 @@ public sealed record EvaluationConfiguration
     /// <summary>Number of independent attempts per model and scenario. Minimum of three for a baseline.</summary>
     public int Repetitions { get; init; } = 3;
 
+    /// <summary>Maximum simultaneous attempts; each attempt's stages remain sequential.</summary>
+    public int MaxParallel { get; init; } = 1;
+
     /// <summary>Scenario ids to evaluate. Empty means every scenario in the benchmark package.</summary>
     public IReadOnlyList<string> Scenarios { get; init; } = [];
 
@@ -62,6 +65,9 @@ public sealed record EvaluationConfiguration
 
     /// <summary>Keep attempt workspaces on disk for debugging.</summary>
     public bool KeepWorkspaces { get; init; }
+
+    /// <summary>Print detailed progress and live child-process output during evaluation.</summary>
+    public bool Debug { get; init; }
 
     public static EvaluationConfiguration Load(string path)
     {

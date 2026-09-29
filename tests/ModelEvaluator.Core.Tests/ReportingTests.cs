@@ -1,5 +1,7 @@
+using ModelEvaluator.Core.Configuration;
 using ModelEvaluator.Core.Reporting;
 using ModelEvaluator.Core.Results;
+using ModelEvaluator.Core.Scenarios;
 
 namespace ModelEvaluator.Core.Tests;
 
@@ -23,8 +25,8 @@ public sealed class ReportingTests
         Assert.Equal(0, bad.SuccessfulAttempts);
         Assert.Equal(1, bad.ModelFailures);
         Assert.Equal(1, bad.BudgetExceeded);
-        Assert.Equal(1500, bad.TotalTokens);
-        Assert.Equal(0.25m, bad.TotalCostUsd);
+        Assert.Null(bad.TotalTokens);
+        Assert.Null(bad.TotalCostUsd);
     }
 
     [Fact]
@@ -38,6 +40,88 @@ public sealed class ReportingTests
         Assert.Contains("tokens n/a", markdown, StringComparison.Ordinal);
         Assert.Contains("Unavailable measurements", markdown, StringComparison.Ordinal);
         Assert.DoesNotContain("| | ", markdown, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Render_ConvertsCreditsWithoutClaimingInvoiceCharges()
+    {
+        var original = CreateReport();
+        var attempt = original.Attempts[0] with
+        {
+            Efficiency = new EfficiencyMetrics
+            {
+                AiCredits = 0.88772m,
+                UnavailableMetrics = ["estimatedCostUsd", "toolCalls"],
+            },
+        };
+        var report = original with { Attempts = [attempt] };
+        var summary = Assert.Single(ReportAggregator.Summarise(report));
+        Assert.Equal(0.0088772m, summary.TotalEquivalentCostUsd);
+        Assert.Null(summary.TotalCostUsd);
+        var markdown = MarkdownReportWriter.Render(report);
+        Assert.Contains("USD equivalent $0.0088772", markdown);
+        Assert.Contains("not actual billed spend", markdown);
+        Assert.DoesNotContain("estimatedCostUsd", markdown);
+        Assert.Contains("toolCalls", markdown);
+
+        var directory = Path.Combine(Path.GetTempPath(), "eval-tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(JsonReportWriter.Write(report, directory)));
+            Assert.Equal(0.0088772m, json.RootElement.GetProperty("summaries")[0].GetProperty("totalEquivalentCostUsd").GetDecimal());
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Render_MissingOrPartialCreditsNeverBecomeCompleteCost(bool partial)
+    {
+        var original = CreateReport();
+        var report = original with
+        {
+            Attempts = [original.Attempts[0] with
+            {
+                Efficiency = new EfficiencyMetrics
+                {
+                    AiCredits = partial ? 2m : null,
+                    UsageIsPartial = partial,
+                    UnavailableMetrics = ["estimatedCostUsd"],
+                },
+            }],
+        };
+        Assert.Null(Assert.Single(ReportAggregator.Summarise(report)).TotalEquivalentCostUsd);
+        var markdown = MarkdownReportWriter.Render(report);
+        Assert.Contains("USD equivalent n/a", markdown);
+        Assert.Contains("estimatedCostUsd", markdown);
+        if (partial)
+        {
+            Assert.Contains("Partial USD equivalent", markdown);
+            Assert.Contains("$0.02", markdown);
+        }
+    }
+
+    [Fact]
+    public void Render_PreservesExplicitCostAndHandlesZeroCredits()
+    {
+        var original = CreateReport();
+        var report = original with
+        {
+            Attempts = [original.Attempts[0] with
+            {
+                Efficiency = new EfficiencyMetrics { AiCredits = 0m, EstimatedCostUsd = 1.5m },
+            }],
+        };
+        var summary = Assert.Single(ReportAggregator.Summarise(report));
+        Assert.Equal(0m, summary.TotalEquivalentCostUsd);
+        Assert.Equal(1.5m, summary.TotalCostUsd);
+        var markdown = MarkdownReportWriter.Render(report);
+        Assert.Contains("USD equivalent $0.00", markdown);
+        Assert.Contains("adapter-reported USD $1.50", markdown);
     }
 
     [Fact]
@@ -66,6 +150,71 @@ public sealed class ReportingTests
         {
             Directory.Delete(directory, recursive: true);
         }
+    }
+
+    [Fact]
+    public void ScenarioDetailsRender_ContainsMetadataEffectiveBudgetsAndResolvedPrompt()
+    {
+        var scenario = new ScenarioPackage(
+            new ScenarioDefinition
+            {
+                Id = "scenario-one",
+                Name = "Scenario one",
+                ProjectType = "Console",
+                BenchmarkVersion = "1.0.0",
+                AllowedPackages = ["Example.Package"],
+                RequiredGlobs = ["src/**/*.cs"],
+                PreservedPaths = ["global.json"],
+                Budget = new ScenarioBudget { GenerationTimeoutSeconds = 30 },
+                Samples = new Dictionary<string, SampleVariantDefinition>
+                {
+                    ["good"] = new()
+                    {
+                        Path = "samples/good",
+                        Description = "Known-good implementation.",
+                    },
+                },
+            },
+            "/benchmarks/scenario-one",
+            "# Prompt\n\nUse this contract.\n\n```csharp\nConsole.WriteLine();\n```");
+
+        var markdown = ScenarioDetailsMarkdownWriter.Render(
+            [scenario],
+            new BudgetOverrides { GenerationTimeoutSeconds = 45 });
+
+        Assert.Contains("## `scenario-one` - Scenario one", markdown, StringComparison.Ordinal);
+        Assert.Contains("| Generation | 45 |", markdown, StringComparison.Ordinal);
+        Assert.Contains("`Example.Package`", markdown, StringComparison.Ordinal);
+        Assert.Contains("`samples/good`", markdown, StringComparison.Ordinal);
+        Assert.Contains("### Resolved prompt", markdown, StringComparison.Ordinal);
+        Assert.Contains("````markdown", markdown, StringComparison.Ordinal);
+        Assert.Contains("Console.WriteLine();", markdown, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("Prompt with LF\n")]
+    [InlineData("Prompt with CRLF\r\n")]
+    [InlineData("Prompt with trailing spaces  ")]
+    [InlineData("Prompt with trailing blank lines\n\n")]
+    [InlineData("Prompt without a final newline")]
+    public void ScenarioDetailsRender_PreservesPromptWhitespace(string prompt)
+    {
+        var scenario = new ScenarioPackage(
+            new ScenarioDefinition
+            {
+                Id = "scenario-one",
+                Name = "Scenario one",
+                ProjectType = "Console",
+                BenchmarkVersion = "1.0.0",
+            },
+            "/benchmarks/scenario-one",
+            prompt);
+
+        var markdown = ScenarioDetailsMarkdownWriter.Render([scenario], new BudgetOverrides());
+        var expectedBlock = "```markdown" + Environment.NewLine + prompt
+                            + (prompt.EndsWith('\n') ? string.Empty : Environment.NewLine) + "```";
+
+        Assert.Contains(expectedBlock, markdown, StringComparison.Ordinal);
     }
 
     private static EvaluationReport CreateReport()
@@ -145,6 +294,7 @@ public sealed class ReportingTests
             {
                 ElapsedSecondsTotal = 60 + repetition,
                 InputTokens = tokens,
+                OutputTokens = tokens is null ? null : 0,
                 EstimatedCostUsd = cost,
                 UnavailableMetrics = tokens is null ? ["inputTokens", "outputTokens"] : ["toolCalls"],
             },

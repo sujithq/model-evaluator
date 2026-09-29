@@ -20,12 +20,13 @@ public sealed class CommandLineOptionsTests
     public void Parse_ReadsKnownOptions()
     {
         var options = CommandLineOptions.Parse(
-            ["--models", "alpha, beta", "--scenarios", "one", "--repetitions", "5", "--keep-workspaces"]);
+            ["--models", "alpha, beta", "--scenarios", "one", "--repetitions", "5", "--keep-workspaces", "--debug"]);
 
         Assert.Equal(["alpha", "beta"], options.Models);
         Assert.Equal(["one"], options.Scenarios);
         Assert.Equal(5, options.Repetitions);
         Assert.True(options.KeepWorkspaces);
+        Assert.True(options.Debug);
     }
 
     [Fact]
@@ -42,6 +43,25 @@ public sealed class CommandLineOptionsTests
     [InlineData("many")]
     public void Parse_RejectsNonPositiveRepetitions(string value) =>
         Assert.Throws<FormatException>(() => CommandLineOptions.Parse(["--repetitions", value]));
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("-1")]
+    [InlineData("many")]
+    public void Parse_RejectsInvalidParallelLimit(string value) =>
+        Assert.Throws<FormatException>(() => CommandLineOptions.Parse(["--max-parallel", value]));
+
+    [Fact]
+    public void Parse_ParallelLimitRequiresValue() =>
+        Assert.Throws<FormatException>(() => CommandLineOptions.Parse(["--max-parallel"]));
+
+    [Fact]
+    public void Apply_ParallelLimitDefaultsToOneAndOverridesConfiguration()
+    {
+        Assert.Equal(1, CommandLineOptions.Parse([]).Apply(BaseConfiguration).MaxParallel);
+        Assert.Equal(4, CommandLineOptions.Parse([]).Apply(BaseConfiguration with { MaxParallel = 4 }).MaxParallel);
+        Assert.Equal(2, CommandLineOptions.Parse(["--max-parallel", "2"]).Apply(BaseConfiguration with { MaxParallel = 4 }).MaxParallel);
+    }
 
     [Fact]
     public void Apply_FiltersModelsAndOverridesBudgets()
@@ -72,7 +92,21 @@ public sealed class CommandLineOptionsTests
         Assert.Equal(BaseConfiguration.Models.Count, configuration.Models.Count);
         Assert.Equal(BaseConfiguration.Repetitions, configuration.Repetitions);
         Assert.Equal(BaseConfiguration.BenchmarkRoot, configuration.BenchmarkRoot);
+        Assert.False(configuration.Debug);
     }
+
+    [Fact]
+    public void Apply_DebugEnablesDiagnosticsWithoutChangingOtherOptions()
+    {
+        var configuration = CommandLineOptions.Parse(["--debug"]).Apply(BaseConfiguration);
+
+        Assert.True(configuration.Debug);
+        Assert.Equal(BaseConfiguration, configuration with { Debug = false });
+    }
+
+    [Fact]
+    public void Apply_PreservesDebugEnabledInConfiguration() =>
+        Assert.True(CommandLineOptions.Parse([]).Apply(BaseConfiguration with { Debug = true }).Debug);
 
     [Fact]
     public void Load_ResolvesPathsRelativeToTheConfigurationFile()
@@ -86,6 +120,8 @@ public sealed class CommandLineOptionsTests
               "benchmarkRoot": "../benchmarks/v1",
               "outputDirectory": "out",
               "repetitions": 4,
+              "debug": true,
+              "maxParallel": 2,
               "models": [ { "id": "alpha", "adapter": "local-sample", "settings": { "variant": "good" } } ]
             }
             """);
@@ -95,6 +131,8 @@ public sealed class CommandLineOptionsTests
             var configuration = EvaluationConfiguration.Load(path);
 
             Assert.Equal(4, configuration.Repetitions);
+            Assert.True(configuration.Debug);
+            Assert.Equal(2, configuration.MaxParallel);
             Assert.Equal(Path.GetFullPath(Path.Combine(directory, "out")), configuration.OutputDirectory);
             Assert.Equal(
                 Path.GetFullPath(Path.Combine(directory, "../benchmarks/v1")),

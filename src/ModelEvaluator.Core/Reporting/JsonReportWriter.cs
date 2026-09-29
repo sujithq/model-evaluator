@@ -20,6 +20,9 @@ public static class JsonReportWriter
             report.CompletedAt,
             report.Runner,
             report.Environment,
+            report.Cancelled,
+            report.PlannedAttempts,
+            report.NotStartedAttempts,
             Summaries = ReportAggregator.Summarise(report).Select(s => new
             {
                 s.ScenarioId,
@@ -27,6 +30,7 @@ public static class JsonReportWriter
                 s.BenchmarkVersion,
                 s.PromptHash,
                 s.RunnerLabel,
+                s.MaxParallel,
                 s.TotalAttempts,
                 s.SuccessfulAttempts,
                 s.SuccessRate,
@@ -40,11 +44,19 @@ public static class JsonReportWriter
                 s.AcceptanceFailed,
                 s.AcceptanceSkipped,
                 s.MeanElapsedSeconds,
+                s.MeanGenerationSeconds,
                 s.ElapsedStandardDeviation,
                 s.TotalTokens,
                 s.TotalToolCalls,
                 s.TotalCostUsd,
+                s.TotalAiCredits,
+                s.TotalEquivalentCostUsd,
+                s.AiCreditsReportedAttempts,
+                s.TotalPremiumRequests,
+                s.TotalApiRequests,
+                s.ReportedModels,
             }),
+            Rankings = ScenarioRanker.Rank(report),
             report.Attempts,
         };
 

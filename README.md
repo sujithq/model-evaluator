@@ -49,6 +49,68 @@ self-verification models: `reference-good` (the known-good sample, which must su
 real models with the `command-line` adapter - see
 [`config/evaluation.models.example.json`](config/evaluation.models.example.json) and
 [docs/model-adapters.md](docs/model-adapters.md).
+For a concrete GPT-6 Astra example using GitHub Copilot CLI, see
+[`config/evaluation.gpt-6-astra.example.json`](config/evaluation.gpt-6-astra.example.json) and the
+[setup and run instructions](docs/model-adapters.md#gpt-6-astra-with-github-copilot-cli).
+A matching GPT-6 Luna example is available in
+[`config/evaluation.gpt-6-luna.example.json`](config/evaluation.gpt-6-luna.example.json), with
+[Luna run instructions](docs/model-adapters.md#gpt-6-luna-with-github-copilot-cli).
+Matching examples for all 28 app-listed model IDs, plus Auto routing, use the filename pattern
+`config/evaluation.<model-id>.example.json`. See the
+[model inventory and CLI availability caveats](docs/model-adapters.md#all-app-listed-models-with-github-copilot-cli).
+
+### Minimal smoke test across all active models
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.smoke.example.json
+```
+
+This runs **one attempt for each of the 25 active named models** in the main Copilot matrix,
+at most two concurrently. Auto routing and deprecated models are excluded. CLI/account availability
+still applies; an unavailable model may fail. The unfiltered command consumes usage across all 25
+models, so use `--models copilot-gpt-5-mini,copilot-claude-haiku-4.5` for a smaller two-model check.
+Each model edits one method to add two integers in a supplied solution. No project scaffolding,
+test authoring, UI, storage or external services are required. Generation is limited to 120 seconds
+per model; restore/build/format and acceptance each have 120-second stage limits, tests 60 seconds.
+These are stage limits, not an overall two-minute deadline; CLI startup and SDK work still take time.
+
+The separate `benchmarks/smoke-v1` package leaves the full five-scenario suite unchanged.
+Three supplied tests and six evaluator-owned acceptance cases cover positive/negative values, zero
+and overflow. The normal grading pipeline remains enabled. The report's existing "generated tests"
+field refers to the **supplied** tests in this smoke scenario, not model-authored tests.
+Rankings from this deliberately trivial, single-repetition task are provisional connectivity/editing
+checks, not evidence of broad model capability. Runs consume real Copilot usage.
+
+Reports and usage artifacts go to `artifacts/smoke`. To check the harness without AI calls:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.smoke.reference.json
+```
+
+The good reference must pass and the deliberately broken reference must fail. To select a subset:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.smoke.example.json --models copilot-gpt-5.4-mini,copilot-gemini-3.7-flash
+```
+
+### Rank models on a task
+
+Copilot examples export native `usage.json` files so reports can compare measured AI-credit
+consumption, tokens and time alongside acceptance-test correctness. To rank Astra and Luna together:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.copilot-matrix.example.json --models copilot-gpt-6-astra,copilot-gpt-6-luna --scenarios console-task-cli --repetitions 3 --debug
+```
+
+This runs six attempts and writes **per-task rankings** to `report.md` and `results.json`.
+The ranking order is success rate, acceptance accuracy, lower mean AI credits, then faster mean
+total time. Cost is used only when every ranked model has complete credit measurements; missing
+values never become zero. AI credits represent consumption, not necessarily invoice spend.
+Infrastructure failures are excluded from ranking metrics and reported separately.
+
+Use explicit `--models` and `--scenarios` filters: the unfiltered matrix schedules 375 attempts,
+consumes real usage, and includes model IDs your CLI account may not support. Auto routing is not
+in this named-model matrix. See [ranking rules and limitations](docs/interpreting-results.md#per-task-rankings).
 
 ## CLI
 
@@ -59,10 +121,65 @@ model-evaluator validate [options]        Validate scenario packages and model c
 model-evaluator version                   Print the harness version.
 ```
 
-Options: `--config`, `--benchmark-root`, `--models`, `--scenarios`, `--repetitions`, `--output`,
+Options: `--config`, `--benchmark-root`, `--models`, `--scenarios`, `--repetitions`, `--max-parallel`, `--output`,
 `--workspace-root`, `--execution-image`, `--generation-timeout`, `--build-timeout`, `--test-timeout`,
-`--acceptance-timeout`, `--keep-workspaces`. Exit codes: `0` success, `1` usage or validation
-problems, `2` error, `3` at least one infrastructure failure.
+`--acceptance-timeout`, `--keep-workspaces`, `--debug`. Exit codes: `0` success, `1` usage or validation
+problems, `2` error, `3` at least one infrastructure failure, `130` cancelled.
+
+### Bounded parallel attempts
+
+Use `--max-parallel 2` to run up to two independent attempts at once:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.copilot-matrix.example.json --models copilot-gpt-5-mini,copilot-claude-haiku-4.5 --scenarios console-task-cli --repetitions 1 --generation-timeout 300 --max-parallel 2 --debug
+```
+
+The default is `1` (sequential). The configuration equivalent is `"maxParallel": 2`; CLI options
+override the file. Limits must be positive integers. The limit applies across the entire selected
+matrix, including different models, scenarios and repetitions. Each attempt still runs generation,
+restore, build, tests, formatting and acceptance checks sequentially in its own workspace.
+
+Jobs are queued in scenario/model/repetition order. Reports retain this order even when attempts
+finish out of order. Debug process output is tagged with its attempt number, and each attempt has
+unique workspace/artifact paths. Existing per-stage timeouts begin when that stage runs, not while
+the attempt is queued.
+
+Parallel execution increases CPU, memory, disk and provider demand; it is useful for smoke tests,
+but may distort timing rankings or trigger rate limits. Reports record `environment.maxParallel`
+and warn about parallel timing. Use `--max-parallel 1` for controlled timing comparisons.
+
+Ctrl+C stops admitting queued attempts and cancels active work. Started attempts retain their
+artifacts and are cleaned up unless `--keep-workspaces` is set. Once active work stops, partial
+reports record `cancelled`, `plannedAttempts` and `notStartedAttempts`; cancelled attempts are
+infrastructure failures rather than model failures. The CLI exits with `130`. Cancellation during
+initial setup may occur before a report can be created.
+
+Copilot attempts also save incremental `usage.telemetry.jsonl`. If termination prevents the final
+`usage.json` export, available completed-call measurements are saved as `usage.partial.json` and
+reported as **partial**, never as complete cost totals. Partial AI credits are recovered when the
+CLI has persisted a usage checkpoint for that attempt;
+see [timeout usage collection](docs/model-adapters.md#usage-when-a-runner-times-out-or-is-cancelled).
+
+### Debug output
+
+Add `--debug` to see the selected evaluation matrix, environment details, workspace and artifact
+paths, time budgets, stage start/completion messages, check results and live runner/build/test output:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.gpt-6-luna.example.json --scenarios console-task-cli --debug
+```
+
+Debug messages are prefixed with `[debug]`. The run also writes one
+`<output-directory>/<run-id>/scenario-details.md` file containing metadata, effective budgets,
+constraints, samples and the full resolved prompt for every selected scenario. Diagnostics are off
+by default; `"debug": true` in the evaluation configuration also enables them. This is evaluator
+logging, not a change to the model's prompt, reasoning settings or the runner's own logging level.
+Output appears as the child process emits lines; a silent or buffering runner may still have pauses.
+
+Transcripts and command logs are saved with or without `--debug`. Combine it with
+`--keep-workspaces` to retain generated workspaces. The evaluator does not dump environment
+variables or provider command arguments, but live child-process output is not redacted and may
+contain sensitive data; review logs before sharing them.
 
 ## How an attempt runs
 
@@ -88,7 +205,10 @@ failures, and a model exceeding its budget counts as an unsuccessful attempt
 
 * [`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds the harness, runs its unit tests,
   validates the benchmark packages, and runs the reference evaluation for every scenario, asserting
-  that known-good samples pass and deliberately broken variants fail.
+  that known-good samples pass and deliberately broken variants fail. A separate reference smoke
+  job validates and runs `smoke-add` with both local samples and retains its artifacts for 14 days.
+  It makes no AI calls; the all-model smoke configuration remains opt-in because it consumes credits
+  and requires Copilot CLI authentication and model access.
 * [`.github/workflows/evaluate.yml`](.github/workflows/evaluate.yml) runs a selected evaluation
   matrix on demand and retains the reports and attempt artifacts.
 

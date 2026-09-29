@@ -2,6 +2,7 @@ using System.Diagnostics;
 using ModelEvaluator.Core.Adapters;
 using ModelEvaluator.Core.Configuration;
 using ModelEvaluator.Core.Execution;
+using ModelEvaluator.Core.Reporting;
 using ModelEvaluator.Core.Results;
 using ModelEvaluator.Core.Scenarios;
 using ModelEvaluator.Core.Util;
@@ -22,6 +23,12 @@ public sealed class EvaluationRunner(
         EvaluationConfiguration configuration,
         CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (configuration.MaxParallel < 1)
+        {
+            throw new InvalidOperationException("maxParallel must be a positive integer.");
+        }
+
         if (configuration.Models.Count == 0)
         {
             throw new InvalidOperationException("The evaluation configuration contains no models.");
@@ -32,26 +39,70 @@ public sealed class EvaluationRunner(
             ? catalog.Scenarios.OrderBy(s => s.Id, StringComparer.Ordinal).ToList()
             : configuration.Scenarios.Select(catalog.Get).ToList();
 
+        var logLock = new object();
+        void Log(string message)
+        {
+            lock (logLock)
+            {
+                _log(message);
+            }
+        }
+
+        Action<string>? debugLog = configuration.Debug ? message => Log($"[debug] {message}") : null;
+        debugLog?.Invoke($"Benchmark root: {configuration.BenchmarkRoot}");
+        debugLog?.Invoke($"Output directory: {configuration.OutputDirectory}");
+        debugLog?.Invoke(
+            $"Matrix: {scenarios.Count} scenario(s) x {configuration.Models.Count} model(s) x " +
+            $"{Math.Max(1, configuration.Repetitions)} repetition(s), max parallel attempts={configuration.MaxParallel}.");
+        if (configuration.MaxParallel > 1)
+        {
+            Log($"warning: up to {configuration.MaxParallel} attempts will run concurrently; timing rankings may be affected by resource contention and provider throttling.");
+        }
+        debugLog?.Invoke($"Scenarios: {string.Join(", ", scenarios.Select(s => s.Id))}");
+        debugLog?.Invoke($"Models: {string.Join(", ", configuration.Models.Select(m => m.Id))}");
         var environment = await ProbeEnvironmentAsync(configuration, cancellationToken).ConfigureAwait(false);
-        var attemptRunner = new AttemptRunner(_adapterFactory, _processRunner, _log);
+        debugLog?.Invoke($"Environment: {environment.OperatingSystem}; SDK {environment.DotnetSdkVersion}; git {environment.GitCommit}");
         var startedAt = DateTimeOffset.UtcNow;
-        var runId = $"run-{startedAt:yyyyMMdd-HHmmss}";
-        var attempts = new List<AttemptResult>();
+        var runId = $"run-{startedAt:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}";
+        var jobs = scenarios.SelectMany(scenario => configuration.Models.SelectMany(model =>
+            Enumerable.Range(1, Math.Max(1, configuration.Repetitions))
+                .Select(repetition => (Scenario: scenario, Model: model, Repetition: repetition)))).ToList();
+        var attempts = new AttemptResult?[jobs.Count];
 
         Directory.CreateDirectory(configuration.OutputDirectory);
-
-        foreach (var scenario in scenarios)
+        if (configuration.Debug)
         {
-            foreach (var model in configuration.Models)
-            {
-                for (var repetition = 1; repetition <= Math.Max(1, configuration.Repetitions); repetition++)
+            var scenarioDetailsPath = ScenarioDetailsMarkdownWriter.Write(
+                scenarios,
+                configuration.Budgets,
+                Path.Combine(configuration.OutputDirectory, runId));
+            debugLog?.Invoke($"Scenario details: {scenarioDetailsPath}");
+        }
+
+        try
+        {
+            await Parallel.ForEachAsync(
+                Enumerable.Range(0, jobs.Count),
+                new ParallelOptions
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    var attempt = await attemptRunner.RunAsync(
-                        scenario, model, repetition, configuration, environment, cancellationToken).ConfigureAwait(false);
-                    attempts.Add(attempt);
-                }
-            }
+                    MaxDegreeOfParallelism = configuration.MaxParallel,
+                    CancellationToken = cancellationToken,
+                },
+                async (index, token) =>
+                {
+                    token.ThrowIfCancellationRequested();
+                    var job = jobs[index];
+                    Action<string>? attemptDebugLog = debugLog is null
+                        ? null : message => debugLog($"[attempt {index + 1}/{jobs.Count}] {message}");
+                    attemptDebugLog?.Invoke($"Starting {job.Scenario.Id} / {job.Model.Id}, repetition {job.Repetition}.");
+                    var attemptRunner = new AttemptRunner(_adapterFactory, _processRunner, Log, attemptDebugLog);
+                    attempts[index] = await attemptRunner.RunAsync(
+                        job.Scenario, job.Model, job.Repetition, configuration, environment, token).ConfigureAwait(false);
+                }).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            Log("warning: evaluation cancelled; active attempts have stopped and queued attempts were not started.");
         }
 
         return new EvaluationReport
@@ -61,7 +112,9 @@ public sealed class EvaluationRunner(
             CompletedAt = DateTimeOffset.UtcNow,
             Runner = new RunnerInfo { Name = "model-evaluator", Version = EvaluatorVersion.Value },
             Environment = environment,
-            Attempts = attempts,
+            Cancelled = cancellationToken.IsCancellationRequested,
+            PlannedAttempts = jobs.Count,
+            Attempts = attempts.OfType<AttemptResult>().ToList(),
         };
     }
 
@@ -74,6 +127,7 @@ public sealed class EvaluationRunner(
 
         return new EnvironmentInfo
         {
+            MaxParallel = configuration.MaxParallel,
             OperatingSystem = RuntimeDescription(),
             Architecture = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString(),
             DotnetSdkVersion = sdk.Succeeded ? sdk.StandardOutput.Trim() : "unavailable",
