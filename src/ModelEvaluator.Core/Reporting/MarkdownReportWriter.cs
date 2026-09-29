@@ -71,6 +71,7 @@ public static class MarkdownReportWriter
         builder.AppendLine("Order: success rate, mean acceptance accuracy, lower mean AI credits (only with complete coverage), then lower mean total wall time.");
         builder.AppendLine("Infrastructure failures are excluded from ranking metrics and shown separately. Missing acceptance execution scores 0; skipped tests count against accuracy.");
         builder.AppendLine("AI credits measure consumption, not invoice charges. Premium requests and reported USD are separate units, never substituted for credits.");
+        builder.AppendLine("USD equivalent = AI credits x $0.01, per [GitHub's published rate](https://docs.github.com/en/copilot/concepts/billing-and-usage/organizations-and-enterprises/billing#what-are-github-ai-credits). Included credits do not incur an additional charge; this is not actual billed spend.");
         builder.AppendLine("Ranks based on fewer than three evaluable attempts are provisional. Equal scores share a rank; reference samples are not ranked.");
         builder.AppendLine();
         foreach (var ranking in ScenarioRanker.Rank(report))
@@ -118,7 +119,8 @@ public static class MarkdownReportWriter
             {
                 var efficiency =
                     $"{summary.MeanElapsedSeconds:0.0} s avg; tokens {Optional(summary.TotalTokens)}; " +
-                    $"tool calls {Optional(summary.TotalToolCalls)}; reported USD {OptionalCost(summary.TotalCostUsd)}; " +
+                    $"tool calls {Optional(summary.TotalToolCalls)}; USD equivalent {OptionalCost(summary.TotalEquivalentCostUsd)}; " +
+                    (summary.TotalCostUsd is not null ? $"adapter-reported USD {OptionalCost(summary.TotalCostUsd)}; " : "") +
                     $"AI credits {Optional(summary.TotalAiCredits)} ({summary.AiCreditsReportedAttempts}/{summary.TotalAttempts} attempts); " +
                     $"premium requests {Optional(summary.TotalPremiumRequests)}; API requests {Optional(summary.TotalApiRequests)}";
 
@@ -171,11 +173,12 @@ public static class MarkdownReportWriter
             builder.AppendLine();
             builder.AppendLine("Observed usage only, not final totals. In-flight calls may be missing. Excluded from complete consumption totals and AI-credit ranking.");
             builder.AppendLine();
-            builder.AppendLine("| Attempt | Observed AI credits | Input tokens | Output tokens | API requests |");
-            builder.AppendLine("| --- | --- | --- | --- | --- |");
+            builder.AppendLine("| Attempt | Observed AI credits | Partial USD equivalent | Input tokens | Output tokens | API requests |");
+            builder.AppendLine("| --- | --- | --- | --- | --- | --- |");
             foreach (var attempt in partialUsage)
             {
                 builder.AppendLine(Row($"`{attempt.AttemptId}`", Optional(attempt.Efficiency.AiCredits),
+                    OptionalCost(attempt.Efficiency.AiCredits * 0.01m),
                     Optional(attempt.Efficiency.InputTokens), Optional(attempt.Efficiency.OutputTokens),
                     Optional(attempt.Efficiency.ApiRequests)));
             }
@@ -183,7 +186,9 @@ public static class MarkdownReportWriter
         }
 
         var unavailable = report.Attempts
-            .SelectMany(a => a.Efficiency.UnavailableMetrics.Select(m => (a.ModelId, Metric: m)))
+            .SelectMany(a => a.Efficiency.UnavailableMetrics
+                .Where(m => m != "estimatedCostUsd" || a.Efficiency.AiCredits is null || a.Efficiency.UsageIsPartial)
+                .Select(m => (a.ModelId, Metric: m)))
             .GroupBy(x => x.ModelId)
             .ToList();
 
@@ -229,7 +234,7 @@ public static class MarkdownReportWriter
         value is null ? "n/a" : Convert.ToString(value.Value, CultureInfo.InvariantCulture) ?? "n/a";
 
     private static string OptionalCost(decimal? value) =>
-        value is null ? "n/a" : "$" + value.Value.ToString("0.0000", CultureInfo.InvariantCulture);
+        value is null ? "n/a" : "$" + value.Value.ToString("0.00##########################", CultureInfo.InvariantCulture);
 
     private static string Value(string? value) => string.IsNullOrWhiteSpace(value) ? "not recorded" : $"`{value}`";
 

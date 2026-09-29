@@ -230,8 +230,9 @@ input: the observed export excludes cached/written tokens there, unlike `modelMe
 
 An absent usage file (for example, a killed runner), malformed JSON or invalid measurements produces
 a visible warning and persisted `efficiency.usageWarnings`. It does not change the functional grade.
-The original JSON remains in the artifacts for inspection. No USD is inferred from credits or token
-pricing: included consumption and paid overage depend on billing/account state not present in this
+The original JSON remains in the artifacts for inspection. Reports convert AI credits to a
+**USD equivalent** at GitHub's published rate of $0.01 per credit, not an invoice charge.
+Included consumption and paid overage depend on billing/account state not present in this
 session export. See [GitHub's billing documentation](https://docs.github.com/en/copilot/concepts/billing-and-usage/organizations-and-enterprises/billing).
 
 #### Usage when a runner times out or is cancelled

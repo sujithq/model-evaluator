@@ -43,6 +43,88 @@ public sealed class ReportingTests
     }
 
     [Fact]
+    public void Render_ConvertsCreditsWithoutClaimingInvoiceCharges()
+    {
+        var original = CreateReport();
+        var attempt = original.Attempts[0] with
+        {
+            Efficiency = new EfficiencyMetrics
+            {
+                AiCredits = 0.88772m,
+                UnavailableMetrics = ["estimatedCostUsd", "toolCalls"],
+            },
+        };
+        var report = original with { Attempts = [attempt] };
+        var summary = Assert.Single(ReportAggregator.Summarise(report));
+        Assert.Equal(0.0088772m, summary.TotalEquivalentCostUsd);
+        Assert.Null(summary.TotalCostUsd);
+        var markdown = MarkdownReportWriter.Render(report);
+        Assert.Contains("USD equivalent $0.0088772", markdown);
+        Assert.Contains("not actual billed spend", markdown);
+        Assert.DoesNotContain("estimatedCostUsd", markdown);
+        Assert.Contains("toolCalls", markdown);
+
+        var directory = Path.Combine(Path.GetTempPath(), "eval-tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(JsonReportWriter.Write(report, directory)));
+            Assert.Equal(0.0088772m, json.RootElement.GetProperty("summaries")[0].GetProperty("totalEquivalentCostUsd").GetDecimal());
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Render_MissingOrPartialCreditsNeverBecomeCompleteCost(bool partial)
+    {
+        var original = CreateReport();
+        var report = original with
+        {
+            Attempts = [original.Attempts[0] with
+            {
+                Efficiency = new EfficiencyMetrics
+                {
+                    AiCredits = partial ? 2m : null,
+                    UsageIsPartial = partial,
+                    UnavailableMetrics = ["estimatedCostUsd"],
+                },
+            }],
+        };
+        Assert.Null(Assert.Single(ReportAggregator.Summarise(report)).TotalEquivalentCostUsd);
+        var markdown = MarkdownReportWriter.Render(report);
+        Assert.Contains("USD equivalent n/a", markdown);
+        Assert.Contains("estimatedCostUsd", markdown);
+        if (partial)
+        {
+            Assert.Contains("Partial USD equivalent", markdown);
+            Assert.Contains("$0.02", markdown);
+        }
+    }
+
+    [Fact]
+    public void Render_PreservesExplicitCostAndHandlesZeroCredits()
+    {
+        var original = CreateReport();
+        var report = original with
+        {
+            Attempts = [original.Attempts[0] with
+            {
+                Efficiency = new EfficiencyMetrics { AiCredits = 0m, EstimatedCostUsd = 1.5m },
+            }],
+        };
+        var summary = Assert.Single(ReportAggregator.Summarise(report));
+        Assert.Equal(0m, summary.TotalEquivalentCostUsd);
+        Assert.Equal(1.5m, summary.TotalCostUsd);
+        var markdown = MarkdownReportWriter.Render(report);
+        Assert.Contains("USD equivalent $0.00", markdown);
+        Assert.Contains("adapter-reported USD $1.50", markdown);
+    }
+
+    [Fact]
     public void Render_WithoutAttempts_ExplainsTheEmptyRun()
     {
         var markdown = MarkdownReportWriter.Render(CreateReport() with { Attempts = [] });

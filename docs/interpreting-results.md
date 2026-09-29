@@ -83,8 +83,17 @@ also recorded but does not replace either wall-clock measurement.
 
 Copilot usage is parsed from the native export, with top-level AI-credit consumption and tokens
 aggregated across `modelMetrics` only. Agent breakdowns are not added again. Input/output token
-totals do not add cache or reasoning subtotals a second time. Tool-call counts and invoice USD are
-not in the verified export, so remain unavailable. See [native usage mapping](model-adapters.md#reporting-usage).
+totals do not add cache or reasoning subtotals a second time. Tool-call counts are supplemented from
+completed telemetry when available. Invoice USD is not available in the export.
+See [native usage mapping](model-adapters.md#reporting-usage).
+
+Markdown shows **USD equivalent** and JSON summaries expose `totalEquivalentCostUsd`, calculated as
+`totalAiCredits * 0.01` using [GitHub's published rate](https://docs.github.com/en/copilot/concepts/billing-and-usage/organizations-and-enterprises/billing#what-are-github-ai-credits).
+This is the value of consumed credits, not additional billed spend: included allowance may cover it.
+Complete credit measurements suppress the misleading `estimatedCostUsd` entry in Markdown's unavailable
+list. Raw adapter `estimatedCostUsd` and summary `totalCostUsd` keep their original meaning and are not
+overwritten; explicit adapter costs are displayed separately. Missing or partial credits never create a
+complete USD total. Partial equivalents appear only in the partial-usage section. Ranking is unchanged.
 
 Partial aggregate metrics are shown as unavailable rather than as complete totals. Credit coverage
 counts reveal how many attempts reported the metric, and per-attempt values remain available in JSON.

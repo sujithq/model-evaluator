@@ -93,6 +93,9 @@ public sealed record ModelScenarioSummary
         ? Attempts.Sum(a => a.Efficiency.AiCredits!.Value)
         : null;
 
+    /// <summary>Published USD value of consumed credits, not an additional invoice charge.</summary>
+    public decimal? TotalEquivalentCostUsd => TotalAiCredits * 0.01m;
+
     public decimal? TotalPremiumRequests => HasCompleteUsage && Attempts.All(a => a.Efficiency.PremiumRequests is not null)
         ? Attempts.Sum(a => a.Efficiency.PremiumRequests!.Value)
         : null;

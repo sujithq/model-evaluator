@@ -50,6 +50,7 @@ public static class JsonReportWriter
                 s.TotalToolCalls,
                 s.TotalCostUsd,
                 s.TotalAiCredits,
+                s.TotalEquivalentCostUsd,
                 s.AiCreditsReportedAttempts,
                 s.TotalPremiumRequests,
                 s.TotalApiRequests,
