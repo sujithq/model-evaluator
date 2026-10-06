@@ -156,6 +156,66 @@ See [Interpreting results](interpreting-results.md) for outcome and ranking rule
 
 ## 6. Choose scenarios and models
 
+### See which model IDs exist
+
+`--models` only accepts IDs that the configuration declares, so start by listing them:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- list-models
+dotnet run --project .\src\ModelEvaluator.Cli -- list-models --config .\config\evaluation.copilot-matrix.example.json
+```
+
+```text
+ID                   ENABLED  ADAPTER       PROVIDER MODEL  RUNNER
+copilot-gpt-6-astra  no       command-line  gpt-6-astra     github-copilot-cli
+copilot-gpt-6-luna   yes      command-line  gpt-6-luna      github-copilot-cli
+```
+
+- `ID` is what you pass to `--models`; disabled IDs are listed too, because `--models` can select them.
+- `ENABLED` shows which models run when you omit `--models`.
+- `PROVIDER MODEL` is parsed from the runner's `--model` argument. It documents intent only - it does
+  not prove that your account may use that model.
+
+`--models` also filters the listing, which is a cheap way to check an ID before a paid run:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- list-models --models copilot-gpt-6-luna
+```
+
+### Check what the authenticated account can actually use
+
+GitHub Copilot CLI has no model-listing command, and it only validates `--model` while serving a real
+prompt. The evaluator therefore offers an opt-in probe that invokes the configured runner once per
+model with a trivial prompt:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- list-models `
+  --config .\config\evaluation.copilot-matrix.example.json `
+  --models copilot-gpt-6-luna,copilot-gpt-6-astra `
+  --probe
+```
+
+```text
+copilot-gpt-6-luna: available (4,1 s)
+copilot-gpt-6-astra: unavailable (0,9 s) - Error: Model "gpt-6-astra" from --model flag is not available.
+
+1 available, 1 unavailable, 0 unconfirmed, 0 local.
+```
+
+Keep these constraints in mind:
+
+- **Probing costs real usage.** Every *available* model answers the prompt, so restrict `--probe`
+  with `--models` instead of probing a 28-entry matrix.
+- Probes run one at a time, with a `--probe-timeout` limit per model (default 120 seconds).
+- `local` means a `local-sample` model, which has no provider account to query.
+- `unconfirmed` means the runner failed for some other reason - not signed in, missing executable,
+  timeout, or a message the evaluator does not recognise. The detail text explains which.
+- `list-models --probe` exits `1` when at least one model is explicitly `unavailable`, so it works as
+  a pre-flight gate in CI. Unconfirmed results only print a warning.
+- Without `--probe` the command does no I/O beyond reading the configuration file.
+
+### Filter an evaluation run
+
 Both filters accept comma-separated IDs:
 
 ```powershell
@@ -483,6 +543,7 @@ repetitions, concurrency, and execution environment.
 ```text
 model-evaluator evaluate [options]        Run the selected evaluation matrix.
 model-evaluator list-scenarios [options]  List scenarios and prompt hashes.
+model-evaluator list-models [options]     List the model IDs --models accepts.
 model-evaluator validate [options]        Validate scenario and adapter configuration.
 model-evaluator version                   Print the evaluator version.
 ```
@@ -503,6 +564,8 @@ model-evaluator version                   Print the evaluator version.
 --acceptance-timeout <positive seconds>
 --keep-workspaces
 --debug
+--probe                 (list-models only)
+--probe-timeout <positive seconds>
 ```
 
 Run `dotnet run --project .\src\ModelEvaluator.Cli -- --help` for the CLI's authoritative option

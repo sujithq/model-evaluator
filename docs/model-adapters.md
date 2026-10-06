@@ -66,6 +66,19 @@ Placeholders substituted in `arguments`: `{workspace}`, `{promptFile}`, `{prompt
 The runner's stdout and stderr are captured to `transcript.log` in the attempt artifacts. Exceeding
 the generation budget is recorded as `BudgetExceeded`, which counts as an unsuccessful attempt.
 
+#### Discovering model IDs
+
+The evaluator's model list is configuration-driven: a model exists because a configuration file
+declares it, not because a provider advertises it. `model-evaluator list-models` prints those IDs
+together with the adapter, the `--model` value parsed out of `arguments`, and the runner name.
+
+No provider CLI currently exposes a model catalog - GitHub Copilot CLI has no `models` subcommand,
+and it only validates `--model` while serving a real prompt. The only account-level check available
+is therefore `list-models --probe`, which runs the configured command once per model with a trivial
+prompt and classifies the outcome as `available`, `unavailable`, `unconfirmed` or `local`. Because an
+available model genuinely answers that prompt, probing consumes real provider usage; combine
+`--probe` with `--models` to keep the cost to the handful of IDs you care about.
+
 #### GPT-6 Astra with GitHub Copilot CLI
 
 [`config/evaluation.gpt-6-astra.example.json`](../config/evaluation.gpt-6-astra.example.json)

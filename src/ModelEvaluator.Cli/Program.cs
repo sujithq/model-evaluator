@@ -46,6 +46,7 @@ public static class Program
         {
             "evaluate" => await EvaluateAsync(options).ConfigureAwait(false),
             "list-scenarios" => ListScenarios(options),
+            "list-models" => await ListModelsAsync(options).ConfigureAwait(false),
             "validate" => Validate(options),
             "version" => PrintVersion(),
             _ => Unknown(command),
@@ -138,6 +139,148 @@ public static class Program
         return 0;
     }
 
+    private static async Task<int> ListModelsAsync(CommandLineOptions options)
+    {
+        var configurationPath = ConfigurationPath(options);
+        var configuration = LoadConfiguration(options);
+        var models = SelectForListing(configuration, options.Models);
+        var entries = models.Select(ModelCatalog.Describe).OrderBy(e => e.Id, StringComparer.Ordinal).ToList();
+
+        Console.WriteLine($"Configuration: {Path.GetFullPath(configurationPath)}");
+        if (entries.Count == 0)
+        {
+            Console.WriteLine("No models are configured. Add entries to the configuration's 'models' array.");
+            return 0;
+        }
+
+        Console.WriteLine(
+            $"{entries.Count} configured model id(s); {entries.Count(e => e.Enabled)} enabled without an explicit --models filter.");
+        Console.WriteLine();
+
+        var idWidth = Math.Max(2, entries.Max(e => e.Id.Length));
+        var adapterWidth = Math.Max(7, entries.Max(e => e.Adapter.Length));
+        var providerWidth = Math.Max(14, entries.Max(e => (e.ProviderModel ?? "-").Length));
+
+        Console.WriteLine(
+            $"{"ID".PadRight(idWidth)}  {"ENABLED".PadRight(7)}  {"ADAPTER".PadRight(adapterWidth)}  " +
+            $"{"PROVIDER MODEL".PadRight(providerWidth)}  RUNNER");
+
+        foreach (var entry in entries)
+        {
+            Console.WriteLine(
+                $"{entry.Id.PadRight(idWidth)}  {(entry.Enabled ? "yes" : "no").PadRight(7)}  " +
+                $"{entry.Adapter.PadRight(adapterWidth)}  {(entry.ProviderModel ?? "-").PadRight(providerWidth)}  " +
+                $"{entry.RunnerName ?? entry.Command ?? entry.SampleVariant ?? "-"}");
+
+            if (options.Debug && entry.Description is not null)
+            {
+                Console.WriteLine($"{new string(' ', idWidth)}  {entry.Description}");
+            }
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("Any id above can be passed to --models, including disabled ones.");
+        Console.WriteLine("Provider model ids come from the configured runner arguments and do not prove account access.");
+
+        return options.Probe
+            ? await ProbeModelsAsync(models, options).ConfigureAwait(false)
+            : 0;
+    }
+
+    private static async Task<int> ProbeModelsAsync(
+        IReadOnlyList<ModelConfiguration> models, CommandLineOptions options)
+    {
+        var timeout = TimeSpan.FromSeconds(options.ProbeTimeoutSeconds ?? 120);
+        Console.WriteLine();
+        Console.Error.WriteLine(
+            $"warning: probing invokes the configured runner once per model with a minimal prompt; " +
+            $"available models consume real provider usage.");
+        Console.WriteLine($"Probing {models.Count} model(s) with a {timeout.TotalSeconds:0} s limit each.");
+        Console.WriteLine();
+
+        using var cancellation = new CancellationTokenSource();
+        ConsoleCancelEventHandler cancelHandler = (_, e) =>
+        {
+            e.Cancel = true;
+            cancellation.Cancel();
+        };
+        Console.CancelKeyPress += cancelHandler;
+
+        var results = new List<ModelAvailabilityResult>();
+        try
+        {
+            var probe = new ModelAvailabilityProbe();
+            foreach (var model in models.OrderBy(m => m.Id, StringComparer.Ordinal))
+            {
+                var result = await probe.ProbeAsync(model, timeout, cancellation.Token).ConfigureAwait(false);
+                results.Add(result);
+                Console.WriteLine(
+                    $"{model.Id}: {Label(result.Availability)}" +
+                    $"{(result.DurationSeconds > 0 ? $" ({result.DurationSeconds:0.0} s)" : string.Empty)}" +
+                    $"{(result.Detail is null ? string.Empty : $" - {result.Detail}")}");
+            }
+        }
+        finally
+        {
+            Console.CancelKeyPress -= cancelHandler;
+        }
+
+        var unconfirmed = results.Count(r => r.Availability == ModelAvailability.Unknown);
+        var unavailable = results.Count(r => r.Availability == ModelAvailability.Unavailable);
+
+        Console.WriteLine();
+        Console.WriteLine(
+            $"{results.Count(r => r.Availability == ModelAvailability.Available)} available, " +
+            $"{unavailable} unavailable, " +
+            $"{unconfirmed} unconfirmed, " +
+            $"{results.Count(r => r.Availability == ModelAvailability.NotApplicable)} local.");
+
+        if (cancellation.IsCancellationRequested)
+        {
+            Console.Error.WriteLine("warning: probing was cancelled before every model was checked.");
+            return 130;
+        }
+
+        if (unconfirmed > 0)
+        {
+            Console.Error.WriteLine(
+                "warning: unconfirmed models were neither accepted nor explicitly rejected by the runner.");
+        }
+
+        return unavailable == 0 ? 0 : 1;
+    }
+
+    private static string Label(ModelAvailability availability) => availability switch
+    {
+        ModelAvailability.Available => "available",
+        ModelAvailability.Unavailable => "unavailable",
+        ModelAvailability.NotApplicable => "local",
+        _ => "unconfirmed",
+    };
+
+    /// <summary>Lists every configured model, or exactly the requested ids, including disabled ones.</summary>
+    private static IReadOnlyList<ModelConfiguration> SelectForListing(
+        EvaluationConfiguration configuration, IReadOnlyList<string> requested)
+    {
+        if (requested.Count == 0)
+        {
+            return configuration.Models;
+        }
+
+        var unknown = requested
+            .Where(id => !configuration.Models.Any(m => m.Id.Equals(id, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+        if (unknown.Count > 0)
+        {
+            throw new KeyNotFoundException(
+                $"Unknown model id(s): {string.Join(", ", unknown)}. Configured models: {string.Join(", ", configuration.Models.Select(m => m.Id))}.");
+        }
+
+        return configuration.Models
+            .Where(m => requested.Contains(m.Id, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+    }
+
     private static int Validate(CommandLineOptions options)
     {
         var configuration = options.Apply(LoadConfiguration(options));
@@ -200,9 +343,12 @@ public static class Program
         return 0;
     }
 
+    private static string ConfigurationPath(CommandLineOptions options) =>
+        options.ConfigPath ?? "config/evaluation.json";
+
     private static EvaluationConfiguration LoadConfiguration(CommandLineOptions options)
     {
-        var path = options.ConfigPath ?? "config/evaluation.json";
+        var path = ConfigurationPath(options);
         if (!File.Exists(path))
         {
             throw new FileNotFoundException($"Evaluation configuration '{Path.GetFullPath(path)}' was not found.", path);
@@ -227,6 +373,7 @@ public static class Program
             Usage:
               model-evaluator evaluate [options]        Run the evaluation matrix and write both reports.
               model-evaluator list-scenarios [options]  List benchmark scenarios and prompt hashes.
+              model-evaluator list-models [options]     List the model ids --models accepts.
               model-evaluator validate [options]        Validate scenario packages and model configuration.
               model-evaluator version                   Print the harness version.
 
@@ -246,6 +393,10 @@ public static class Program
               --acceptance-timeout <sec>   Override the acceptance check budget.
               --keep-workspaces            Keep attempt workspaces for debugging.
               --debug                      Print detailed progress and write scenario-details.md.
+              --probe                      list-models: ask the runner which models the authenticated
+                                           account can use. Invokes the runner once per model and
+                                           consumes real provider usage for available models.
+              --probe-timeout <sec>        Time limit for one availability probe (default: 120).
             """);
     }
 }

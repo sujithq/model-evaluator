@@ -30,6 +30,7 @@ acceptance tests. Changing instructions or grading rules requires a new benchmar
 ```bash
 dotnet build --configuration Release
 dotnet run --project src/ModelEvaluator.Cli -- list-scenarios
+dotnet run --project src/ModelEvaluator.Cli -- list-models
 dotnet run --project src/ModelEvaluator.Cli -- validate
 
 # One command runs the selected evaluation matrix and writes both report formats.
@@ -113,7 +114,9 @@ values never become zero. AI credits represent consumption, not necessarily invo
 Infrastructure failures are excluded from ranking metrics and reported separately.
 
 Use explicit `--models` and `--scenarios` filters to select disabled models. Without `--models`, the
-matrix runs only models whose `enabled` property is `true` (currently GPT-6 Luna). Auto routing is
+matrix runs only models whose `enabled` property is `true` (currently GPT-6 Luna). Run
+`list-models` to print the IDs `--models` accepts, and add `--probe` to ask the runner which of them
+the authenticated account can actually use. Auto routing is
 not in this named-model matrix. See [ranking rules and limitations](docs/interpreting-results.md#per-task-rankings).
 
 ## CLI
@@ -121,13 +124,14 @@ not in this named-model matrix. See [ranking rules and limitations](docs/interpr
 ```text
 model-evaluator evaluate [options]        Run the evaluation matrix and write both reports.
 model-evaluator list-scenarios [options]  List benchmark scenarios and prompt hashes.
+model-evaluator list-models [options]     List the model ids --models accepts.
 model-evaluator validate [options]        Validate scenario packages and model configuration.
 model-evaluator version                   Print the harness version.
 ```
 
 Options: `--config`, `--benchmark-root`, `--models`, `--scenarios`, `--repetitions`, `--max-parallel`, `--output`,
 `--workspace-root`, `--execution-image`, `--generation-timeout`, `--build-timeout`, `--test-timeout`,
-`--acceptance-timeout`, `--keep-workspaces`, `--debug`. Exit codes: `0` success, `1` usage or validation
+`--acceptance-timeout`, `--keep-workspaces`, `--debug`, `--probe`, `--probe-timeout`. Exit codes: `0` success, `1` usage or validation
 problems, `2` error, `3` at least one infrastructure failure, `130` cancelled.
 
 ### Bounded parallel attempts

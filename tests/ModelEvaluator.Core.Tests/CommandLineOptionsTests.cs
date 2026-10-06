@@ -30,6 +30,24 @@ public sealed class CommandLineOptionsTests
     }
 
     [Fact]
+    public void Parse_ReadsProbeOptions()
+    {
+        var options = CommandLineOptions.Parse(["--probe", "--probe-timeout", "45"]);
+
+        Assert.True(options.Probe);
+        Assert.Equal(45, options.ProbeTimeoutSeconds);
+    }
+
+    [Fact]
+    public void Parse_DefaultsProbeOptionsToOff()
+    {
+        var options = CommandLineOptions.Parse([]);
+
+        Assert.False(options.Probe);
+        Assert.Null(options.ProbeTimeoutSeconds);
+    }
+
+    [Fact]
     public void Parse_RejectsUnknownOption() =>
         Assert.Throws<FormatException>(() => CommandLineOptions.Parse(["--nope"]));
 
