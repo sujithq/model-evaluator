@@ -25,7 +25,44 @@ containing its prompt, contracts, configuration, fixtures, starter files and eva
 acceptance tests. Changing instructions or grading rules requires a new benchmark version - see
 [docs/adding-scenarios.md](docs/adding-scenarios.md).
 
-## Quick start
+## Install as a .NET tool
+
+The tool targets .NET 10 and bundles the default configurations and benchmark packages. To pack and
+install the current source globally:
+
+```powershell
+dotnet pack .\src\ModelEvaluator.Cli --configuration Release
+dotnet tool install --global --add-source .\artifacts\packages `
+  --version 0.1.0 Sujithq.ModelEvaluator.Tool
+```
+
+Then run it from any directory:
+
+```powershell
+modelevaluator list-scenarios
+modelevaluator list-models
+modelevaluator validate
+modelevaluator evaluate --scenarios console-task-cli --models reference-good --repetitions 1
+```
+
+Reports are written under the caller's working directory, not the tool installation directory.
+Relative `--config` paths are resolved from the caller first and then from the bundled configurations.
+External model CLIs and their authentication remain separate prerequisites.
+
+For a repository-local, version-pinned installation:
+
+```powershell
+dotnet new tool-manifest
+dotnet tool install --add-source .\artifacts\packages `
+  --version 0.1.0 Sujithq.ModelEvaluator.Tool
+dotnet tool run modelevaluator validate
+```
+
+Once the package is published to NuGet, omit `--add-source`. Update or remove a global installation
+with `dotnet tool update --global Sujithq.ModelEvaluator.Tool` and
+`dotnet tool uninstall --global Sujithq.ModelEvaluator.Tool`.
+
+## Quick start from source
 
 ```bash
 dotnet build --configuration Release

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\ModelEvaluator.Core\ModelEvaluator.Core.csproj" />
@@ -9,6 +9,32 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>modelevaluator</ToolCommandName>
+    <PackageId>Sujithq.ModelEvaluator.Tool</PackageId>
+    <PackageOutputPath>..\..\artifacts\packages</PackageOutputPath>
+    <Authors>sujithq</Authors>
+    <Description>Evaluate how well AI models create working .NET projects from fixed, versioned instructions.</Description>
+    <PackageTags>dotnet-tool;ai;evaluation;benchmark;copilot</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\config\**\*.json"
+          Pack="false"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest"
+          Link="config\%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="..\..\benchmarks\**\*"
+          Exclude="..\..\benchmarks\**\bin\**;..\..\benchmarks\**\obj\**"
+          Pack="false"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest"
+          Link="benchmarks\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
 
 </Project>

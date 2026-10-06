@@ -312,18 +312,28 @@ public static class Program
         return 0;
     }
 
-    private static string ConfigurationPath(CommandLineOptions options) =>
-        options.ConfigPath ?? "config/evaluation.json";
+    private static ConfigurationFileLocation ConfigurationLocation(CommandLineOptions options) =>
+        ConfigurationFileLocator.Resolve(options.ConfigPath, Environment.CurrentDirectory, AppContext.BaseDirectory);
+
+    private static string ConfigurationPath(CommandLineOptions options) => ConfigurationLocation(options).Path;
 
     private static EvaluationConfiguration LoadConfiguration(CommandLineOptions options)
     {
-        var path = ConfigurationPath(options);
-        if (!File.Exists(path))
+        var location = ConfigurationLocation(options);
+        if (!File.Exists(location.Path))
         {
-            throw new FileNotFoundException($"Evaluation configuration '{Path.GetFullPath(path)}' was not found.", path);
+            throw new FileNotFoundException(
+                $"Evaluation configuration '{location.Path}' was not found.",
+                location.Path);
         }
 
-        return EvaluationConfiguration.Load(path);
+        var configuration = EvaluationConfiguration.Load(location.Path);
+        return location.IsBundled
+            ? ConfigurationFileLocator.RelocateBundledWritablePaths(
+                configuration,
+                AppContext.BaseDirectory,
+                Environment.CurrentDirectory)
+            : configuration;
     }
 
     private static int Unknown(string command)
@@ -347,7 +357,7 @@ public static class Program
               model-evaluator version                   Print the harness version.
 
             Options:
-              --config <path>              Evaluation configuration file (default: config/evaluation.json).
+              --config <path>              Evaluation configuration file (default: caller config, then bundled).
               --benchmark-root <path>      Override the benchmark package root.
               --models <a,b>               Restrict the run to these model ids.
               --scenarios <a,b>            Restrict the run to these scenario ids.

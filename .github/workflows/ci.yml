@@ -41,6 +41,34 @@ jobs:
           path: artifacts/test-results
           retention-days: 14
 
+  tool-package:
+    name: Validate .NET tool package (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Pack, install, and test the tool
+        shell: pwsh
+        run: ./scripts/test_dotnet_tool.ps1
+
+      - name: Upload tool package
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v7
+        with:
+          name: model-evaluator-tool-package
+          path: artifacts/packages/*.nupkg
+          retention-days: 14
+          if-no-files-found: error
+
   smoke-evaluation:
     name: Reference smoke evaluation
     runs-on: ubuntu-latest

@@ -34,8 +34,10 @@ Install:
 - Git, if you want the report to record the current commit;
 - the external agent CLI and its authentication only when evaluating a real model.
 
-Run commands from the repository root. The examples use PowerShell paths; Bash users can replace
-backslashes with forward slashes and use their shell's line-continuation syntax.
+The evaluator can run from source or as the `modelevaluator` .NET tool. Source commands run from
+the repository root. An installed tool can run from any writable directory. The examples use
+PowerShell paths; Bash users can replace backslashes with forward slashes and use their shell's
+line-continuation syntax.
 
 Confirm the SDK:
 
@@ -46,7 +48,54 @@ dotnet --version
 The repository permits feature-band roll-forward, so the selected SDK can be newer than the exact
 version in `global.json` when it satisfies that policy.
 
-## 3. First entry: inspect without evaluating
+## 3. Install the .NET tool
+
+The tool targets .NET 10. To build and install the current source globally:
+
+```powershell
+dotnet pack .\src\ModelEvaluator.Cli --configuration Release
+dotnet tool install --global --add-source .\artifacts\packages `
+  --version 0.1.0 Sujithq.ModelEvaluator.Tool
+```
+
+The installed command is `modelevaluator`:
+
+```powershell
+modelevaluator --help
+modelevaluator version
+modelevaluator list-scenarios
+modelevaluator validate
+```
+
+For a repository-local tool manifest instead:
+
+```powershell
+dotnet new tool-manifest
+dotnet tool install --add-source .\artifacts\packages `
+  --version 0.1.0 Sujithq.ModelEvaluator.Tool
+dotnet tool run modelevaluator validate
+```
+
+Once the package is published to NuGet, omit `--add-source`. Manage a global installation with:
+
+```powershell
+dotnet tool update --global Sujithq.ModelEvaluator.Tool
+dotnet tool uninstall --global Sujithq.ModelEvaluator.Tool
+```
+
+The package includes all shipped JSON configurations and both benchmark versions. With no
+`--config`, the evaluator uses `config/evaluation.json` from the caller when present, otherwise its
+bundled copy. An explicitly named relative configuration follows the same caller-first rule. Files
+supplied with an absolute `--config` path never fall back to bundled content.
+
+Bundled benchmark files remain read-only in the installation. Configured output and workspace paths
+that point into the installation are relocated under the caller's working directory. External agent
+CLIs, provider authentication, and model entitlement are not installed with this tool.
+
+All remaining examples use `dotnet run --project .\src\ModelEvaluator.Cli --`. When using the
+installed tool, replace that prefix with `modelevaluator`.
+
+## 4. First entry: inspect without evaluating
 
 Build the evaluator:
 
@@ -81,7 +130,7 @@ dotnet run --project .\src\ModelEvaluator.Cli -- validate
 models, authenticate an external CLI, verify model entitlement, build generated projects, or run
 acceptance tests.
 
-## 4. First evaluation: no AI calls
+## 5. First evaluation: no AI calls
 
 Run one scenario once with both reference variants:
 
@@ -119,7 +168,7 @@ dotnet run --project .\src\ModelEvaluator.Cli -- evaluate `
 
 This also uses local samples and makes no AI requests.
 
-## 5. Find the output
+## 6. Find the output
 
 At completion, the CLI prints the absolute paths to:
 
@@ -154,7 +203,7 @@ the root's `attempts` directory rather than inside the run directory. Use:
 
 See [Interpreting results](interpreting-results.md) for outcome and ranking rules.
 
-## 6. Choose scenarios and models
+## 7. Choose scenarios and models
 
 ### See which model IDs exist
 
@@ -240,7 +289,7 @@ Selection rules:
 Before starting a paid run, calculate the attempt count. For example, five scenarios, four models,
 and three repetitions create 60 independent model invocations.
 
-## 7. Evaluate a real model with GitHub Copilot CLI
+## 8. Evaluate a real model with GitHub Copilot CLI
 
 Install GitHub Copilot CLI, authenticate it, and confirm that the desired model is available to
 your account and organization. Then validate a supplied configuration:
@@ -281,7 +330,7 @@ The supplied Copilot examples allow all tools without confirmation. Run them onl
 isolated environment. A fresh workspace protects experiment independence but is not a security
 sandbox.
 
-## 8. Compare models fairly
+## 9. Compare models fairly
 
 Run compared models in the same matrix so they share benchmark content, budgets, concurrency, and
 environment:
@@ -309,7 +358,7 @@ For a fair comparison:
 The report ranks models separately per comparable task and runner/concurrency group. A missing
 usage measurement is not treated as zero cost.
 
-## 9. Understand configuration
+## 10. Understand configuration
 
 A configuration has this shape:
 
@@ -374,7 +423,7 @@ The equivalent CLI options are:
 These are per-stage limits, not one total run deadline. Restore, build, and formatting each use the
 build timeout. Queueing time does not consume a stage timeout.
 
-## 10. Use another command-line model runner
+## 11. Use another command-line model runner
 
 The `command-line` adapter can invoke any non-interactive CLI:
 
@@ -418,7 +467,7 @@ large multiline prompts are safer than shell argument text.
 See [Configuring model adapters](model-adapters.md) for the normalized usage schema, Copilot
 telemetry handling, credentials, and writing a new in-process adapter.
 
-## 11. Parallel and advanced runs
+## 12. Parallel and advanced runs
 
 Use bounded concurrency to reduce elapsed wall time:
 
@@ -449,7 +498,7 @@ Useful advanced options:
 `scenario-details.md` includes selected scenario metadata, effective budgets, constraints, samples,
 and full resolved prompts. Treat it and live runner output as potentially sensitive before sharing.
 
-## 12. Debug a failed attempt
+## 13. Debug a failed attempt
 
 Repeat the smallest failing model/scenario pair:
 
@@ -481,7 +530,7 @@ Common distinctions:
 - `InfrastructureFailure`: runner, environment, or evaluator setup failed;
 - skipped downstream checks after a failed restore/build are still unsuccessful checks.
 
-## 13. Cancellation, cleanup, and edge cases
+## 14. Cancellation, cleanup, and edge cases
 
 ### Ctrl+C
 
@@ -531,7 +580,7 @@ credential-like environment variables before running generated code. However, ru
 generated files, prompts, and logs can still contain sensitive data. Review artifacts before
 publishing them.
 
-## 14. Add benchmarks and reproduce runs
+## 15. Add benchmarks and reproduce runs
 
 To define a new task, follow [Adding a scenario](adding-scenarios.md). Scenario contracts must state
 every behavior the hidden acceptance suite grades. Published benchmark packages are immutable;
