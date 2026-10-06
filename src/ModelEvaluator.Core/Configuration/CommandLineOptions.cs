@@ -35,11 +35,8 @@ public sealed record CommandLineOptions
 
     public bool Debug { get; init; }
 
-    /// <summary>Ask the runner whether the authenticated account can use each listed model.</summary>
+    /// <summary>Check configured Copilot models against GitHub's published model catalog.</summary>
     public bool Probe { get; init; }
-
-    /// <summary>Time limit for one availability probe.</summary>
-    public int? ProbeTimeoutSeconds { get; init; }
 
     public static CommandLineOptions Parse(IEnumerable<string> arguments)
     {
@@ -89,9 +86,6 @@ public sealed record CommandLineOptions
                     break;
                 case "--acceptance-timeout":
                     options = options with { AcceptanceTimeoutSeconds = Int(queue, argument) };
-                    break;
-                case "--probe-timeout":
-                    options = options with { ProbeTimeoutSeconds = Int(queue, argument) };
                     break;
                 case "--probe":
                     options = options with { Probe = true };

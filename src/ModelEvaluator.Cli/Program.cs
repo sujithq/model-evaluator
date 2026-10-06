@@ -46,7 +46,7 @@ public static class Program
         {
             "evaluate" => await EvaluateAsync(options).ConfigureAwait(false),
             "list-scenarios" => ListScenarios(options),
-            "list-models" => await ListModelsAsync(options).ConfigureAwait(false),
+            "list-models" => ListModels(options),
             "validate" => Validate(options),
             "version" => PrintVersion(),
             _ => Unknown(command),
@@ -139,7 +139,7 @@ public static class Program
         return 0;
     }
 
-    private static async Task<int> ListModelsAsync(CommandLineOptions options)
+    private static int ListModels(CommandLineOptions options)
     {
         var configurationPath = ConfigurationPath(options);
         var configuration = LoadConfiguration(options);
@@ -182,80 +182,49 @@ public static class Program
         Console.WriteLine("Any id above can be passed to --models, including disabled ones.");
         Console.WriteLine("Provider model ids come from the configured runner arguments and do not prove account access.");
 
-        return options.Probe
-            ? await ProbeModelsAsync(models, options).ConfigureAwait(false)
-            : 0;
+        return options.Probe ? ProbeModels(models) : 0;
     }
 
-    private static async Task<int> ProbeModelsAsync(
-        IReadOnlyList<ModelConfiguration> models, CommandLineOptions options)
+    private static int ProbeModels(IReadOnlyList<ModelConfiguration> models)
     {
-        var timeout = TimeSpan.FromSeconds(options.ProbeTimeoutSeconds ?? 120);
+        var catalog = PublishedCopilotModelCatalog.Load();
         Console.WriteLine();
-        Console.Error.WriteLine(
-            $"warning: probing invokes the configured runner once per model with a minimal prompt; " +
-            $"available models consume real provider usage.");
-        Console.WriteLine($"Probing {models.Count} model(s) with a {timeout.TotalSeconds:0} s limit each.");
+        Console.WriteLine($"Checking {models.Count} model(s) against GitHub's published catalog.");
+        Console.WriteLine("No runner or provider request will be made.");
         Console.WriteLine();
 
-        using var cancellation = new CancellationTokenSource();
-        ConsoleCancelEventHandler cancelHandler = (_, e) =>
+        var results = models
+            .OrderBy(model => model.Id, StringComparer.Ordinal)
+            .Select(catalog.Check)
+            .ToList();
+        foreach (var result in results)
         {
-            e.Cancel = true;
-            cancellation.Cancel();
-        };
-        Console.CancelKeyPress += cancelHandler;
-
-        var results = new List<ModelAvailabilityResult>();
-        try
-        {
-            var probe = new ModelAvailabilityProbe();
-            foreach (var model in models.OrderBy(m => m.Id, StringComparer.Ordinal))
-            {
-                var result = await probe.ProbeAsync(model, timeout, cancellation.Token).ConfigureAwait(false);
-                results.Add(result);
-                Console.WriteLine(
-                    $"{model.Id}: {Label(result.Availability)}" +
-                    $"{(result.DurationSeconds > 0 ? $" ({result.DurationSeconds:0.0} s)" : string.Empty)}" +
-                    $"{(result.Detail is null ? string.Empty : $" - {result.Detail}")}");
-            }
+            Console.WriteLine(
+                $"{result.ModelId}: {Label(result.Status)}" +
+                $"{(result.PublishedName is null ? string.Empty : $" ({result.PublishedName})")}" +
+                $"{(result.CopilotCli is null ? string.Empty : $"; Copilot CLI: {result.CopilotCli}")}" +
+                $"{(result.Detail is null ? string.Empty : $" - {result.Detail}")}");
         }
-        finally
-        {
-            Console.CancelKeyPress -= cancelHandler;
-        }
-
-        var unconfirmed = results.Count(r => r.Availability == ModelAvailability.Unknown);
-        var unavailable = results.Count(r => r.Availability == ModelAvailability.Unavailable);
 
         Console.WriteLine();
         Console.WriteLine(
-            $"{results.Count(r => r.Availability == ModelAvailability.Available)} available, " +
-            $"{unavailable} unavailable, " +
-            $"{unconfirmed} unconfirmed, " +
-            $"{results.Count(r => r.Availability == ModelAvailability.NotApplicable)} local.");
+            $"{results.Count(r => r.Status == PublishedCopilotModelStatus.Supported)} supported, " +
+            $"{results.Count(r => r.Status == PublishedCopilotModelStatus.ScheduledRetirement)} scheduled for retirement, " +
+            $"{results.Count(r => r.Status == PublishedCopilotModelStatus.Retired)} retired, " +
+            $"{results.Count(r => r.Status == PublishedCopilotModelStatus.NotListed)} not listed, " +
+            $"{results.Count(r => r.Status == PublishedCopilotModelStatus.NotApplicable)} not applicable.");
 
-        if (cancellation.IsCancellationRequested)
-        {
-            Console.Error.WriteLine("warning: probing was cancelled before every model was checked.");
-            return 130;
-        }
-
-        if (unconfirmed > 0)
-        {
-            Console.Error.WriteLine(
-                "warning: unconfirmed models were neither accepted nor explicitly rejected by the runner.");
-        }
-
-        return unavailable == 0 ? 0 : 1;
+        return results.Any(result => result.Status is PublishedCopilotModelStatus.ScheduledRetirement
+            or PublishedCopilotModelStatus.Retired) ? 1 : 0;
     }
 
-    private static string Label(ModelAvailability availability) => availability switch
+    private static string Label(PublishedCopilotModelStatus status) => status switch
     {
-        ModelAvailability.Available => "available",
-        ModelAvailability.Unavailable => "unavailable",
-        ModelAvailability.NotApplicable => "local",
-        _ => "unconfirmed",
+        PublishedCopilotModelStatus.Supported => "supported",
+        PublishedCopilotModelStatus.ScheduledRetirement => "scheduled for retirement",
+        PublishedCopilotModelStatus.Retired => "retired",
+        PublishedCopilotModelStatus.NotApplicable => "not applicable",
+        _ => "not listed",
     };
 
     /// <summary>Lists every configured model, or exactly the requested ids, including disabled ones.</summary>
@@ -393,10 +362,8 @@ public static class Program
               --acceptance-timeout <sec>   Override the acceptance check budget.
               --keep-workspaces            Keep attempt workspaces for debugging.
               --debug                      Print detailed progress and write scenario-details.md.
-              --probe                      list-models: ask the runner which models the authenticated
-                                           account can use. Invokes the runner once per model and
-                                           consumes real provider usage for available models.
-              --probe-timeout <sec>        Time limit for one availability probe (default: 120).
+              --probe                      list-models: check configured Copilot models against the
+                                           embedded official catalog without invoking the runner.
             """);
     }
 }

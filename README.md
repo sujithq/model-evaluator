@@ -60,7 +60,7 @@ and select one or a few models with `--models`. See the
 [setup and run instructions](docs/model-adapters.md#github-copilot-cli). The matrix is the single
 source of truth for the 28 named model IDs; Auto routing remains a separate example.
 The generated [Copilot model catalog](docs/copilot-models.md) lists GitHub's currently supported
-and deprecated models and is refreshed by a daily workflow from the official GitHub Docs tables.
+and deprecated models and is refreshed hourly from the official GitHub Docs tables.
 
 ### Minimal smoke test across all active models
 
@@ -113,8 +113,8 @@ Infrastructure failures are excluded from ranking metrics and reported separatel
 
 Use explicit `--models` and `--scenarios` filters to select disabled models. Without `--models`, the
 matrix runs only models whose `enabled` property is `true` (currently GPT-6 Luna). Run
-`list-models` to print the IDs `--models` accepts, and add `--probe` to ask the runner which of them
-the authenticated account can actually use. Auto routing is
+`list-models` to print the IDs `--models` accepts, and add `--probe` to compare them with GitHub's
+published catalog without launching a model request. Auto routing is
 not in this named-model matrix. See [ranking rules and limitations](docs/interpreting-results.md#per-task-rankings).
 
 ## CLI
@@ -129,7 +129,7 @@ model-evaluator version                   Print the harness version.
 
 Options: `--config`, `--benchmark-root`, `--models`, `--scenarios`, `--repetitions`, `--max-parallel`, `--output`,
 `--workspace-root`, `--execution-image`, `--generation-timeout`, `--build-timeout`, `--test-timeout`,
-`--acceptance-timeout`, `--keep-workspaces`, `--debug`, `--probe`, `--probe-timeout`. Exit codes: `0` success, `1` usage or validation
+`--acceptance-timeout`, `--keep-workspaces`, `--debug`, `--probe`. Exit codes: `0` success, `1` usage or validation
 problems, `2` error, `3` at least one infrastructure failure, `130` cancelled.
 
 ### Bounded parallel attempts

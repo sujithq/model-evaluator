@@ -182,11 +182,11 @@ copilot-gpt-6-luna   yes      command-line  gpt-6-luna      github-copilot-cli
 dotnet run --project .\src\ModelEvaluator.Cli -- list-models --models copilot-gpt-6-luna
 ```
 
-### Check what the authenticated account can actually use
+### Check configured models against GitHub's catalog
 
-GitHub Copilot CLI has no model-listing command, and it only validates `--model` while serving a real
-prompt. The evaluator therefore offers an opt-in probe that invokes the configured runner once per
-model with a trivial prompt:
+The evaluator embeds the generated official GitHub model catalog. The opt-in probe compares each
+configured Copilot provider model with that catalog without starting Copilot CLI or making a model
+request:
 
 ```powershell
 dotnet run --project .\src\ModelEvaluator.Cli -- list-models `
@@ -196,22 +196,24 @@ dotnet run --project .\src\ModelEvaluator.Cli -- list-models `
 ```
 
 ```text
-copilot-gpt-6-luna: available (4,1 s)
-copilot-gpt-6-astra: unavailable (0,9 s) - Error: Model "gpt-6-astra" from --model flag is not available.
+Checking 2 model(s) against GitHub's published catalog.
+No runner or provider request will be made.
 
-1 available, 1 unavailable, 0 unconfirmed, 0 local.
+copilot-gpt-6-astra: supported (GPT-6 Astra); Copilot CLI: Yes - OpenAI; GA.
+copilot-gpt-6-luna: supported (GPT-6 Luna); Copilot CLI: Yes - OpenAI; GA.
+
+2 supported, 0 scheduled for retirement, 0 retired, 0 not listed, 0 not applicable.
 ```
 
 Keep these constraints in mind:
 
-- **Probing costs real usage.** Every *available* model answers the prompt, so restrict `--probe`
-  with `--models` instead of probing a 28-entry matrix.
-- Probes run one at a time, with a `--probe-timeout` limit per model (default 120 seconds).
-- `local` means a `local-sample` model, which has no provider account to query.
-- `unconfirmed` means the runner failed for some other reason - not signed in, missing executable,
-  timeout, or a message the evaluator does not recognise. The detail text explains which.
-- `list-models --probe` exits `1` when at least one model is explicitly `unavailable`, so it works as
-  a pre-flight gate in CI. Unconfirmed results only print a warning.
+- **Probing consumes no model usage.** It reads an embedded catalog generated from GitHub Docs.
+- `supported` is provider-wide publication status, not proof of authenticated-user entitlement.
+- `not listed` is not proof that a model is unavailable; GitHub's CLI surface table can lag rollout.
+- `list-models --probe` exits `1` when a selected model is retired or scheduled for retirement, so
+  it can detect stale benchmark selections in CI.
+- The hourly workflow updates the embedded JSON and Markdown catalog through a pull request only
+  when the generated output changes. A checkout uses the catalog from its latest merged update.
 - Without `--probe` the command does no I/O beyond reading the configuration file.
 
 ### Filter an evaluation run
@@ -566,7 +568,6 @@ model-evaluator version                   Print the evaluator version.
 --keep-workspaces
 --debug
 --probe                 (list-models only)
---probe-timeout <positive seconds>
 ```
 
 Run `dotnet run --project .\src\ModelEvaluator.Cli -- --help` for the CLI's authoritative option

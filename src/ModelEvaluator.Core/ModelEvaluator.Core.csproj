@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Data\copilot-model-catalog.json" />
+  </ItemGroup>
+
 </Project>

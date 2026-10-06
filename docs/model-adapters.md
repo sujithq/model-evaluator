@@ -72,12 +72,11 @@ The evaluator's model list is configuration-driven: a model exists because a con
 declares it, not because a provider advertises it. `model-evaluator list-models` prints those IDs
 together with the adapter, the `--model` value parsed out of `arguments`, and the runner name.
 
-No provider CLI currently exposes a model catalog - GitHub Copilot CLI has no `models` subcommand,
-and it only validates `--model` while serving a real prompt. The only account-level check available
-is therefore `list-models --probe`, which runs the configured command once per model with a trivial
-prompt and classifies the outcome as `available`, `unavailable`, `unconfirmed` or `local`. Because an
-available model genuinely answers that prompt, probing consumes real provider usage; combine
-`--probe` with `--models` to keep the cost to the handful of IDs you care about.
+GitHub Copilot CLI has no `models` subcommand. `list-models --probe` therefore checks configured
+Copilot provider model IDs against the embedded catalog generated from GitHub's official Docs
+tables. It does not start the runner, authenticate, or consume model usage. The result describes
+provider-wide publication and retirement status only; it cannot verify whether the current account,
+organization policy, geography, rollout, or installed CLI version permits a model.
 
 #### GitHub Copilot CLI
 
@@ -115,8 +114,8 @@ Native usage is retained in each attempt's artifacts and read into the report, i
 credits, input/output tokens, cache metrics and API requests when reported. Completed-run
 telemetry supplements tool-call counts when available; invoice USD is not available.
 The generated [Copilot model catalog](copilot-models.md) tracks GitHub's provider-wide supported
-and deprecated model tables. It is updated daily by automation; it does not replace the
-account-level `list-models --probe` check.
+and deprecated model tables. Automation checks for updates hourly and opens a pull request only
+when the generated Markdown or embedded JSON changes.
 
 | Family | Model IDs |
 | --- | --- |
