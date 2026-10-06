@@ -10,9 +10,10 @@ public sealed class CopilotExampleConfigurationTests
     {
         var directory = Path.Combine(RepositoryLocator.Root, "config");
         var matrix = EvaluationConfiguration.Load(Path.Combine(directory, "evaluation.copilot-matrix.example.json"));
-        Assert.Equal(25, matrix.Models.Count);
+        Assert.Equal(28, matrix.Models.Count);
         Assert.Equal(matrix.Models.Count, matrix.Models.Select(m => m.Id).Distinct().Count());
         Assert.DoesNotContain(matrix.Models, m => m.Id == "copilot-auto");
+        Assert.Equal("copilot-gpt-6-luna", Assert.Single(matrix.Models, model => model.Enabled).Id);
 
         var exampleIds = new List<string>();
         var examplePaths = Directory.EnumerateFiles(directory, "evaluation.*.example.json");
@@ -38,22 +39,20 @@ public sealed class CopilotExampleConfigurationTests
             if (model.Id != "copilot-auto")
             {
                 var inMatrix = Assert.Single(matrix.Models, m => m.Id == model.Id);
+                Assert.Equal(model.Enabled, inMatrix.Enabled);
                 Assert.Equal(model.GetSetting("arguments"), inMatrix.GetSetting("arguments"));
                 Assert.Equal(model.GetSetting("usageFormat"), inMatrix.GetSetting("usageFormat"));
                 Assert.Equal(model.GetSetting("usageFile"), inMatrix.GetSetting("usageFile"));
             }
         }
 
-        Assert.Equal(26, exampleIds.Count);
+        Assert.Equal(29, exampleIds.Count);
         Assert.Equal(exampleIds.Count, exampleIds.Distinct().Count());
         Assert.Equal(
             matrix.Models.Select(m => m.Id).Append("copilot-auto").Order(StringComparer.Ordinal),
             exampleIds.Order(StringComparer.Ordinal));
-        foreach (var path in Directory.EnumerateFiles(Path.Combine(directory, "deprecated"), "evaluation.*.example.json"))
-        {
-            var deprecated = EvaluationConfiguration.Load(path);
-            Assert.All(deprecated.Models, model => Assert.DoesNotContain(model.Id, exampleIds));
-            Assert.All(deprecated.Models, model => Assert.DoesNotContain(matrix.Models, active => active.Id == model.Id));
-        }
+        Assert.False(Assert.Single(matrix.Models, model => model.Id == "copilot-claude-opus-4.7").Enabled);
+        Assert.False(Assert.Single(matrix.Models, model => model.Id == "copilot-gemini-3.5-flash").Enabled);
+        Assert.False(Assert.Single(matrix.Models, model => model.Id == "copilot-gemini-3.6-flash").Enabled);
     }
 }

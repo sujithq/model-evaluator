@@ -127,15 +127,19 @@ model access; evaluation consumes Copilot usage. The default configuration remai
 
 #### All app-listed models with GitHub Copilot CLI
 
-Separate `config/evaluation.<model-id>.example.json` files cover the non-deprecated model IDs from the
+Separate `config/evaluation.<model-id>.example.json` files cover the model IDs from the
 Copilot app's September 28, 2026 session catalog. This is a static snapshot, not live model
 discovery or a claim that each model is available to your standalone Copilot CLI account.
 Each file selects one `copilot-<model-id>` entry, with the same runner flags, three repetitions,
 scenario selection and budget defaults as the Astra and Luna examples.
 
-The individual examples for `claude-opus-4.7`, `gemini-3.5-flash` and `gemini-3.6-flash`
-are archived under `config/deprecated/` and excluded from the active examples and matrix.
-The active matrix contains 25 named models; Auto remains a separate example.
+Models default to disabled. An unfiltered run selects only entries with `"enabled": true`; an
+explicit `--models` filter can select any configured model regardless of that setting. GPT-6 Luna
+is the sole enabled Copilot model for the current test run.
+
+The previously deprecated `claude-opus-4.7`, `gemini-3.5-flash` and `gemini-3.6-flash` examples
+are back in `config/` and in the 28-model matrix, but remain disabled. Auto remains a separate
+example.
 
 | Family | Model IDs |
 | --- | --- |

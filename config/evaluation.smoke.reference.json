@@ -5,7 +5,17 @@
   "maxParallel": 2,
   "scenarios": ["smoke-add"],
   "models": [
-    { "id": "reference-good", "adapter": "local-sample", "settings": { "variant": "good" } },
-    { "id": "reference-broken", "adapter": "local-sample", "settings": { "variant": "broken" } }
+    {
+      "id": "reference-good",
+      "enabled": true,
+      "adapter": "local-sample",
+      "settings": { "variant": "good" }
+    },
+    {
+      "id": "reference-broken",
+      "enabled": true,
+      "adapter": "local-sample",
+      "settings": { "variant": "broken" }
+    }
   ]
 }

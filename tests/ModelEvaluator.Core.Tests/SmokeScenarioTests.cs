@@ -18,12 +18,14 @@ public sealed class SmokeScenarioTests
         Assert.Equal(1, config.Repetitions);
         Assert.Equal(2, config.MaxParallel);
         var matrix = EvaluationConfiguration.Load(Path.Combine(RepositoryLocator.Root, "config", "evaluation.copilot-matrix.example.json"));
-        Assert.Equal(25, config.Models.Count);
+        Assert.Equal(28, config.Models.Count);
         Assert.Equal(config.Models.Count, config.Models.Select(m => m.Id).Distinct().Count());
         Assert.Equal(matrix.Models.Select(m => m.Id), config.Models.Select(m => m.Id));
+        Assert.Equal("copilot-gpt-6-luna", Assert.Single(config.Models, model => model.Enabled).Id);
         Assert.All(config.Models, model =>
         {
             var expected = Assert.Single(matrix.Models, candidate => candidate.Id == model.Id);
+            Assert.Equal(expected.Enabled, model.Enabled);
             Assert.Equal(expected.Adapter, model.Adapter);
             Assert.Equal(expected.Settings.OrderBy(pair => pair.Key), model.Settings.OrderBy(pair => pair.Key));
             Assert.Equal(expected.Environment.OrderBy(pair => pair.Key), model.Environment.OrderBy(pair => pair.Key));

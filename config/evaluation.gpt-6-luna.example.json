@@ -6,6 +6,7 @@
   "models": [
     {
       "id": "copilot-gpt-6-luna",
+      "enabled": true,
       "adapter": "command-line",
       "description": "GPT-6 Luna generating projects through GitHub Copilot CLI.",
       "settings": {

@@ -101,18 +101,26 @@ public sealed record CommandLineOptions
     /// <summary>Applies the options on top of a configuration file.</summary>
     public EvaluationConfiguration Apply(EvaluationConfiguration configuration)
     {
-        var models = configuration.Models;
+        IReadOnlyList<ModelConfiguration> models;
         if (Models.Count > 0)
         {
-            var selected = models.Where(m => Models.Contains(m.Id, StringComparer.OrdinalIgnoreCase)).ToList();
-            var unknown = Models.Where(id => !models.Any(m => m.Id.Equals(id, StringComparison.OrdinalIgnoreCase))).ToList();
+            var selected = configuration.Models
+                .Where(m => Models.Contains(m.Id, StringComparer.OrdinalIgnoreCase))
+                .ToList();
+            var unknown = Models
+                .Where(id => !configuration.Models.Any(m => m.Id.Equals(id, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
             if (unknown.Count > 0)
             {
                 throw new KeyNotFoundException(
-                    $"Unknown model id(s): {string.Join(", ", unknown)}. Configured models: {string.Join(", ", models.Select(m => m.Id))}.");
+                    $"Unknown model id(s): {string.Join(", ", unknown)}. Configured models: {string.Join(", ", configuration.Models.Select(m => m.Id))}.");
             }
 
             models = selected;
+        }
+        else
+        {
+            models = configuration.Models.Where(model => model.Enabled).ToList();
         }
 
         return configuration with

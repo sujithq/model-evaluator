@@ -11,7 +11,7 @@ public sealed class CommandLineOptionsTests
         Repetitions = 3,
         Models =
         [
-            new ModelConfiguration { Id = "alpha", Adapter = "local-sample" },
+            new ModelConfiguration { Id = "alpha", Adapter = "local-sample", Enabled = true },
             new ModelConfiguration { Id = "beta", Adapter = "command-line" },
         ],
     };
@@ -77,6 +77,22 @@ public sealed class CommandLineOptionsTests
     }
 
     [Fact]
+    public void Apply_WithoutModelOverride_SelectsOnlyEnabledModels()
+    {
+        var configuration = CommandLineOptions.Parse([]).Apply(BaseConfiguration);
+
+        Assert.Equal("alpha", Assert.Single(configuration.Models).Id);
+    }
+
+    [Fact]
+    public void Apply_ExplicitModelOverride_CanSelectDisabledModel()
+    {
+        var configuration = CommandLineOptions.Parse(["--models", "beta"]).Apply(BaseConfiguration);
+
+        Assert.Equal("beta", Assert.Single(configuration.Models).Id);
+    }
+
+    [Fact]
     public void Apply_ThrowsForUnknownModel()
     {
         var options = CommandLineOptions.Parse(["--models", "gamma"]);
@@ -85,11 +101,11 @@ public sealed class CommandLineOptionsTests
     }
 
     [Fact]
-    public void Apply_WithoutOverrides_KeepsConfiguration()
+    public void Apply_WithoutOverrides_KeepsEnabledConfiguration()
     {
         var configuration = CommandLineOptions.Parse([]).Apply(BaseConfiguration);
 
-        Assert.Equal(BaseConfiguration.Models.Count, configuration.Models.Count);
+        Assert.Equal(BaseConfiguration.Models.Where(model => model.Enabled), configuration.Models);
         Assert.Equal(BaseConfiguration.Repetitions, configuration.Repetitions);
         Assert.Equal(BaseConfiguration.BenchmarkRoot, configuration.BenchmarkRoot);
         Assert.False(configuration.Debug);
@@ -99,9 +115,13 @@ public sealed class CommandLineOptionsTests
     public void Apply_DebugEnablesDiagnosticsWithoutChangingOtherOptions()
     {
         var configuration = CommandLineOptions.Parse(["--debug"]).Apply(BaseConfiguration);
+        var expected = CommandLineOptions.Parse([]).Apply(BaseConfiguration);
 
         Assert.True(configuration.Debug);
-        Assert.Equal(BaseConfiguration, configuration with { Debug = false });
+        Assert.Equal(expected.Models, configuration.Models);
+        Assert.Equal(
+            expected with { Models = [] },
+            configuration with { Debug = false, Models = [] });
     }
 
     [Fact]

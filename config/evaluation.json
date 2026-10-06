@@ -6,6 +6,7 @@
   "models": [
     {
       "id": "reference-good",
+      "enabled": true,
       "adapter": "local-sample",
       "description": "Known-good reference implementation. Used to verify the harness itself.",
       "settings": {
@@ -14,6 +15,7 @@
     },
     {
       "id": "reference-broken",
+      "enabled": true,
       "adapter": "local-sample",
       "description": "Deliberately broken reference implementation. Must fail the relevant checks.",
       "settings": {

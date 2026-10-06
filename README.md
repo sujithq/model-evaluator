@@ -65,10 +65,10 @@ Matching examples for all 28 app-listed model IDs, plus Auto routing, use the fi
 dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.smoke.example.json
 ```
 
-This runs **one attempt for each of the 25 active named models** in the main Copilot matrix,
-at most two concurrently. Auto routing and deprecated models are excluded. CLI/account availability
-still applies; an unavailable model may fail. The unfiltered command consumes usage across all 25
-models, so use `--models copilot-gpt-5-mini,copilot-claude-haiku-4.5` for a smaller two-model check.
+This runs **one GPT-6 Luna attempt** by default, at most two attempts concurrently. The configuration
+contains all 28 named models from the Copilot matrix, but models are disabled unless their
+`enabled` property is `true`. CLI/account availability still applies; an unavailable model may fail.
+Use `--models copilot-gpt-5-mini,copilot-claude-haiku-4.5` to explicitly run disabled models.
 Each model edits one method to add two integers in a supplied solution. No project scaffolding,
 test authoring, UI, storage or external services are required. Generation is limited to 120 seconds
 per model; restore/build/format and acceptance each have 120-second stage limits, tests 60 seconds.
@@ -108,9 +108,9 @@ total time. Cost is used only when every ranked model has complete credit measur
 values never become zero. AI credits represent consumption, not necessarily invoice spend.
 Infrastructure failures are excluded from ranking metrics and reported separately.
 
-Use explicit `--models` and `--scenarios` filters: the unfiltered matrix schedules 375 attempts,
-consumes real usage, and includes model IDs your CLI account may not support. Auto routing is not
-in this named-model matrix. See [ranking rules and limitations](docs/interpreting-results.md#per-task-rankings).
+Use explicit `--models` and `--scenarios` filters to select disabled models. Without `--models`, the
+matrix runs only models whose `enabled` property is `true` (currently GPT-6 Luna). Auto routing is
+not in this named-model matrix. See [ranking rules and limitations](docs/interpreting-results.md#per-task-rankings).
 
 ## CLI
 

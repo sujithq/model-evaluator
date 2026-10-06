@@ -9,6 +9,9 @@ public sealed record ModelConfiguration
     /// <summary>Identifier used in reports. Must describe the full model + runner configuration.</summary>
     public required string Id { get; init; }
 
+    /// <summary>Include this model when no explicit model filter is supplied.</summary>
+    public bool Enabled { get; init; }
+
     /// <summary>Adapter key, for example <c>local-sample</c> or <c>command-line</c>.</summary>
     public required string Adapter { get; init; }
 
