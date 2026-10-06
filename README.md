@@ -39,6 +39,10 @@ dotnet run --project src/ModelEvaluator.Cli -- evaluate \
   --repetitions 3
 ```
 
+New users should start with the progressive [usage guide](docs/usage-guide.md). It covers
+prerequisites, a no-AI first run, real model setup, configuration and selection rules, custom
+runners, fair comparisons, artifacts, debugging, cancellation, exit codes and other edge cases.
+
 The run writes `artifacts/evaluations/run-<timestamp>/results.json` (machine readable) and
 `report.md` (Markdown comparison), plus a per-attempt artifact directory containing the prompt,
 generated code, command output, test results and the attempt's `result.json`.
@@ -214,6 +218,7 @@ failures, and a model exceeding its budget counts as an unsuccessful attempt
 
 ## Documentation
 
+* [Using model-evaluator: first run through advanced and edge cases](docs/usage-guide.md)
 * [Adding scenarios](docs/adding-scenarios.md)
 * [Configuring model adapters](docs/model-adapters.md)
 * [Reproducing an evaluation configuration](docs/reproducing-runs.md)
