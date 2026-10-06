@@ -59,6 +59,8 @@ For GitHub Copilot CLI, use the canonical
 and select one or a few models with `--models`. See the
 [setup and run instructions](docs/model-adapters.md#github-copilot-cli). The matrix is the single
 source of truth for the 28 named model IDs; Auto routing remains a separate example.
+The generated [Copilot model catalog](docs/copilot-models.md) lists GitHub's currently supported
+and deprecated models and is refreshed by a daily workflow from the official GitHub Docs tables.
 
 ### Minimal smoke test across all active models
 
@@ -221,6 +223,7 @@ failures, and a model exceeding its budget counts as an unsuccessful attempt
 * [Using model-evaluator: first run through advanced and edge cases](docs/usage-guide.md)
 * [Adding scenarios](docs/adding-scenarios.md)
 * [Configuring model adapters](docs/model-adapters.md)
+* [GitHub Copilot model catalog](docs/copilot-models.md)
 * [Reproducing an evaluation configuration](docs/reproducing-runs.md)
 * [Interpreting results](docs/interpreting-results.md)
 

@@ -114,6 +114,9 @@ The matrix passes `--usage-output-file "{usageFile}"` and selects `"usageFormat"
 Native usage is retained in each attempt's artifacts and read into the report, including AI
 credits, input/output tokens, cache metrics and API requests when reported. Completed-run
 telemetry supplements tool-call counts when available; invoice USD is not available.
+The generated [Copilot model catalog](copilot-models.md) tracks GitHub's provider-wide supported
+and deprecated model tables. It is updated daily by automation; it does not replace the
+account-level `list-models --probe` check.
 
 | Family | Model IDs |
 | --- | --- |
