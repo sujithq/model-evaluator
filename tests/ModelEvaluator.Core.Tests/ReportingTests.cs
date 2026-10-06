@@ -43,6 +43,49 @@ public sealed class ReportingTests
     }
 
     [Fact]
+    public void Render_ShowsCopilotUsageBreakdown()
+    {
+        var original = CreateReport();
+        var attempt = original.Attempts[0] with
+        {
+            Efficiency = new EfficiencyMetrics
+            {
+                InputTokens = 100,
+                OutputTokens = 40,
+                CacheReadTokens = 20,
+                CacheWriteTokens = 5,
+                ReasoningTokens = 10,
+                ToolCalls = 2,
+                AiCredits = 0.5m,
+                ApiRequests = 3,
+                ApiDurationSeconds = 1.25,
+            },
+        };
+        var report = original with { Attempts = [attempt] };
+
+        var markdown = MarkdownReportWriter.Render(report);
+        Assert.Contains("tokens 140 (in 100, out 40, cache read 20, cache write 5, reasoning 10)", markdown);
+        Assert.Contains("API requests 3 (1.25 API seconds)", markdown);
+
+        var directory = Path.Combine(Path.GetTempPath(), "eval-tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(JsonReportWriter.Write(report, directory)));
+            var summary = json.RootElement.GetProperty("summaries")[0];
+            Assert.Equal(100, summary.GetProperty("totalInputTokens").GetInt64());
+            Assert.Equal(40, summary.GetProperty("totalOutputTokens").GetInt64());
+            Assert.Equal(20, summary.GetProperty("totalCacheReadTokens").GetInt64());
+            Assert.Equal(5, summary.GetProperty("totalCacheWriteTokens").GetInt64());
+            Assert.Equal(10, summary.GetProperty("totalReasoningTokens").GetInt64());
+            Assert.Equal(1.25, summary.GetProperty("totalApiDurationSeconds").GetDouble());
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Render_ConvertsCreditsWithoutClaimingInvoiceCharges()
     {
         var original = CreateReport();

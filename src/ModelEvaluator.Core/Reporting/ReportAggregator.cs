@@ -77,7 +77,22 @@ public sealed record ModelScenarioSummary
         }
     }
 
+    public long? TotalInputTokens => CompleteLongMetric(a => a.Efficiency.InputTokens);
+
+    public long? TotalOutputTokens => CompleteLongMetric(a => a.Efficiency.OutputTokens);
+
+    public long? TotalCacheReadTokens => CompleteLongMetric(a => a.Efficiency.CacheReadTokens);
+
+    public long? TotalCacheWriteTokens => CompleteLongMetric(a => a.Efficiency.CacheWriteTokens);
+
+    public long? TotalReasoningTokens => CompleteLongMetric(a => a.Efficiency.ReasoningTokens);
+
     private bool HasCompleteUsage => Attempts.Count > 0 && Attempts.All(a => !a.Efficiency.UsageIsPartial);
+
+    private long? CompleteLongMetric(Func<AttemptResult, long?> selector) =>
+        HasCompleteUsage && Attempts.All(a => selector(a) is not null)
+            ? Attempts.Sum(a => selector(a)!.Value)
+            : null;
 
     public decimal? TotalCostUsd => HasCompleteUsage && Attempts.All(a => a.Efficiency.EstimatedCostUsd is not null)
         ? Attempts.Sum(a => a.Efficiency.EstimatedCostUsd!.Value)
@@ -102,6 +117,10 @@ public sealed record ModelScenarioSummary
 
     public long? TotalApiRequests => HasCompleteUsage && Attempts.All(a => a.Efficiency.ApiRequests is not null)
         ? Attempts.Sum(a => a.Efficiency.ApiRequests!.Value)
+        : null;
+
+    public double? TotalApiDurationSeconds => HasCompleteUsage && Attempts.All(a => a.Efficiency.ApiDurationSeconds is not null)
+        ? Attempts.Sum(a => a.Efficiency.ApiDurationSeconds!.Value)
         : null;
 
     public IReadOnlyList<string> ReportedModels =>

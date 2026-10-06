@@ -118,11 +118,15 @@ public static class MarkdownReportWriter
             foreach (var summary in scenarioGroup)
             {
                 var efficiency =
-                    $"{summary.MeanElapsedSeconds:0.0} s avg; tokens {Optional(summary.TotalTokens)}; " +
+                    $"{summary.MeanElapsedSeconds:0.0} s avg; tokens {Optional(summary.TotalTokens)} " +
+                    $"(in {Optional(summary.TotalInputTokens)}, out {Optional(summary.TotalOutputTokens)}, " +
+                    $"cache read {Optional(summary.TotalCacheReadTokens)}, cache write {Optional(summary.TotalCacheWriteTokens)}, " +
+                    $"reasoning {Optional(summary.TotalReasoningTokens)}); " +
                     $"tool calls {Optional(summary.TotalToolCalls)}; USD equivalent {OptionalCost(summary.TotalEquivalentCostUsd)}; " +
                     (summary.TotalCostUsd is not null ? $"adapter-reported USD {OptionalCost(summary.TotalCostUsd)}; " : "") +
                     $"AI credits {Optional(summary.TotalAiCredits)} ({summary.AiCreditsReportedAttempts}/{summary.TotalAttempts} attempts); " +
-                    $"premium requests {Optional(summary.TotalPremiumRequests)}; API requests {Optional(summary.TotalApiRequests)}";
+                    $"premium requests {Optional(summary.TotalPremiumRequests)}; API requests {Optional(summary.TotalApiRequests)} " +
+                    $"({Optional(summary.TotalApiDurationSeconds)} API seconds)";
 
                 builder.AppendLine(Row(
                     summary.ModelId,
