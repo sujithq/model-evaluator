@@ -1,0 +1,160 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test the harness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build --logger "trx;LogFileName=harness.trx" --results-directory artifacts/test-results
+
+      - name: Validate benchmark packages
+        run: dotnet run --project src/ModelEvaluator.Cli --configuration Release --no-build -- validate --config config/evaluation.json
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: harness-test-results
+          path: artifacts/test-results
+          retention-days: 14
+
+  tool-package:
+    name: Validate .NET tool package (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Pack, install, and test the tool
+        shell: pwsh
+        run: ./scripts/test_dotnet_tool.ps1
+
+      - name: Upload tool package
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v7
+        with:
+          name: model-evaluator-tool-package
+          path: artifacts/packages/*.nupkg
+          retention-days: 14
+          if-no-files-found: error
+
+  smoke-evaluation:
+    name: Reference smoke evaluation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Build the harness
+        run: dotnet build --configuration Release
+
+      - name: Validate the smoke benchmark package
+        run: dotnet run --project src/ModelEvaluator.Cli --configuration Release --no-build -- validate --config config/evaluation.smoke.reference.json
+
+      - name: Evaluate the smoke reference implementations
+        run: |
+          dotnet run --project src/ModelEvaluator.Cli --configuration Release --no-build -- \
+            evaluate --config config/evaluation.smoke.reference.json --execution-image ubuntu-latest
+
+      - name: Assert both smoke reference outcomes
+        run: |
+          results=(artifacts/smoke-reference/*/results.json)
+          test "${#results[@]}" -eq 1
+          jq -e '
+            (.attempts | length == 2) and
+            ([.attempts[] | select(.scenarioId == "smoke-add" and .modelId == "reference-good" and .outcome == "Success")] | length == 1) and
+            ([.attempts[] | select(.scenarioId == "smoke-add" and .modelId == "reference-broken" and .outcome == "ModelFailure")] | length == 1)
+          ' "${results[0]}"
+
+      - name: Upload smoke evaluation artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: smoke-reference-evaluation
+          path: artifacts/smoke-reference/**
+          retention-days: 14
+          if-no-files-found: warn
+
+  reference-evaluation:
+    name: Reference evaluation (${{ matrix.scenario }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - console-task-cli
+          - class-library-pricing
+          - webapi-task-minimal
+          - worker-job-processor
+          - blazor-task-app
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Build the harness
+        run: dotnet build --configuration Release
+
+      - name: Evaluate the reference implementations
+        run: |
+          dotnet run --project src/ModelEvaluator.Cli --configuration Release --no-build -- \
+            evaluate --scenarios ${{ matrix.scenario }} --repetitions 1 --execution-image ubuntu-latest
+
+      - name: Assert the known-good sample passes and the broken sample fails
+        run: |
+          results=$(ls -1t artifacts/evaluations/*/results.json | head -n 1)
+          good=$(jq -r '[.attempts[] | select(.modelId == "reference-good") | .outcome] | unique | join(",")' "$results")
+          broken=$(jq -r '[.attempts[] | select(.modelId == "reference-broken") | .outcome] | unique | join(",")' "$results")
+          echo "reference-good: $good"
+          echo "reference-broken: $broken"
+          test "$good" = "Success"
+          test "$broken" = "ModelFailure"
+
+      - name: Upload evaluation artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reference-evaluation-${{ matrix.scenario }}
+          path: artifacts/evaluations/**
+          retention-days: 14
+          if-no-files-found: warn

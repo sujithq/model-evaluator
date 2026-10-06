@@ -1,0 +1,350 @@
+{
+  "benchmarkRoot": "../benchmarks/v1",
+  "outputDirectory": "../artifacts/evaluations",
+  "repetitions": 3,
+  "scenarios": [],
+  "models": [
+    {
+      "id": "copilot-claude-fable-5.1",
+      "adapter": "command-line",
+      "description": "Claude Fable 5.1 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model claude-fable-5.1 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-claude-fable-5",
+      "adapter": "command-line",
+      "description": "Claude Fable 5 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model claude-fable-5 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-claude-haiku-4.5",
+      "adapter": "command-line",
+      "description": "Claude Haiku 4.5 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model claude-haiku-4.5 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-claude-opus-4.7",
+      "enabled": false,
+      "adapter": "command-line",
+      "description": "Claude Opus 4.7 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model claude-opus-4.7 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-claude-opus-4.8",
+      "adapter": "command-line",
+      "description": "Claude Opus 4.8 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model claude-opus-4.8 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-claude-opus-5.5",
+      "adapter": "command-line",
+      "description": "Claude Opus 5.5 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model claude-opus-5.5 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-claude-opus-5",
+      "adapter": "command-line",
+      "description": "Claude Opus 5 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model claude-opus-5 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-claude-sonnet-5",
+      "adapter": "command-line",
+      "description": "Claude Sonnet 5 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model claude-sonnet-5 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gemini-3.5-flash",
+      "enabled": false,
+      "adapter": "command-line",
+      "description": "Gemini 3.5 Flash generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gemini-3.5-flash --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gemini-3.6-flash",
+      "enabled": false,
+      "adapter": "command-line",
+      "description": "Gemini 3.6 Flash generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gemini-3.6-flash --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gemini-3.7-flash",
+      "adapter": "command-line",
+      "description": "Gemini 3.7 Flash generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gemini-3.7-flash --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gemini-3.8-flash",
+      "adapter": "command-line",
+      "description": "Gemini 3.8 Flash generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gemini-3.8-flash --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gpt-5-mini",
+      "adapter": "command-line",
+      "description": "GPT-5 mini generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-5-mini --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gpt-5.3-codex",
+      "adapter": "command-line",
+      "description": "GPT-5.3-Codex generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-5.3-codex --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gpt-5.4-mini",
+      "adapter": "command-line",
+      "description": "GPT-5.4 mini generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-5.4-mini --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gpt-5.4",
+      "adapter": "command-line",
+      "description": "GPT-5.4 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-5.4 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gpt-5.5",
+      "adapter": "command-line",
+      "description": "GPT-5.5 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-5.5 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gpt-5.6-luna",
+      "adapter": "command-line",
+      "description": "GPT-5.6 Luna generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-5.6-luna --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gpt-5.6-sol-fast",
+      "adapter": "command-line",
+      "description": "GPT-5.6 Sol Fast (Internal only) generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-5.6-sol-fast --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gpt-5.6-sol",
+      "adapter": "command-line",
+      "description": "GPT-5.6 Sol generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-5.6-sol --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gpt-5.6-terra",
+      "adapter": "command-line",
+      "description": "GPT-5.6 Terra generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-5.6-terra --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gpt-6-astra",
+      "adapter": "command-line",
+      "description": "GPT-6 Astra generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-6-astra --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gpt-6-luna",
+      "enabled": true,
+      "adapter": "command-line",
+      "description": "GPT-6 Luna generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-6-luna --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-gpt-6-sol",
+      "adapter": "command-line",
+      "description": "GPT-6 Sol generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-6-sol --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-grok-4.5",
+      "adapter": "command-line",
+      "description": "Grok 4.5 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model grok-4.5 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-grok-4.6",
+      "adapter": "command-line",
+      "description": "Grok 4.6 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model grok-4.6 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-grok-4.7",
+      "adapter": "command-line",
+      "description": "Grok 4.7 generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model grok-4.7 --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-mai-code-1.1-flash",
+      "adapter": "command-line",
+      "description": "MAI-Code-1.1-Flash generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model mai-code-1.1-flash --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    }
+  ],
+  "budgets": {},
+  "keepWorkspaces": false
+}

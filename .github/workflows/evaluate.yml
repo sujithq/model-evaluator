@@ -1,0 +1,76 @@
+name: evaluate
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenarios:
+        description: "Comma-separated scenario ids (empty runs every scenario)."
+        required: false
+        default: ""
+      models:
+        description: "Comma-separated model ids from the configuration file."
+        required: false
+        default: "reference-good,reference-broken"
+      repetitions:
+        description: "Independent attempts per model and scenario."
+        required: false
+        default: "3"
+      config:
+        description: "Evaluation configuration file."
+        required: false
+        default: "config/evaluation.json"
+      retention_days:
+        description: "How long to retain the reports and attempt artifacts."
+        required: false
+        default: "30"
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    name: Run the evaluation matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Build the harness
+        run: dotnet build --configuration Release
+
+      - name: Run the evaluation matrix
+        id: evaluate
+        env:
+          # Model provider credentials for command-line adapters. Generated projects never see them:
+          # the harness strips credential-prefixed variables before running any dotnet command.
+          MODEL_EVALUATOR_API_KEY: ${{ secrets.MODEL_EVALUATOR_API_KEY }}
+        run: |
+          set -o pipefail
+          args=(evaluate --config "${{ inputs.config }}" --repetitions "${{ inputs.repetitions }}" --execution-image "ubuntu-latest")
+          if [ -n "${{ inputs.models }}" ]; then args+=(--models "${{ inputs.models }}"); fi
+          if [ -n "${{ inputs.scenarios }}" ]; then args+=(--scenarios "${{ inputs.scenarios }}"); fi
+          dotnet run --project src/ModelEvaluator.Cli --configuration Release --no-build -- "${args[@]}"
+
+      - name: Summarise the comparison report
+        if: always()
+        run: |
+          report=$(ls -1t artifacts/evaluations/*/report.md 2>/dev/null | head -n 1 || true)
+          if [ -n "$report" ]; then
+            cat "$report" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No report was produced; inspect the job log for infrastructure errors." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload evaluation artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: evaluation-reports
+          path: artifacts/evaluations/**
+          retention-days: ${{ inputs.retention_days }}
+          if-no-files-found: warn

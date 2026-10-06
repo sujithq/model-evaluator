@@ -1,0 +1,5 @@
+{
+  "id": "gamma",
+  "payload": "give up",
+  "failuresBeforeSuccess": 5
+}

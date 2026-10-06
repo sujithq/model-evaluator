@@ -1,0 +1,46 @@
+name: Update Copilot model catalog
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install YAML parser
+        run: python -m pip install --disable-pip-version-check "PyYAML==6.0.2"
+
+      - name: Generate catalog
+        run: python scripts/update_copilot_model_catalog.py --refresh
+
+      - name: Create update pull request when changed
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore(docs): update Copilot model catalog"
+          title: "chore(docs): update Copilot model catalog"
+          body: |
+            Automated update from the official GitHub Docs model tables.
+
+            Sources:
+            - https://github.com/github/docs/blob/main/data/tables/copilot/model-release-status.yml
+            - https://github.com/github/docs/blob/main/data/tables/copilot/auto-model-selection.yml
+            - https://github.com/github/docs/blob/main/data/tables/copilot/model-deprecation-history.yml
+          branch: automation/update-copilot-model-catalog
+          delete-branch: true
+          labels: |
+            documentation
+            automated

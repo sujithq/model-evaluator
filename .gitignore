@@ -1,0 +1,13 @@
+## .NET build output
+bin/
+obj/
+
+## Evaluation output
+artifacts/
+.workspaces/
+
+## Tooling
+build/copilot-model-data/
+.vs/
+.idea/
+*.user
