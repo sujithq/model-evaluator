@@ -79,80 +79,41 @@ prompt and classifies the outcome as `available`, `unavailable`, `unconfirmed` o
 available model genuinely answers that prompt, probing consumes real provider usage; combine
 `--probe` with `--models` to keep the cost to the handful of IDs you care about.
 
-#### GPT-6 Astra with GitHub Copilot CLI
+#### GitHub Copilot CLI
 
-[`config/evaluation.gpt-6-astra.example.json`](../config/evaluation.gpt-6-astra.example.json)
-is a concrete configuration that invokes `copilot --model gpt-6-astra` in non-interactive prompt
-mode. Install GitHub Copilot CLI on `PATH`, authenticate with `copilot login`, and ensure your
-account and organization policy allow access to `gpt-6-astra`. The model identifier is passed
-directly to Copilot; the evaluator does not grant model access or substitute another model.
+[`config/evaluation.copilot-matrix.example.json`](../config/evaluation.copilot-matrix.example.json)
+is the canonical Copilot CLI configuration. It contains the supported named model IDs and the
+shared runner settings; select only the models you want to compare with `--models`.
 
-From the repository root, validate the configuration, then run a single scenario:
+Install GitHub Copilot CLI on `PATH`, authenticate with `copilot login`, and ensure your account
+and organization policy allow the selected model. The evaluator passes the selected provider model
+ID directly to Copilot; it does not grant model access or substitute another model.
+
+From the repository root, validate the matrix and run a small comparison:
 
 ```powershell
-dotnet run --project .\src\ModelEvaluator.Cli -- validate --config .\config\evaluation.gpt-6-astra.example.json
-dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.gpt-6-astra.example.json --scenarios console-task-cli --models copilot-gpt-6-astra --repetitions 3
+dotnet run --project .\src\ModelEvaluator.Cli -- validate --config .\config\evaluation.copilot-matrix.example.json
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.copilot-matrix.example.json --models copilot-gpt-6-astra,copilot-gpt-6-luna --scenarios console-task-cli --repetitions 3
 ```
 
-Omit `--scenarios` to run all five scenarios. Evaluation makes real model requests and consumes
-Copilot usage; `validate` only checks the local configuration and benchmark packages, not
-authentication or model availability.
+Do not run an unfiltered matrix by accident: 28 models x 5 scenarios x 3 repetitions creates
+420 model attempts. Use `list-models` and an explicit `--models` selection for normal comparisons.
+Validation only checks local configuration and benchmark packages; it does not authenticate or
+verify provider access.
 
-The adapter starts Copilot inside each fresh workspace and passes the resolved instructions as
-one `--prompt` argument. The harness enforces the generation timeout. No wrapper script or
-fictional `--prompt-file`/`--workdir` flags are needed.
-
-The example disables built-in MCP servers, custom instruction files, user questions and automatic
-CLI updates. Use a clean, dedicated runner profile without personal MCP servers, plugins or other
-customizations to keep comparisons consistent. Before recording benchmark results, add
-`runnerVersion` to the model's `settings` with the version reported by `copilot --no-auto-update --version`;
-otherwise reports correctly record it as `unknown`.
+The adapter starts Copilot inside each fresh workspace and passes the resolved instructions as one
+`--prompt` argument. The matrix disables built-in MCP servers, custom instruction files, user
+questions and automatic CLI updates. Use a clean, dedicated runner profile without personal MCP
+servers, plugins or other customizations to keep comparisons consistent. Record
+`runnerVersion` from `copilot --no-auto-update --version` before publishing results.
 
 **Run only in a disposable, isolated environment.** `--allow-all-tools` lets the agent edit files
 and execute commands without confirmation; a temporary workspace is not a security sandbox.
-Do not expose unrelated credentials or the evaluator's acceptance tests and sample implementations
-to the agent. The example does not disable path verification with `--allow-all-paths`.
 
-This configuration passes `--usage-output-file "{usageFile}"` to Copilot and selects
-`"usageFormat": "copilot-cli"`. Native usage is retained as `usage.json` in each attempt's artifacts
-and read into the report, including AI credits, tokens, cache metrics and API requests when reported.
-The native export does not supply tool-call counts or invoice USD. Completed-run telemetry supplements
-tool-call counts when available; invoice USD remains unavailable.
-The default configuration and CI self-checks continue to use the local reference samples.
-The on-demand evaluation workflow also needs Copilot CLI installation and authentication before
-it can run this example; selecting this file alone is not sufficient.
-
-#### GPT-6 Luna with GitHub Copilot CLI
-
-[`config/evaluation.gpt-6-luna.example.json`](../config/evaluation.gpt-6-luna.example.json)
-uses the same runner settings and budgets as the Astra example, but invokes
-`copilot --model gpt-6-luna` and reports the model as `copilot-gpt-6-luna`.
-The [Astra setup, isolation and usage guidance](#gpt-6-astra-with-github-copilot-cli) applies
-equally here; your account and organization policy must allow access to `gpt-6-luna`.
-
-```powershell
-dotnet run --project .\src\ModelEvaluator.Cli -- validate --config .\config\evaluation.gpt-6-luna.example.json
-dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.gpt-6-luna.example.json --scenarios console-task-cli --models copilot-gpt-6-luna --repetitions 3
-```
-
-Omit `--scenarios` to run all five scenarios. Validation does not make model requests or check
-model access; evaluation consumes Copilot usage. The default configuration remains unchanged.
-
-#### All app-listed models with GitHub Copilot CLI
-
-Separate `config/evaluation.<model-id>.example.json` files cover the model IDs from the
-Copilot app's September 28, 2026 session catalog. This is a static snapshot, not live model
-discovery or a claim that each model is available to your standalone Copilot CLI account.
-Each file selects one `copilot-<model-id>` entry, with the same runner flags, three repetitions,
-scenario selection and budget defaults as the Astra and Luna examples.
-
-Models default to disabled. An unfiltered run selects only entries with `"enabled": true`; an
-explicit `--models` filter can select any configured model regardless of that setting. GPT-6 Luna
-is the sole enabled Copilot model for the current test run.
-
-The previously deprecated `claude-opus-4.7`, `gemini-3.5-flash` and `gemini-3.6-flash` examples
-are back in `config/` and in the 28-model matrix, but remain disabled. Auto remains a separate
-example.
+The matrix passes `--usage-output-file "{usageFile}"` and selects `"usageFormat": "copilot-cli"`.
+Native usage is retained in each attempt's artifacts and read into the report, including AI
+credits, input/output tokens, cache metrics and API requests when reported. Completed-run
+telemetry supplements tool-call counts when available; invoice USD is not available.
 
 | Family | Model IDs |
 | --- | --- |
@@ -173,21 +134,17 @@ routing strategy, not a fixed model.** Its report ID is `copilot-auto`; `reporte
 records the contributing model IDs when exported by the CLI. Do not present Auto results as a
 named-model baseline.
 
-For example, select a model ID from the table and run:
+For example, select a model ID from the matrix and run:
 
 ```powershell
 $model = "claude-sonnet-5"
-$config = ".\config\evaluation.$model.example.json"
+$config = ".\config\evaluation.copilot-matrix.example.json"
 dotnet run --project .\src\ModelEvaluator.Cli -- validate --config $config
-dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config $config --scenarios console-task-cli
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config $config --models "copilot-$model" --scenarios console-task-cli --repetitions 1
 ```
 
-The [Copilot CLI setup and isolation guidance](#gpt-6-astra-with-github-copilot-cli) applies to all
-these files, including recording the actual runner version and the limitations on usage metrics.
-Reasoning effort and context tier are not explicitly set by these examples; keep runner settings
-consistent and record any overrides when comparing models. Evaluation consumes real Copilot usage;
-these examples do not automatically run a combined model matrix or change the default reference
-configuration.
+Auto remains a separate example because it is a routing strategy rather than a fixed model.
+Its report ID is `copilot-auto`; `reportedModels` records contributing model IDs when exported.
 
 For a shared per-task ranking, use
 [`evaluation.copilot-matrix.example.json`](../config/evaluation.copilot-matrix.example.json) and
@@ -198,10 +155,9 @@ dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\eval
 ```
 
 This runs six independent attempts and includes both models in one report. Without `--models`,
-the matrix selects all 25 named models (including IDs that may be unavailable to your account).
-Without either filter it schedules 25 models x 5 scenarios x 3 repetitions = 375 attempts.
-Auto is intentionally excluded from the matrix. Separately executed runs are not automatically
-merged; use the matrix when you want a single comparison report.
+the matrix selects only entries marked `"enabled": true`; explicitly selecting disabled IDs is
+supported. Separately executed runs are not automatically merged; use one matrix invocation when
+you want a single comparison report.
 
 #### Reporting usage
 
@@ -226,7 +182,7 @@ For Copilot CLI, set the following settings and append the usage option to the r
 }
 ```
 
-The complete example files also include the isolation/reproducibility flags discussed above.
+The matrix and special-purpose example files include the isolation/reproducibility flags discussed above.
 The parser uses the export shape verified with Copilot CLI `1.0.87-0`:
 
 | Export field | Report metric | Meaning |

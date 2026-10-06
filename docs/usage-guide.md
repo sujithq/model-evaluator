@@ -245,14 +245,15 @@ your account and organization. Then validate a supplied configuration:
 
 ```powershell
 dotnet run --project .\src\ModelEvaluator.Cli -- validate `
-  --config .\config\evaluation.gpt-6-luna.example.json
+  --config .\config\evaluation.copilot-matrix.example.json `
+  --models copilot-gpt-6-luna
 ```
 
 Start with one cheap, observable attempt:
 
 ```powershell
 dotnet run --project .\src\ModelEvaluator.Cli -- evaluate `
-  --config .\config\evaluation.gpt-6-luna.example.json `
+  --config .\config\evaluation.copilot-matrix.example.json `
   --scenarios console-task-cli `
   --models copilot-gpt-6-luna `
   --repetitions 1 `
@@ -267,7 +268,7 @@ Once the setup works, collect a baseline:
 
 ```powershell
 dotnet run --project .\src\ModelEvaluator.Cli -- evaluate `
-  --config .\config\evaluation.gpt-6-luna.example.json `
+  --config .\config\evaluation.copilot-matrix.example.json `
   --scenarios console-task-cli `
   --models copilot-gpt-6-luna `
   --repetitions 3 `

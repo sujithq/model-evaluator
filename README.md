@@ -54,15 +54,11 @@ self-verification models: `reference-good` (the known-good sample, which must su
 real models with the `command-line` adapter - see
 [`config/evaluation.models.example.json`](config/evaluation.models.example.json) and
 [docs/model-adapters.md](docs/model-adapters.md).
-For a concrete GPT-6 Astra example using GitHub Copilot CLI, see
-[`config/evaluation.gpt-6-astra.example.json`](config/evaluation.gpt-6-astra.example.json) and the
-[setup and run instructions](docs/model-adapters.md#gpt-6-astra-with-github-copilot-cli).
-A matching GPT-6 Luna example is available in
-[`config/evaluation.gpt-6-luna.example.json`](config/evaluation.gpt-6-luna.example.json), with
-[Luna run instructions](docs/model-adapters.md#gpt-6-luna-with-github-copilot-cli).
-Matching examples for all 28 app-listed model IDs, plus Auto routing, use the filename pattern
-`config/evaluation.<model-id>.example.json`. See the
-[model inventory and CLI availability caveats](docs/model-adapters.md#all-app-listed-models-with-github-copilot-cli).
+For GitHub Copilot CLI, use the canonical
+[`config/evaluation.copilot-matrix.example.json`](config/evaluation.copilot-matrix.example.json)
+and select one or a few models with `--models`. See the
+[setup and run instructions](docs/model-adapters.md#github-copilot-cli). The matrix is the single
+source of truth for the 28 named model IDs; Auto routing remains a separate example.
 
 ### Minimal smoke test across all active models
 
@@ -174,7 +170,7 @@ Add `--debug` to see the selected evaluation matrix, environment details, worksp
 paths, time budgets, stage start/completion messages, check results and live runner/build/test output:
 
 ```powershell
-dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.gpt-6-luna.example.json --scenarios console-task-cli --debug
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.copilot-matrix.example.json --models copilot-gpt-6-luna --scenarios console-task-cli --debug
 ```
 
 Debug messages are prefixed with `[debug]`. The run also writes one
