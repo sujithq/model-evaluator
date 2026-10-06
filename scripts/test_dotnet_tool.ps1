@@ -25,6 +25,22 @@ function Invoke-Checked {
     }
 }
 
+function Invoke-ExpectExitCode {
+    param(
+        [Parameter(Mandatory)]
+        [scriptblock]$Command,
+        [Parameter(Mandatory)]
+        [int]$ExpectedExitCode,
+        [Parameter(Mandatory)]
+        [string]$Description
+    )
+
+    & $Command
+    if ($LASTEXITCODE -ne $ExpectedExitCode) {
+        throw "$Description returned exit code $LASTEXITCODE; expected $ExpectedExitCode."
+    }
+}
+
 if (Test-Path $testRoot) {
     Remove-Item -Recurse -Force $testRoot
 }
@@ -80,12 +96,16 @@ Push-Location $workingDirectory
 try {
     Invoke-Checked { & $toolCommand --help } "Running --help"
     Invoke-Checked { & $toolCommand version } "Running version"
-    Invoke-Checked { & $toolCommand list-scenarios } "Listing bundled scenarios"
-    Invoke-Checked { & $toolCommand list-models } "Listing bundled models"
-    Invoke-Checked { & $toolCommand validate } "Validating bundled assets"
+    Invoke-Checked { & $toolCommand list-presets } "Listing packaged presets"
+    Invoke-Checked { & $toolCommand list-scenarios --preset default } "Listing bundled scenarios"
+    Invoke-Checked { & $toolCommand list-models --preset auto } "Listing bundled models"
+    Invoke-Checked { & $toolCommand validate --preset default } "Validating bundled assets"
+    Invoke-ExpectExitCode {
+        & $toolCommand validate --config config/evaluation.auto.example.json
+    } 2 "Resolving a missing caller-owned config"
     Invoke-Checked {
         & $toolCommand evaluate `
-            --config config/evaluation.smoke.reference.json `
+            --preset smoke-reference `
             --models reference-good `
             --repetitions 1
     } "Running the bundled reference smoke evaluation"

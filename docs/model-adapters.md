@@ -95,6 +95,15 @@ dotnet run --project .\src\ModelEvaluator.Cli -- validate --config .\config\eval
 dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\evaluation.copilot-matrix.example.json --models copilot-gpt-6-astra,copilot-gpt-6-luna --scenarios console-task-cli --repetitions 3
 ```
 
+With the installed .NET tool, select packaged configurations by name instead of using repository
+paths:
+
+```powershell
+modelevaluator validate --preset copilot-matrix
+modelevaluator evaluate --preset copilot-matrix --models copilot-gpt-6-astra,copilot-gpt-6-luna --scenarios console-task-cli --repetitions 3
+modelevaluator evaluate --preset auto --models copilot-auto --scenarios console-task-cli --repetitions 1
+```
+
 Do not run an unfiltered matrix by accident: 28 models x 5 scenarios x 3 repetitions creates
 420 model attempts. Use `list-models` and an explicit `--models` selection for normal comparisons.
 Validation only checks local configuration and benchmark packages; it does not authenticate or

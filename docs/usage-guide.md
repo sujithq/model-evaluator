@@ -55,7 +55,7 @@ The tool targets .NET 10. To build and install the current source globally:
 ```powershell
 dotnet pack .\src\ModelEvaluator.Cli --configuration Release
 dotnet tool install --global --add-source .\artifacts\packages `
-  --version 0.1.0 Sujithq.ModelEvaluator.Tool
+  --version 0.2.0 Sujithq.ModelEvaluator.Tool
 ```
 
 The installed command is `modelevaluator`:
@@ -63,8 +63,9 @@ The installed command is `modelevaluator`:
 ```powershell
 modelevaluator --help
 modelevaluator version
-modelevaluator list-scenarios
-modelevaluator validate
+modelevaluator list-presets
+modelevaluator list-scenarios --preset default
+modelevaluator validate --preset default
 ```
 
 For a repository-local tool manifest instead:
@@ -72,7 +73,7 @@ For a repository-local tool manifest instead:
 ```powershell
 dotnet new tool-manifest
 dotnet tool install --add-source .\artifacts\packages `
-  --version 0.1.0 Sujithq.ModelEvaluator.Tool
+  --version 0.2.0 Sujithq.ModelEvaluator.Tool
 dotnet tool run modelevaluator validate
 ```
 
@@ -83,17 +84,32 @@ dotnet tool update --global Sujithq.ModelEvaluator.Tool
 dotnet tool uninstall --global Sujithq.ModelEvaluator.Tool
 ```
 
-The package includes all shipped JSON configurations and both benchmark versions. With no
-`--config`, the evaluator uses `config/evaluation.json` from the caller when present, otherwise its
-bundled copy. An explicitly named relative configuration follows the same caller-first rule. Files
-supplied with an absolute `--config` path never fall back to bundled content.
+The package includes all shipped JSON configurations and both benchmark versions. Use
+`modelevaluator list-presets` to discover the packaged names: `default`, `auto`, `copilot-matrix`,
+`models`, `smoke`, and `smoke-reference`. For example:
 
-Bundled benchmark files remain read-only in the installation. Configured output and workspace paths
-that point into the installation are relocated under the caller's working directory. External agent
-CLIs, provider authentication, and model entitlement are not installed with this tool.
+```powershell
+modelevaluator evaluate --preset auto `
+  --scenarios console-task-cli `
+  --models copilot-auto `
+  --repetitions 1
+```
 
-All remaining examples use `dotnet run --project .\src\ModelEvaluator.Cli --`. When using the
-installed tool, replace that prefix with `modelevaluator`.
+`--preset` always uses immutable files from the installed package. `--config` always identifies a
+caller-owned file; relative config paths start at the current directory and never fall back to the
+package. The options are mutually exclusive. With neither option, a repository-local
+`config/evaluation.json` takes precedence, otherwise the packaged `default` configuration is used.
+
+Paths declared inside a configuration are relative to that configuration file. CLI path overrides
+(`--benchmark-root`, `--output`, and `--workspace-root`) are relative to the current directory.
+Bundled benchmark files remain read-only. Bundled output/workspace paths are relocated under the
+caller directory; when no workspace root is configured, workspaces use the OS temporary directory.
+External agent CLIs, authentication, and model entitlement are not installed with this tool.
+
+All remaining examples use `dotnet run --project .\src\ModelEvaluator.Cli --` with repository
+configuration files. With the installed tool, replace that prefix with `modelevaluator` and replace
+the corresponding `--config` argument with `--preset auto`, `--preset copilot-matrix`,
+`--preset smoke`, or another name shown by `list-presets`.
 
 ## 4. First entry: inspect without evaluating
 
@@ -388,9 +404,10 @@ A configuration has this shape:
 ```
 
 Relative `benchmarkRoot`, `outputDirectory`, and `workspaceRoot` paths are resolved relative to the
-configuration file, not the current directory. In contrast, the default config path
-`config/evaluation.json` and a relative value passed to `--config` are found from the current
-directory. CLI path overrides are converted to absolute paths from the current directory.
+configuration file, not the current directory. `--preset` selects a packaged configuration by name.
+A relative value passed to `--config` identifies a caller-owned file from the current directory and
+never falls back to packaged content. CLI path overrides are converted to absolute paths from the
+current directory.
 
 CLI options override configuration values. Boolean CLI flags only enable behavior: for example,
 `--debug` can turn debugging on, but there is no CLI flag that turns a configured `"debug": true`
@@ -596,11 +613,13 @@ repetitions, concurrency, and execution environment.
 model-evaluator evaluate [options]        Run the selected evaluation matrix.
 model-evaluator list-scenarios [options]  List scenarios and prompt hashes.
 model-evaluator list-models [options]     List the model IDs --models accepts.
+model-evaluator list-presets              List packaged configuration presets.
 model-evaluator validate [options]        Validate scenario and adapter configuration.
 model-evaluator version                   Print the evaluator version.
 ```
 
 ```text
+--preset <name>
 --config <path>
 --benchmark-root <path>
 --models <id,id>

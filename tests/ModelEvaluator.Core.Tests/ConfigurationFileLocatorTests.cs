@@ -5,6 +5,21 @@ namespace ModelEvaluator.Core.Tests;
 public sealed class ConfigurationFileLocatorTests
 {
     [Fact]
+    public void Presets_HaveUniqueNamesAndExistingConfigurationFiles()
+    {
+        Assert.Equal(
+            ["default", "auto", "copilot-matrix", "models", "smoke", "smoke-reference"],
+            ConfigurationFileLocator.Presets.Select(preset => preset.Name));
+        Assert.Equal(
+            ConfigurationFileLocator.Presets.Count,
+            ConfigurationFileLocator.Presets.Select(preset => preset.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.All(ConfigurationFileLocator.Presets, preset =>
+            Assert.True(
+                File.Exists(Path.Combine(RepositoryLocator.Root, "config", preset.FileName)),
+                $"Packaged preset '{preset.Name}' references missing config/{preset.FileName}."));
+    }
+
+    [Fact]
     public void Resolve_PrefersRequestedFileInWorkingDirectory()
     {
         using var directories = new TestDirectories();
@@ -14,6 +29,7 @@ public sealed class ConfigurationFileLocatorTests
 
         var location = ConfigurationFileLocator.Resolve(
             relativePath,
+            preset: null,
             directories.WorkingDirectory,
             directories.ApplicationBaseDirectory);
 
@@ -22,19 +38,62 @@ public sealed class ConfigurationFileLocatorTests
     }
 
     [Fact]
-    public void Resolve_FallsBackToRequestedBundledFile()
+    public void Resolve_DoesNotFallbackCallerConfigToBundledFile()
     {
         using var directories = new TestDirectories();
         var relativePath = Path.Combine("config", "custom.json");
-        var bundledFile = directories.CreateApplicationFile(relativePath);
+        directories.CreateApplicationFile(relativePath);
 
         var location = ConfigurationFileLocator.Resolve(
             relativePath,
+            preset: null,
+            directories.WorkingDirectory,
+            directories.ApplicationBaseDirectory);
+
+        Assert.Equal(Path.Combine(directories.WorkingDirectory, relativePath), location.Path);
+        Assert.False(location.IsBundled);
+    }
+
+    [Fact]
+    public void Resolve_PresetUsesBundledConfiguration()
+    {
+        using var directories = new TestDirectories();
+        var bundledFile = directories.CreateApplicationFile(Path.Combine("config", "evaluation.auto.example.json"));
+
+        var location = ConfigurationFileLocator.Resolve(
+            requestedPath: null,
+            preset: "AUTO",
             directories.WorkingDirectory,
             directories.ApplicationBaseDirectory);
 
         Assert.Equal(bundledFile, location.Path);
         Assert.True(location.IsBundled);
+    }
+
+    [Fact]
+    public void Resolve_RejectsUnknownPreset()
+    {
+        using var directories = new TestDirectories();
+
+        var exception = Assert.Throws<KeyNotFoundException>(() => ConfigurationFileLocator.Resolve(
+            requestedPath: null,
+            preset: "missing",
+            directories.WorkingDirectory,
+            directories.ApplicationBaseDirectory));
+
+        Assert.Contains("Available presets", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Resolve_RejectsConfigAndPresetTogether()
+    {
+        using var directories = new TestDirectories();
+
+        Assert.Throws<FormatException>(() => ConfigurationFileLocator.Resolve(
+            requestedPath: "custom.json",
+            preset: "auto",
+            directories.WorkingDirectory,
+            directories.ApplicationBaseDirectory));
     }
 
     [Fact]
@@ -46,6 +105,7 @@ public sealed class ConfigurationFileLocatorTests
 
         var location = ConfigurationFileLocator.Resolve(
             requestedPath: null,
+            preset: null,
             directories.WorkingDirectory,
             directories.ApplicationBaseDirectory);
 
@@ -61,6 +121,7 @@ public sealed class ConfigurationFileLocatorTests
 
         var location = ConfigurationFileLocator.Resolve(
             requestedPath: null,
+            preset: null,
             directories.WorkingDirectory,
             directories.ApplicationBaseDirectory);
 
@@ -76,6 +137,7 @@ public sealed class ConfigurationFileLocatorTests
 
         var location = ConfigurationFileLocator.Resolve(
             requestedPath,
+            preset: null,
             directories.WorkingDirectory,
             directories.ApplicationBaseDirectory);
 

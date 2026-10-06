@@ -30,6 +30,32 @@ public sealed class CommandLineOptionsTests
     }
 
     [Fact]
+    public void Parse_ReadsPackagedPreset()
+    {
+        var options = CommandLineOptions.Parse(["--preset", "auto"]);
+
+        Assert.Equal("auto", options.Preset);
+        Assert.Null(options.ConfigPath);
+    }
+
+    [Theory]
+    [InlineData("--config", "custom.json", "--preset", "auto")]
+    [InlineData("--preset", "auto", "--config", "custom.json")]
+    public void Parse_RejectsConfigAndPresetTogether(params string[] arguments) =>
+        Assert.Throws<FormatException>(() => CommandLineOptions.Parse(arguments));
+
+    [Fact]
+    public void Parse_ResolvesPathOverridesFromCurrentDirectory()
+    {
+        var options = CommandLineOptions.Parse(
+            ["--benchmark-root", "benchmarks/custom", "--output", "reports", "--workspace-root", ".work"]);
+
+        Assert.Equal(Path.GetFullPath("benchmarks/custom"), options.BenchmarkRoot);
+        Assert.Equal(Path.GetFullPath("reports"), options.OutputDirectory);
+        Assert.Equal(Path.GetFullPath(".work"), options.WorkspaceRoot);
+    }
+
+    [Fact]
     public void Parse_ReadsProbeOptions()
     {
         var options = CommandLineOptions.Parse(["--probe"]);

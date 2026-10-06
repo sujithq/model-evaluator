@@ -7,6 +7,8 @@ public sealed record CommandLineOptions
 {
     public string? ConfigPath { get; init; }
 
+    public string? Preset { get; init; }
+
     public string? BenchmarkRoot { get; init; }
 
     public string? OutputDirectory { get; init; }
@@ -50,6 +52,9 @@ public sealed record CommandLineOptions
             {
                 case "--config":
                     options = options with { ConfigPath = Next(queue, argument) };
+                    break;
+                case "--preset":
+                    options = options with { Preset = Next(queue, argument) };
                     break;
                 case "--benchmark-root":
                     options = options with { BenchmarkRoot = Path.GetFullPath(Next(queue, argument)) };
@@ -99,6 +104,11 @@ public sealed record CommandLineOptions
                 default:
                     throw new FormatException($"Unknown option '{argument}'.");
             }
+        }
+
+        if (options.ConfigPath is not null && options.Preset is not null)
+        {
+            throw new FormatException("Options '--config' and '--preset' cannot be used together.");
         }
 
         return options;

@@ -47,6 +47,7 @@ public static class Program
             "evaluate" => await EvaluateAsync(options).ConfigureAwait(false),
             "list-scenarios" => ListScenarios(options),
             "list-models" => ListModels(options),
+            "list-presets" => ListPresets(),
             "validate" => Validate(options),
             "version" => PrintVersion(),
             _ => Unknown(command),
@@ -185,6 +186,21 @@ public static class Program
         return options.Probe ? ProbeModels(models) : 0;
     }
 
+    private static int ListPresets()
+    {
+        var nameWidth = ConfigurationFileLocator.Presets.Max(preset => preset.Name.Length);
+        Console.WriteLine($"{"NAME".PadRight(nameWidth)}  CONFIGURATION");
+        foreach (var preset in ConfigurationFileLocator.Presets)
+        {
+            Console.WriteLine($"{preset.Name.PadRight(nameWidth)}  config/{preset.FileName}");
+            Console.WriteLine($"{new string(' ', nameWidth)}  {preset.Description}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("Use a packaged configuration with --preset <name>.");
+        return 0;
+    }
+
     private static int ProbeModels(IReadOnlyList<ModelConfiguration> models)
     {
         var catalog = PublishedCopilotModelCatalog.Load();
@@ -313,7 +329,11 @@ public static class Program
     }
 
     private static ConfigurationFileLocation ConfigurationLocation(CommandLineOptions options) =>
-        ConfigurationFileLocator.Resolve(options.ConfigPath, Environment.CurrentDirectory, AppContext.BaseDirectory);
+        ConfigurationFileLocator.Resolve(
+            options.ConfigPath,
+            options.Preset,
+            Environment.CurrentDirectory,
+            AppContext.BaseDirectory);
 
     private static string ConfigurationPath(CommandLineOptions options) => ConfigurationLocation(options).Path;
 
@@ -353,18 +373,20 @@ public static class Program
               model-evaluator evaluate [options]        Run the evaluation matrix and write both reports.
               model-evaluator list-scenarios [options]  List benchmark scenarios and prompt hashes.
               model-evaluator list-models [options]     List the model ids --models accepts.
+              model-evaluator list-presets              List packaged configuration presets.
               model-evaluator validate [options]        Validate scenario packages and model configuration.
               model-evaluator version                   Print the harness version.
 
             Options:
-              --config <path>              Evaluation configuration file (default: caller config, then bundled).
-              --benchmark-root <path>      Override the benchmark package root.
+              --preset <name>             Use a packaged configuration; see list-presets.
+              --config <path>              Use a caller-owned configuration file.
+              --benchmark-root <path>      Override the benchmark package root (relative to current directory).
               --models <a,b>               Restrict the run to these model ids.
               --scenarios <a,b>            Restrict the run to these scenario ids.
               --repetitions <n>            Independent attempts per model and scenario.
               --max-parallel <n>           Maximum concurrent attempts (default: 1).
-              --output <path>              Output directory for reports and artifacts.
-              --workspace-root <path>      Root for disposable per-attempt workspaces.
+              --output <path>              Output directory (relative to current directory).
+              --workspace-root <path>      Root for disposable workspaces (default: OS temporary directory).
               --execution-image <name>     Record the execution image or runner label.
               --generation-timeout <sec>   Override the model generation budget.
               --build-timeout <sec>        Override the restore/build budget.

@@ -33,28 +33,32 @@ install the current source globally:
 ```powershell
 dotnet pack .\src\ModelEvaluator.Cli --configuration Release
 dotnet tool install --global --add-source .\artifacts\packages `
-  --version 0.1.0 Sujithq.ModelEvaluator.Tool
+  --version 0.2.0 Sujithq.ModelEvaluator.Tool
 ```
 
 Then run it from any directory:
 
 ```powershell
-modelevaluator list-scenarios
-modelevaluator list-models
-modelevaluator validate
-modelevaluator evaluate --scenarios console-task-cli --models reference-good --repetitions 1
+modelevaluator list-presets
+modelevaluator list-scenarios --preset default
+modelevaluator list-models --preset auto
+modelevaluator validate --preset default
+modelevaluator evaluate --preset default --scenarios console-task-cli --models reference-good --repetitions 1
 ```
 
 Reports are written under the caller's working directory, not the tool installation directory.
-Relative `--config` paths are resolved from the caller first and then from the bundled configurations.
-External model CLIs and their authentication remain separate prerequisites.
+Use `--preset` for immutable packaged configurations such as `auto`, `copilot-matrix`, and `smoke`.
+Use `--config` only for a caller-owned file; relative paths start at the current directory and never
+fall back to package content. `--benchmark-root`, `--output`, and `--workspace-root` overrides are
+also relative to the current directory. External model CLIs and authentication remain separate
+prerequisites.
 
 For a repository-local, version-pinned installation:
 
 ```powershell
 dotnet new tool-manifest
 dotnet tool install --add-source .\artifacts\packages `
-  --version 0.1.0 Sujithq.ModelEvaluator.Tool
+  --version 0.2.0 Sujithq.ModelEvaluator.Tool
 dotnet tool run modelevaluator validate
 ```
 
@@ -160,11 +164,12 @@ not in this named-model matrix. See [ranking rules and limitations](docs/interpr
 model-evaluator evaluate [options]        Run the evaluation matrix and write both reports.
 model-evaluator list-scenarios [options]  List benchmark scenarios and prompt hashes.
 model-evaluator list-models [options]     List the model ids --models accepts.
+model-evaluator list-presets              List packaged configuration presets.
 model-evaluator validate [options]        Validate scenario packages and model configuration.
 model-evaluator version                   Print the harness version.
 ```
 
-Options: `--config`, `--benchmark-root`, `--models`, `--scenarios`, `--repetitions`, `--max-parallel`, `--output`,
+Options: `--preset`, `--config`, `--benchmark-root`, `--models`, `--scenarios`, `--repetitions`, `--max-parallel`, `--output`,
 `--workspace-root`, `--execution-image`, `--generation-timeout`, `--build-timeout`, `--test-timeout`,
 `--acceptance-timeout`, `--keep-workspaces`, `--debug`, `--probe`. Exit codes: `0` success, `1` usage or validation
 problems, `2` error, `3` at least one infrastructure failure, `130` cancelled.
