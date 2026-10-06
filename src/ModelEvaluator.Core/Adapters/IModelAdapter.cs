@@ -26,6 +26,9 @@ public sealed record ModelAttemptContext
     public required TimeSpan Timeout { get; init; }
 
     public required int Repetition { get; init; }
+
+    /// <summary>Optional observer for live runner output; transcripts are saved independently.</summary>
+    public Action<string>? OnOutput { get; init; }
 }
 
 /// <summary>What an adapter reports back after producing a candidate solution.</summary>
@@ -42,6 +45,8 @@ public sealed record ModelAttemptOutput
 
     public double DurationSeconds { get; init; }
 
+    public bool UsageIsPartial { get; init; }
+
     public int? ToolCalls { get; init; }
 
     public long? InputTokens { get; init; }
@@ -50,13 +55,31 @@ public sealed record ModelAttemptOutput
 
     public decimal? EstimatedCostUsd { get; init; }
 
+    public decimal? AiCredits { get; init; }
+
+    public decimal? PremiumRequests { get; init; }
+
+    public long? CacheReadTokens { get; init; }
+
+    public long? CacheWriteTokens { get; init; }
+
+    public long? ReasoningTokens { get; init; }
+
+    public long? ApiRequests { get; init; }
+
+    public double? ApiDurationSeconds { get; init; }
+
+    public IReadOnlyList<string> ReportedModels { get; init; } = [];
+
+    public IReadOnlyList<string> UsageWarnings { get; init; } = [];
+
     public required RunnerInfo Runner { get; init; }
 
     /// <summary>Metrics the adapter cannot supply, reported explicitly instead of as zero.</summary>
     public IReadOnlyList<string> UnavailableMetrics { get; init; } = [];
 }
 
-/// <summary>A pluggable model/provider integration.</summary>
+/// <summary>A pluggable model/provider integration. Implementations must support concurrent attempts.</summary>
 public interface IModelAdapter
 {
     /// <summary>Adapter key used in configuration.</summary>

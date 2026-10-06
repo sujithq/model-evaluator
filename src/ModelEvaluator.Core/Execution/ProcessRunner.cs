@@ -20,7 +20,9 @@ public sealed record CommandResult
 
     public required bool TimedOut { get; init; }
 
-    public bool Succeeded => !TimedOut && ExitCode == 0;
+    public bool Cancelled { get; init; }
+
+    public bool Succeeded => !TimedOut && !Cancelled && ExitCode == 0;
 
     public string CombinedOutput => string.IsNullOrEmpty(StandardError)
         ? StandardOutput
@@ -47,6 +49,7 @@ public sealed class ProcessRunner
         Action<string>? onOutput = null,
         CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var argumentList = arguments.ToList();
         var startInfo = new ProcessStartInfo
         {
@@ -124,6 +127,8 @@ public sealed class ProcessRunner
         {
             timedOut = !cancellationToken.IsCancellationRequested;
             TryKill(process);
+            // Drain redirected output before callers dispose transcripts or remove workspaces.
+            await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         stopwatch.Stop();
@@ -137,6 +142,7 @@ public sealed class ProcessRunner
             StandardError = stderr.ToString(),
             DurationSeconds = stopwatch.Elapsed.TotalSeconds,
             TimedOut = timedOut,
+            Cancelled = cancellationToken.IsCancellationRequested,
         };
     }
 
@@ -164,10 +170,6 @@ public sealed class ProcessRunner
         catch (InvalidOperationException)
         {
             // Process already gone.
-        }
-        catch (NotSupportedException)
-        {
-            // Platform does not support tree kill.
         }
     }
 }

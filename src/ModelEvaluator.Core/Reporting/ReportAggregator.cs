@@ -15,6 +15,8 @@ public sealed record ModelScenarioSummary
 
     public required string RunnerLabel { get; init; }
 
+    public int MaxParallel { get; init; } = 1;
+
     public required IReadOnlyList<AttemptResult> Attempts { get; init; }
 
     public int TotalAttempts => Attempts.Count;
@@ -46,6 +48,10 @@ public sealed record ModelScenarioSummary
         ? 0
         : Attempts.Average(a => a.Efficiency.ElapsedSecondsTotal);
 
+    public double MeanGenerationSeconds => Attempts.Count == 0
+        ? 0
+        : Attempts.Average(a => a.Efficiency.ElapsedSecondsGeneration);
+
     public double ElapsedStandardDeviation
     {
         get
@@ -65,22 +71,41 @@ public sealed record ModelScenarioSummary
     {
         get
         {
-            var values = Attempts
-                .Select(a => (a.Efficiency.InputTokens ?? 0) + (a.Efficiency.OutputTokens ?? 0))
-                .ToList();
-            return Attempts.Any(a => a.Efficiency.InputTokens is not null || a.Efficiency.OutputTokens is not null)
-                ? values.Sum()
+            return HasCompleteUsage && Attempts.All(a => a.Efficiency.InputTokens is not null && a.Efficiency.OutputTokens is not null)
+                ? Attempts.Sum(a => a.Efficiency.InputTokens!.Value + a.Efficiency.OutputTokens!.Value)
                 : null;
         }
     }
 
-    public decimal? TotalCostUsd => Attempts.Any(a => a.Efficiency.EstimatedCostUsd is not null)
-        ? Attempts.Sum(a => a.Efficiency.EstimatedCostUsd ?? 0m)
+    private bool HasCompleteUsage => Attempts.Count > 0 && Attempts.All(a => !a.Efficiency.UsageIsPartial);
+
+    public decimal? TotalCostUsd => HasCompleteUsage && Attempts.All(a => a.Efficiency.EstimatedCostUsd is not null)
+        ? Attempts.Sum(a => a.Efficiency.EstimatedCostUsd!.Value)
         : null;
 
-    public int? TotalToolCalls => Attempts.Any(a => a.Efficiency.ToolCalls is not null)
-        ? Attempts.Sum(a => a.Efficiency.ToolCalls ?? 0)
+    public int? TotalToolCalls => HasCompleteUsage && Attempts.All(a => a.Efficiency.ToolCalls is not null)
+        ? Attempts.Sum(a => a.Efficiency.ToolCalls!.Value)
         : null;
+
+    public int AiCreditsReportedAttempts => Attempts.Count(a => !a.Efficiency.UsageIsPartial && a.Efficiency.AiCredits is not null);
+
+    public decimal? TotalAiCredits => Attempts.Count > 0 && AiCreditsReportedAttempts == Attempts.Count
+        ? Attempts.Sum(a => a.Efficiency.AiCredits!.Value)
+        : null;
+
+    /// <summary>Published USD value of consumed credits, not an additional invoice charge.</summary>
+    public decimal? TotalEquivalentCostUsd => TotalAiCredits * 0.01m;
+
+    public decimal? TotalPremiumRequests => HasCompleteUsage && Attempts.All(a => a.Efficiency.PremiumRequests is not null)
+        ? Attempts.Sum(a => a.Efficiency.PremiumRequests!.Value)
+        : null;
+
+    public long? TotalApiRequests => HasCompleteUsage && Attempts.All(a => a.Efficiency.ApiRequests is not null)
+        ? Attempts.Sum(a => a.Efficiency.ApiRequests!.Value)
+        : null;
+
+    public IReadOnlyList<string> ReportedModels =>
+        Attempts.SelectMany(a => a.Efficiency.ReportedModels).Distinct().Order(StringComparer.Ordinal).ToList();
 
     private static bool AllMandatoryPassed(AttemptResult attempt, CheckCategory category)
     {
@@ -93,7 +118,7 @@ public sealed record ModelScenarioSummary
 public static class ReportAggregator
 {
     public static IReadOnlyList<ModelScenarioSummary> Summarise(EvaluationReport report) => report.Attempts
-        .GroupBy(a => (a.ScenarioId, a.ModelId))
+        .GroupBy(a => (a.ScenarioId, a.ModelId, a.BenchmarkVersion, a.PromptHash, a.Runner.Name, a.Runner.Version, a.Environment.MaxParallel))
         .Select(g => new ModelScenarioSummary
         {
             ScenarioId = g.Key.ScenarioId,
@@ -101,6 +126,7 @@ public static class ReportAggregator
             BenchmarkVersion = g.First().BenchmarkVersion,
             PromptHash = g.First().PromptHash,
             RunnerLabel = $"{g.First().Runner.Name}@{g.First().Runner.Version}",
+            MaxParallel = g.Key.MaxParallel,
             Attempts = g.OrderBy(a => a.Repetition).ToList(),
         })
         .OrderBy(s => s.ScenarioId, StringComparer.Ordinal)

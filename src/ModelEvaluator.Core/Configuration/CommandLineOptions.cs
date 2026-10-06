@@ -21,6 +21,8 @@ public sealed record CommandLineOptions
 
     public int? Repetitions { get; init; }
 
+    public int? MaxParallel { get; init; }
+
     public int? GenerationTimeoutSeconds { get; init; }
 
     public int? BuildTimeoutSeconds { get; init; }
@@ -30,6 +32,8 @@ public sealed record CommandLineOptions
     public int? AcceptanceTimeoutSeconds { get; init; }
 
     public bool KeepWorkspaces { get; init; }
+
+    public bool Debug { get; init; }
 
     public static CommandLineOptions Parse(IEnumerable<string> arguments)
     {
@@ -65,6 +69,9 @@ public sealed record CommandLineOptions
                 case "--repetitions":
                     options = options with { Repetitions = Int(queue, argument) };
                     break;
+                case "--max-parallel":
+                    options = options with { MaxParallel = Int(queue, argument) };
+                    break;
                 case "--generation-timeout":
                     options = options with { GenerationTimeoutSeconds = Int(queue, argument) };
                     break;
@@ -80,6 +87,9 @@ public sealed record CommandLineOptions
                 case "--keep-workspaces":
                     options = options with { KeepWorkspaces = true };
                     break;
+                case "--debug":
+                    options = options with { Debug = true };
+                    break;
                 default:
                     throw new FormatException($"Unknown option '{argument}'.");
             }
@@ -91,18 +101,26 @@ public sealed record CommandLineOptions
     /// <summary>Applies the options on top of a configuration file.</summary>
     public EvaluationConfiguration Apply(EvaluationConfiguration configuration)
     {
-        var models = configuration.Models;
+        IReadOnlyList<ModelConfiguration> models;
         if (Models.Count > 0)
         {
-            var selected = models.Where(m => Models.Contains(m.Id, StringComparer.OrdinalIgnoreCase)).ToList();
-            var unknown = Models.Where(id => !models.Any(m => m.Id.Equals(id, StringComparison.OrdinalIgnoreCase))).ToList();
+            var selected = configuration.Models
+                .Where(m => Models.Contains(m.Id, StringComparer.OrdinalIgnoreCase))
+                .ToList();
+            var unknown = Models
+                .Where(id => !configuration.Models.Any(m => m.Id.Equals(id, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
             if (unknown.Count > 0)
             {
                 throw new KeyNotFoundException(
-                    $"Unknown model id(s): {string.Join(", ", unknown)}. Configured models: {string.Join(", ", models.Select(m => m.Id))}.");
+                    $"Unknown model id(s): {string.Join(", ", unknown)}. Configured models: {string.Join(", ", configuration.Models.Select(m => m.Id))}.");
             }
 
             models = selected;
+        }
+        else
+        {
+            models = configuration.Models.Where(model => model.Enabled).ToList();
         }
 
         return configuration with
@@ -112,9 +130,11 @@ public sealed record CommandLineOptions
             WorkspaceRoot = WorkspaceRoot ?? configuration.WorkspaceRoot,
             ExecutionImage = ExecutionImage ?? configuration.ExecutionImage,
             Repetitions = Repetitions ?? configuration.Repetitions,
+            MaxParallel = MaxParallel ?? configuration.MaxParallel,
             Scenarios = Scenarios.Count > 0 ? Scenarios : configuration.Scenarios,
             Models = models,
             KeepWorkspaces = KeepWorkspaces || configuration.KeepWorkspaces,
+            Debug = Debug || configuration.Debug,
             Budgets = new BudgetOverrides
             {
                 GenerationTimeoutSeconds = GenerationTimeoutSeconds ?? configuration.Budgets.GenerationTimeoutSeconds,

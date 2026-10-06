@@ -1,0 +1,22 @@
+{
+  "benchmarkRoot": "../benchmarks/v1",
+  "outputDirectory": "../artifacts/evaluations",
+  "repetitions": 3,
+  "scenarios": [],
+  "models": [
+    {
+      "id": "copilot-mai-code-1.1-flash",
+      "adapter": "command-line",
+      "description": "MAI-Code-1.1-Flash generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model mai-code-1.1-flash --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    }
+  ],
+  "budgets": {},
+  "keepWorkspaces": false
+}

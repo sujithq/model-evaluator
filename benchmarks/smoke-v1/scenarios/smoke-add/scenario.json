@@ -1,0 +1,26 @@
+{
+  "id": "smoke-add",
+  "name": "Smoke: add two integers",
+  "projectType": "ClassLibrary",
+  "benchmarkVersion": "smoke-1.0.0",
+  "targetFramework": "net10.0",
+  "sdkVersion": "10.0.100",
+  "allowedPackages": ["Microsoft.NET.Test.Sdk", "xunit", "xunit.runner.visualstudio"],
+  "requiredGlobs": ["Smoke.slnx", "src/**/*.csproj", "tests/**/*.csproj", "README.md"],
+  "preservedPaths": [
+    "global.json", ".editorconfig", "BENCHMARK.md", "Smoke.slnx", "README.md",
+    "src/Smoke/Smoke.csproj", "tests/Smoke.Tests/Smoke.Tests.csproj",
+    "tests/Smoke.Tests/CalculatorTests.cs"
+  ],
+  "acceptanceProject": "acceptance/Smoke.Acceptance.csproj",
+  "budget": {
+    "generationTimeoutSeconds": 120,
+    "buildTimeoutSeconds": 120,
+    "testTimeoutSeconds": 60,
+    "acceptanceTimeoutSeconds": 120
+  },
+  "samples": {
+    "good": { "path": "samples/good", "description": "Correct unchecked integer addition." },
+    "broken": { "path": "samples/broken", "description": "Subtraction instead of addition." }
+  }
+}
