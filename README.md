@@ -47,7 +47,8 @@ modelevaluator evaluate --preset default --scenarios console-task-cli --models r
 ```
 
 Reports are written under the caller's working directory, not the tool installation directory.
-Use `--preset` for immutable packaged configurations such as `auto`, `copilot-matrix`, and `smoke`.
+Use `--preset` for immutable packaged configurations such as `auto`, `copilot-matrix`,
+`hydrafusion`, and `smoke`.
 Use `--config` only for a caller-owned file; relative paths start at the current directory and never
 fall back to package content. `--benchmark-root`, `--output`, and `--workspace-root` overrides are
 also relative to the current directory. External model CLIs and authentication remain separate
@@ -102,6 +103,31 @@ and select one or a few models with `--models`. See the
 source of truth for the 28 named model IDs; Auto routing remains a separate example.
 The generated [Copilot model catalog](docs/copilot-models.md) lists GitHub's currently supported
 and deprecated models and is refreshed hourly from the official GitHub Docs tables.
+
+### Compare HydraFusion with a fixed baseline
+
+The packaged `hydrafusion` preset evaluates GPT-6 Astra as a fixed, configurable baseline alongside
+HydraFusion and HydraFusion Max in one matrix. HydraFusion entries are systems, not named models:
+they can choose orchestration workflows, reasoning effort, and multiple contributing models for
+each attempt. They therefore remain separate from the named-model catalog and Copilot matrix.
+
+Run one scenario sequentially with the minimum recommended three repetitions:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --preset hydrafusion --scenarios console-task-cli --repetitions 3 --max-parallel 1 --debug
+```
+
+Use at least three repetitions because orchestration choices and routed models can vary by attempt;
+fewer than three evaluable attempts also produces only a provisional rank. Native Copilot
+`usage.json` collection remains enabled, and `reportedModels` captures contributing models or
+subagents when the CLI exports them.
+
+Treat the result as a comparison between a fixed-model baseline and changing orchestration systems,
+not as a controlled model-to-model benchmark. HydraFusion's model pool, workflow, reasoning effort,
+latency, and credit consumption can vary over time and between tasks. Account entitlements,
+organization policies, research-preview changes, and incomplete provider attribution can also
+affect comparability. Use one matrix invocation, identical prompts, sequential execution, and the
+reported runner version when publishing results.
 
 ### Minimal smoke test across all active models
 

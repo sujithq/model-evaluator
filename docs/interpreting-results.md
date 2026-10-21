@@ -76,6 +76,19 @@ three evaluable attempts makes a rank provisional. Always inspect attempt counts
 failures alongside rank: a tiny or infrastructure-biased sample is not evidence of superiority.
 Rank 1 is only relative ordering, not a guarantee that any model passed; check the success column.
 
+### Fixed models versus orchestration systems
+
+HydraFusion and HydraFusion Max are orchestration systems, not fixed models. A comparison against
+GPT-6 Astra can hold the prompt, scenario, harness, concurrency limit, and runner version constant,
+but it cannot hold the underlying model, number of model passes, reasoning effort, workflow,
+latency, or credit consumption constant. The orchestrator may make different choices on repeated
+attempts, and its model pool or policies can change during the research preview.
+
+Use the same evaluation matrix and `--max-parallel 1`, require at least three repetitions, inspect
+`reportedModels` and usage coverage, and report the Copilot CLI version. Interpret ranks as observed
+system-level outcomes under those conditions, not as evidence that a single HydraFusion model
+outperformed a fixed model. Missing constituent attribution does not mean only one model ran.
+
 Accuracy comes from evaluator-owned acceptance tests, not the model's own tests. Build, instruction
 adherence and code-quality checks affect the mandatory-check success rate. Mean generation time is
 shown separately from total time, which includes evaluator restore/build/tests. API duration is

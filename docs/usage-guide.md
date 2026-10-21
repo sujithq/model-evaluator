@@ -86,7 +86,7 @@ dotnet tool uninstall --global Sujithq.ModelEvaluator.Tool
 
 The package includes all shipped JSON configurations and both benchmark versions. Use
 `modelevaluator list-presets` to discover the packaged names: `default`, `auto`, `copilot-matrix`,
-`models`, `smoke`, and `smoke-reference`. For example:
+`hydrafusion`, `models`, `smoke`, and `smoke-reference`. For example:
 
 ```powershell
 modelevaluator evaluate --preset auto `

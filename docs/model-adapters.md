@@ -157,6 +157,35 @@ dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config $config --mod
 Auto remains a separate example because it is a routing strategy rather than a fixed model.
 Its report ID is `copilot-auto`; `reportedModels` records contributing model IDs when exported.
 
+#### HydraFusion orchestration
+
+The packaged `hydrafusion` preset compares three evaluator entries in the same matrix:
+
+| Evaluator ID | Copilot CLI selector | Kind |
+| --- | --- | --- |
+| `copilot-gpt-6-astra` | `gpt-6-astra` | Fixed baseline model |
+| `copilot-hydrafusion` | `hydrafusion` | Orchestration system |
+| `copilot-hydrafusion-max` | `hydrafusion-max` | Orchestration system tuned for frontier capability |
+
+The selector values are the synthetic IDs exposed by Copilot CLI. HydraFusion and HydraFusion Max
+must not be added to the named-model catalog: GitHub documents them as runtime systems that choose
+execution patterns, reasoning effort, and one or more contributing models. The Astra baseline is
+configured in the preset rather than hard-coded in ranking logic, so a caller-owned copy can change
+the fixed baseline while preserving the shared matrix.
+
+All three entries use the same `command-line` adapter flags, timeouts, runner name, native usage
+export, and isolation conventions as the Copilot matrix. When `modelMetrics` or telemetry names the
+constituent models or subagents, the report retains those names in `reportedModels`.
+
+Run one scenario with sequential attempts and at least three repetitions:
+
+```powershell
+dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --preset hydrafusion --scenarios console-task-cli --repetitions 3 --max-parallel 1 --debug
+```
+
+HydraFusion is a research preview and requires the corresponding Copilot CLI/account feature access.
+Validation checks the preset without starting Copilot or consuming credits.
+
 For a shared per-task ranking, use
 [`evaluation.copilot-matrix.example.json`](../config/evaluation.copilot-matrix.example.json) and
 explicitly select the model IDs your CLI account supports:

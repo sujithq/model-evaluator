@@ -8,7 +8,7 @@ public sealed class ConfigurationFileLocatorTests
     public void Presets_HaveUniqueNamesAndExistingConfigurationFiles()
     {
         Assert.Equal(
-            ["default", "auto", "copilot-matrix", "models", "smoke", "smoke-reference"],
+            ["default", "auto", "copilot-matrix", "hydrafusion", "models", "smoke", "smoke-reference"],
             ConfigurationFileLocator.Presets.Select(preset => preset.Name));
         Assert.Equal(
             ConfigurationFileLocator.Presets.Count,
@@ -63,6 +63,22 @@ public sealed class ConfigurationFileLocatorTests
         var location = ConfigurationFileLocator.Resolve(
             requestedPath: null,
             preset: "AUTO",
+            directories.WorkingDirectory,
+            directories.ApplicationBaseDirectory);
+
+        Assert.Equal(bundledFile, location.Path);
+        Assert.True(location.IsBundled);
+    }
+
+    [Fact]
+    public void Resolve_HydraFusionPresetUsesBundledConfiguration()
+    {
+        using var directories = new TestDirectories();
+        var bundledFile = directories.CreateApplicationFile(Path.Combine("config", "evaluation.hydrafusion.example.json"));
+
+        var location = ConfigurationFileLocator.Resolve(
+            requestedPath: null,
+            preset: "HYDRAFUSION",
             directories.WorkingDirectory,
             directories.ApplicationBaseDirectory);
 

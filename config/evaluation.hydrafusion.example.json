@@ -1,0 +1,49 @@
+{
+  "benchmarkRoot": "../benchmarks/v1",
+  "outputDirectory": "../artifacts/evaluations",
+  "repetitions": 3,
+  "scenarios": [],
+  "models": [
+    {
+      "id": "copilot-gpt-6-astra",
+      "enabled": true,
+      "adapter": "command-line",
+      "description": "Fixed GPT-6 Astra baseline generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--model gpt-6-astra --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-hydrafusion",
+      "enabled": true,
+      "adapter": "command-line",
+      "description": "HydraFusion orchestration system generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--experimental --model hydrafusion --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    },
+    {
+      "id": "copilot-hydrafusion-max",
+      "enabled": true,
+      "adapter": "command-line",
+      "description": "HydraFusion Max orchestration system generating projects through GitHub Copilot CLI.",
+      "settings": {
+        "command": "copilot",
+        "arguments": "--experimental --model hydrafusion-max --prompt \"{prompt}\" --allow-all-tools --disable-builtin-mcps --no-custom-instructions --no-ask-user --no-auto-update --usage-output-file \"{usageFile}\"",
+        "runnerName": "github-copilot-cli",
+        "usageFile": "usage.json",
+        "usageFormat": "copilot-cli"
+      }
+    }
+  ],
+  "budgets": {},
+  "keepWorkspaces": false
+}

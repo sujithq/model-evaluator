@@ -16,6 +16,7 @@ public static class ConfigurationFileLocator
         new("default", "evaluation.json", "Reference-good and reference-broken models against benchmark v1."),
         new("auto", "evaluation.auto.example.json", "GitHub Copilot Auto routing against benchmark v1."),
         new("copilot-matrix", "evaluation.copilot-matrix.example.json", "Named GitHub Copilot models against benchmark v1."),
+        new("hydrafusion", "evaluation.hydrafusion.example.json", "GPT-6 Astra baseline against HydraFusion orchestration systems."),
         new("models", "evaluation.models.example.json", "Generic command-line model adapter example."),
         new("smoke", "evaluation.smoke.example.json", "GitHub Copilot models against the minimal smoke benchmark."),
         new("smoke-reference", "evaluation.smoke.reference.json", "Local reference models against the minimal smoke benchmark."),
