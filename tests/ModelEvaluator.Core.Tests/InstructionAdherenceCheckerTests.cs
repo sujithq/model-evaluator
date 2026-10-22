@@ -165,6 +165,21 @@ public sealed class InstructionAdherenceCheckerTests : IDisposable
         Assert.Equal(CheckStatus.Failed, Find(results, "instructions.solution-file").Status);
     }
 
+    [Fact]
+    public void Slnx_SatisfiesAlternativeSolutionRequirement()
+    {
+        CreateCompliantWorkspace();
+        File.Delete(Path.Combine(Workspace, "App.sln"));
+        Write(Path.Combine(Workspace, "App.slnx"), "<Solution />");
+
+        var results = _checker.Check(Workspace, CreatePackageWithAlternativeSolutionGlobs());
+
+        Assert.Equal(
+            CheckStatus.Passed,
+            Find(results, "instructions.required-path-any:*.sln|*.slnx").Status);
+        Assert.Equal(CheckStatus.Passed, Find(results, "instructions.solution-file").Status);
+    }
+
     private static CheckResult Find(IEnumerable<CheckResult> results, string id) =>
         results.Single(r => r.Id == id);
 
@@ -179,6 +194,15 @@ public sealed class InstructionAdherenceCheckerTests : IDisposable
             AllowedPackages = ["xunit", "Microsoft.NET.Test.Sdk"],
             RequiredGlobs = ["*.sln", "src/**/*.csproj"],
             PreservedPaths = ["global.json", "BENCHMARK.md"],
+        },
+        ScenarioDirectory,
+        "prompt");
+
+    private ScenarioPackage CreatePackageWithAlternativeSolutionGlobs() => new(
+        CreatePackage().Definition with
+        {
+            RequiredGlobs = ["src/**/*.csproj"],
+            RequiredAnyGlobs = ["*.sln", "*.slnx"],
         },
         ScenarioDirectory,
         "prompt");

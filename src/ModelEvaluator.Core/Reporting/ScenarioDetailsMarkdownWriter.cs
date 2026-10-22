@@ -68,6 +68,7 @@ public static class ScenarioDetailsMarkdownWriter
 
             WriteList(builder, "Allowed NuGet packages", definition.AllowedPackages);
             WriteList(builder, "Required file globs", definition.RequiredGlobs);
+            WriteList(builder, "Required alternative file globs (at least one)", definition.RequiredAnyGlobs);
             WriteList(builder, "Preserved paths", definition.PreservedPaths);
 
             builder.AppendLine("### Samples");

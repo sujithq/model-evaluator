@@ -50,7 +50,8 @@ anything left implicit is not gradeable.
   "starterDirectory": "starter",
   "acceptanceProject": "acceptance/<Name>.Acceptance.csproj",
   "allowedPackages": ["Microsoft.NET.Test.Sdk", "xunit", "xunit.runner.visualstudio", "coverlet.collector"],
-  "requiredGlobs": ["*.sln", "src/**/*.csproj", "tests/**/*.csproj", "README.md"],
+  "requiredGlobs": ["src/**/*.csproj", "tests/**/*.csproj", "README.md"],
+  "requiredAnyGlobs": ["*.sln", "*.slnx"],
   "preservedPaths": ["global.json", ".editorconfig", "BENCHMARK.md"],
   "budget": {
     "generationTimeoutSeconds": 1800,

@@ -82,12 +82,13 @@ public sealed class CopilotExampleConfigurationTests
         var expectedSelectors = new Dictionary<string, string>
         {
             ["copilot-gpt-6-astra"] = "gpt-6-astra",
+            ["copilot-claude-opus-5.5"] = "claude-opus-5.5",
             ["copilot-auto"] = "auto",
             ["copilot-hydrafusion"] = "hydrafusion",
             ["copilot-hydrafusion-max"] = "hydrafusion-max",
         };
 
-        Assert.Equal(4, configuration.Models.Count);
+        Assert.Equal(5, configuration.Models.Count);
         Assert.Equal(configuration.Models.Count, configuration.Models.Select(model => model.Id).Distinct().Count());
         Assert.All(configuration.Models, model => Assert.True(model.Enabled));
         Assert.Equal(7200, configuration.Budgets.GenerationTimeoutSeconds);

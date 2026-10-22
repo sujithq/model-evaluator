@@ -60,6 +60,16 @@ public sealed class InstructionAdherenceChecker
                 $"Pattern '{glob}' matched."));
         }
 
+        if (definition.RequiredAnyGlobs.Count > 0)
+        {
+            var patterns = string.Join(" or ", definition.RequiredAnyGlobs.Select(pattern => $"'{pattern}'"));
+            results.Add(Bool(
+                $"instructions.required-path-any:{string.Join("|", definition.RequiredAnyGlobs)}",
+                definition.RequiredAnyGlobs.Any(glob => GlobMatcher.AnyMatch(relativeFiles, glob)),
+                $"No file matched any of the required patterns: {patterns}.",
+                $"A file matched one of the required patterns: {patterns}."));
+        }
+
         return results;
     }
 

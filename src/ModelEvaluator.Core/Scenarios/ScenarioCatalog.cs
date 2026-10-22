@@ -58,6 +58,9 @@ public sealed record ScenarioDefinition
     /// <summary>Relative glob patterns that must match at least one file in the workspace.</summary>
     public IReadOnlyList<string> RequiredGlobs { get; init; } = [];
 
+    /// <summary>Alternative relative glob patterns where at least one pattern must match a file.</summary>
+    public IReadOnlyList<string> RequiredAnyGlobs { get; init; } = [];
+
     /// <summary>Supplied files that must be preserved byte-for-byte by the model.</summary>
     public IReadOnlyList<string> PreservedPaths { get; init; } = [];
 

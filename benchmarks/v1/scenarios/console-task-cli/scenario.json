@@ -16,10 +16,13 @@
     "coverlet.collector"
   ],
   "requiredGlobs": [
-    "*.sln",
     "src/**/*.csproj",
     "tests/**/*.csproj",
     "README.md"
+  ],
+  "requiredAnyGlobs": [
+    "*.sln",
+    "*.slnx"
   ],
   "preservedPaths": [
     "global.json",
