@@ -7,6 +7,8 @@ public sealed record ModelRanking
 {
     public required string ModelId { get; init; }
 
+    public bool IsBaseline { get; init; }
+
     public int? Rank { get; init; }
 
     public int TotalAttempts { get; init; }
@@ -25,7 +27,15 @@ public sealed record ModelRanking
 
     public decimal? MeanAiCredits { get; init; }
 
+    public decimal? AiCreditsDeltaVsBaseline { get; init; }
+
+    public double? SuccessRateDeltaVsBaseline { get; init; }
+
+    public double? AcceptanceAccuracyDeltaVsBaseline { get; init; }
+
     public double? MeanElapsedSeconds { get; init; }
+
+    public double? ElapsedSecondsDeltaVsBaseline { get; init; }
 
     public double? MeanGenerationSeconds { get; init; }
 
@@ -48,10 +58,12 @@ public sealed record ScenarioRanking
 
     public bool UsesAiCredits { get; init; }
 
+    public string? BaselineModelId { get; init; }
+
     public required IReadOnlyList<ModelRanking> Models { get; init; }
 }
 
-/// <summary>Ranks comparable attempts by correctness first, then measured consumption and wall time.</summary>
+/// <summary>Ranks comparable attempts by complete AI-credit consumption and compares them with the configured baseline.</summary>
 public static class ScenarioRanker
 {
     public static IReadOnlyList<ScenarioRanking> Rank(EvaluationReport report) =>
@@ -60,23 +72,32 @@ public static class ScenarioRanker
             .Select(group =>
             {
                 var models = group.Select(CreateModelRanking).ToList();
-                var eligible = models.Where(m => m.ExclusionReason is null).ToList();
-                var useCredits = eligible.Count > 0 && eligible.All(m => m.MeanAiCredits is not null);
-                var ordered = eligible.OrderByDescending(m => m.SuccessRate)
-                    .ThenByDescending(m => m.AcceptanceAccuracy)
-                    .ThenBy(m => useCredits ? m.MeanAiCredits : 0m)
-                    .ThenBy(m => m.MeanElapsedSeconds)
+                var baseline = models.FirstOrDefault(model =>
+                    model.ModelId.Equals(report.BaselineModelId, StringComparison.Ordinal));
+                models = models.Select(model => CompareWithBaseline(model, baseline)).ToList();
+
+                var costRankable = models
+                    .Where(model => model.ExclusionReason is null && model.MeanAiCredits is not null)
+                    .ToList();
+                var useCredits = costRankable.Count > 0;
+                var ordered = costRankable
+                    .OrderBy(model => model.MeanAiCredits)
                     .ThenBy(m => m.ModelId, StringComparer.Ordinal)
                     .ToList();
                 var ranked = new List<ModelRanking>();
                 for (var index = 0; index < ordered.Count; index++)
                 {
                     var model = ordered[index];
-                    var tied = index > 0 && SameScore(model, ordered[index - 1], useCredits);
+                    var tied = index > 0 && model.MeanAiCredits == ordered[index - 1].MeanAiCredits;
                     ranked.Add(model with { Rank = tied ? ranked[index - 1].Rank : index + 1 });
                 }
 
-                ranked.AddRange(models.Where(m => m.ExclusionReason is not null).OrderBy(m => m.ModelId, StringComparer.Ordinal));
+                ranked.AddRange(models
+                    .Where(model => model.ExclusionReason is not null || model.MeanAiCredits is null)
+                    .Select(model => model.ExclusionReason is null
+                        ? model with { ExclusionReason = "Complete AI-credit measurement unavailable." }
+                        : model)
+                    .OrderBy(model => model.ModelId, StringComparer.Ordinal));
                 return new ScenarioRanking
                 {
                     ScenarioId = group.Key.ScenarioId,
@@ -85,14 +106,26 @@ public static class ScenarioRanker
                     RunnerLabel = group.Key.RunnerLabel,
                     MaxParallel = group.Key.MaxParallel,
                     UsesAiCredits = useCredits,
+                    BaselineModelId = report.BaselineModelId,
                     Models = ranked,
                 };
             }).ToList();
 
-    private static bool SameScore(ModelRanking left, ModelRanking right, bool useCredits) =>
-        left.SuccessRate == right.SuccessRate && left.AcceptanceAccuracy == right.AcceptanceAccuracy
-        && (!useCredits || left.MeanAiCredits == right.MeanAiCredits)
-        && left.MeanElapsedSeconds == right.MeanElapsedSeconds;
+    private static ModelRanking CompareWithBaseline(ModelRanking model, ModelRanking? baseline) =>
+        model with
+        {
+            IsBaseline = baseline is not null && model.ModelId.Equals(baseline.ModelId, StringComparison.Ordinal),
+            AiCreditsDeltaVsBaseline = Difference(model.MeanAiCredits, baseline?.MeanAiCredits),
+            SuccessRateDeltaVsBaseline = Difference(model.SuccessRate, baseline?.SuccessRate),
+            AcceptanceAccuracyDeltaVsBaseline = Difference(model.AcceptanceAccuracy, baseline?.AcceptanceAccuracy),
+            ElapsedSecondsDeltaVsBaseline = Difference(model.MeanElapsedSeconds, baseline?.MeanElapsedSeconds),
+        };
+
+    private static decimal? Difference(decimal? value, decimal? baseline) =>
+        value is null || baseline is null ? null : value.Value - baseline.Value;
+
+    private static double? Difference(double? value, double? baseline) =>
+        value is null || baseline is null ? null : value.Value - baseline.Value;
 
     private static ModelRanking CreateModelRanking(ModelScenarioSummary summary)
     {

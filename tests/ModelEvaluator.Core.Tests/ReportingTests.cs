@@ -65,6 +65,7 @@ public sealed class ReportingTests
 
         var markdown = MarkdownReportWriter.Render(report);
         Assert.Contains("tokens 140 (in 100, out 40, cache read 20, cache write 5, reasoning 10)", markdown);
+        Assert.Contains("AI credits 0.5 (1/1 complete attempts; observed 0.5 across 1/1)", markdown);
         Assert.Contains("API requests 3 (1.25 API seconds)", markdown);
 
         var directory = Path.Combine(Path.GetTempPath(), "eval-tests", Guid.NewGuid().ToString("N"));
@@ -78,6 +79,9 @@ public sealed class ReportingTests
             Assert.Equal(5, summary.GetProperty("totalCacheWriteTokens").GetInt64());
             Assert.Equal(10, summary.GetProperty("totalReasoningTokens").GetInt64());
             Assert.Equal(1.25, summary.GetProperty("totalApiDurationSeconds").GetDouble());
+            Assert.Equal(0.5m, summary.GetProperty("observedAiCredits").GetDecimal());
+            Assert.Equal(0.005m, summary.GetProperty("observedEquivalentCostUsd").GetDecimal());
+            Assert.Equal(1, summary.GetProperty("aiCreditsObservedAttempts").GetInt32());
         }
         finally
         {
@@ -100,6 +104,8 @@ public sealed class ReportingTests
         var report = original with { Attempts = [attempt] };
         var summary = Assert.Single(ReportAggregator.Summarise(report));
         Assert.Equal(0.0088772m, summary.TotalEquivalentCostUsd);
+        Assert.Equal(0.88772m, summary.ObservedAiCredits);
+        Assert.Equal(0.0088772m, summary.ObservedEquivalentCostUsd);
         Assert.Null(summary.TotalCostUsd);
         var markdown = MarkdownReportWriter.Render(report);
         Assert.Contains("USD equivalent $0.0088772", markdown);
@@ -112,6 +118,7 @@ public sealed class ReportingTests
         {
             using var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(JsonReportWriter.Write(report, directory)));
             Assert.Equal(0.0088772m, json.RootElement.GetProperty("summaries")[0].GetProperty("totalEquivalentCostUsd").GetDecimal());
+            Assert.Equal(0.88772m, json.RootElement.GetProperty("summaries")[0].GetProperty("observedAiCredits").GetDecimal());
         }
         finally
         {
@@ -137,7 +144,11 @@ public sealed class ReportingTests
                 },
             }],
         };
-        Assert.Null(Assert.Single(ReportAggregator.Summarise(report)).TotalEquivalentCostUsd);
+        var summary = Assert.Single(ReportAggregator.Summarise(report));
+        Assert.Null(summary.TotalEquivalentCostUsd);
+        Assert.Equal(partial ? 2m : null, summary.ObservedAiCredits);
+        Assert.Equal(partial ? 0.02m : null, summary.ObservedEquivalentCostUsd);
+        Assert.Equal(partial ? 1 : 0, summary.AiCreditsObservedAttempts);
         var markdown = MarkdownReportWriter.Render(report);
         Assert.Contains("USD equivalent n/a", markdown);
         Assert.Contains("estimatedCostUsd", markdown);

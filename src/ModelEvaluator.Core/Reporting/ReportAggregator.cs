@@ -108,8 +108,17 @@ public sealed record ModelScenarioSummary
         ? Attempts.Sum(a => a.Efficiency.AiCredits!.Value)
         : null;
 
+    public int AiCreditsObservedAttempts => Attempts.Count(a => a.Efficiency.AiCredits is not null);
+
+    /// <summary>Sum of credits observed, including partial usage snapshots; not a complete billing total unless coverage is complete.</summary>
+    public decimal? ObservedAiCredits => AiCreditsObservedAttempts == 0
+        ? null
+        : Attempts.Where(a => a.Efficiency.AiCredits is not null).Sum(a => a.Efficiency.AiCredits!.Value);
+
     /// <summary>Published USD value of consumed credits, not an additional invoice charge.</summary>
     public decimal? TotalEquivalentCostUsd => TotalAiCredits * 0.01m;
+
+    public decimal? ObservedEquivalentCostUsd => ObservedAiCredits * 0.01m;
 
     public decimal? TotalPremiumRequests => HasCompleteUsage && Attempts.All(a => a.Efficiency.PremiumRequests is not null)
         ? Attempts.Sum(a => a.Efficiency.PremiumRequests!.Value)

@@ -23,6 +23,7 @@ public static class MarkdownReportWriter
         builder.AppendLine("# Model evaluation report");
         builder.AppendLine();
         builder.AppendLine($"- Run id: `{report.RunId}`");
+        builder.AppendLine($"- Baseline model: {Value(report.BaselineModelId)}");
         builder.AppendLine($"- Started: {report.StartedAt:u} / completed: {report.CompletedAt:u}");
         builder.AppendLine($"- Harness: `{report.Runner.Name}@{report.Runner.Version}`");
         builder.AppendLine($"- Environment: {report.Environment.OperatingSystem}, {report.Environment.Architecture}, " +
@@ -68,8 +69,9 @@ public static class MarkdownReportWriter
 
         builder.AppendLine("## Per-task rankings");
         builder.AppendLine();
-        builder.AppendLine("Order: success rate, mean acceptance accuracy, lower mean AI credits (only with complete coverage), then lower mean total wall time.");
-        builder.AppendLine("Infrastructure failures are excluded from ranking metrics and shown separately. Missing acceptance execution scores 0; skipped tests count against accuracy.");
+        builder.AppendLine("Order: lower mean AI-credit consumption. This is a cost ranking, not a quality ranking.");
+        builder.AppendLine("The first selected model is the baseline. Quality, consumption and timing deltas compare each model with that baseline.");
+        builder.AppendLine("Models without complete AI-credit measurements are shown but not cost-ranked. Infrastructure failures remain visible.");
         builder.AppendLine("AI credits measure consumption, not invoice charges. Premium requests and reported USD are separate units, never substituted for credits.");
         builder.AppendLine("USD equivalent = AI credits x $0.01, per [GitHub's published rate](https://docs.github.com/en/copilot/concepts/billing-and-usage/organizations-and-enterprises/billing#what-are-github-ai-credits). Included credits do not incur an additional charge; this is not actual billed spend.");
         builder.AppendLine("Ranks based on fewer than three evaluable attempts are provisional. Equal scores share a rank; reference samples are not ranked.");
@@ -80,22 +82,28 @@ public static class MarkdownReportWriter
             builder.AppendLine();
             builder.AppendLine($"Prompt hash: `{ranking.PromptHash}`");
             builder.AppendLine($"Maximum parallel attempts: {ranking.MaxParallel}");
+            builder.AppendLine($"Baseline: {Value(ranking.BaselineModelId)}");
             builder.AppendLine(ranking.UsesAiCredits
-                ? "AI-credit tie-breaker: enabled (complete measurements for every ranked model)."
-                : "AI-credit tie-breaker: disabled for this group (missing measurements or no ranked models); time breaks accuracy ties.");
+                ? "Cost ranking: enabled for models with complete AI-credit measurements."
+                : "Cost ranking: unavailable for this group because no model has complete AI-credit measurements.");
             builder.AppendLine();
-            builder.AppendLine("| Rank | Model | Success | Acceptance accuracy | Mean AI credits | Credit coverage | Mean total / generation seconds | Infra failures | Notes |");
-            builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+            builder.AppendLine("| Cost rank | Model | Role | Success | vs baseline | Acceptance accuracy | vs baseline | Mean AI credits | vs baseline | Credit coverage | Mean total / generation seconds | vs baseline total | Infra failures | Notes |");
+            builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
             foreach (var model in ranking.Models)
             {
                 builder.AppendLine(Row(
                     Optional(model.Rank),
                     model.ModelId,
+                    model.IsBaseline ? "baseline" : "candidate",
                     $"{model.SuccessfulAttempts}/{model.EvaluatedAttempts}",
+                    SignedPercentagePoints(model.SuccessRateDeltaVsBaseline),
                     model.AcceptanceAccuracy is null ? "n/a" : Percent(model.AcceptanceAccuracy.Value),
+                    SignedPercentagePoints(model.AcceptanceAccuracyDeltaVsBaseline),
                     Optional(model.MeanAiCredits),
+                    Signed(model.AiCreditsDeltaVsBaseline),
                     $"{model.AiCreditsReportedAttempts}/{model.EvaluatedAttempts}",
                     $"{Seconds(model.MeanElapsedSeconds)} / {Seconds(model.MeanGenerationSeconds)}",
+                    SignedSeconds(model.ElapsedSecondsDeltaVsBaseline),
                     model.InfrastructureFailures.ToString(CultureInfo.InvariantCulture),
                     model.ExclusionReason ?? (model.Provisional ? "provisional" : "-")));
             }
@@ -124,7 +132,8 @@ public static class MarkdownReportWriter
                     $"reasoning {Optional(summary.TotalReasoningTokens)}); " +
                     $"tool calls {Optional(summary.TotalToolCalls)}; USD equivalent {OptionalCost(summary.TotalEquivalentCostUsd)}; " +
                     (summary.TotalCostUsd is not null ? $"adapter-reported USD {OptionalCost(summary.TotalCostUsd)}; " : "") +
-                    $"AI credits {Optional(summary.TotalAiCredits)} ({summary.AiCreditsReportedAttempts}/{summary.TotalAttempts} attempts); " +
+                    $"AI credits {Optional(summary.TotalAiCredits)} ({summary.AiCreditsReportedAttempts}/{summary.TotalAttempts} complete attempts; " +
+                    $"observed {Optional(summary.ObservedAiCredits)} across {summary.AiCreditsObservedAttempts}/{summary.TotalAttempts}); " +
                     $"premium requests {Optional(summary.TotalPremiumRequests)}; API requests {Optional(summary.TotalApiRequests)} " +
                     $"({Optional(summary.TotalApiDurationSeconds)} API seconds)";
 
@@ -233,6 +242,15 @@ public static class MarkdownReportWriter
     private static string Percent(double value) => (value * 100).ToString("0.#", CultureInfo.InvariantCulture) + "%";
 
     private static string Seconds(double? value) => value?.ToString("0.0", CultureInfo.InvariantCulture) ?? "n/a";
+
+    private static string SignedSeconds(double? value) =>
+        value is null ? "n/a" : value.Value.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture) + " s";
+
+    private static string SignedPercentagePoints(double? value) =>
+        value is null ? "n/a" : (value.Value * 100).ToString("+0.#;-0.#;0", CultureInfo.InvariantCulture) + " pp";
+
+    private static string Signed(decimal? value) =>
+        value is null ? "n/a" : value.Value.ToString("+0.############################;-0.############################;0", CultureInfo.InvariantCulture);
 
     private static string Optional<T>(T? value) where T : struct =>
         value is null ? "n/a" : Convert.ToString(value.Value, CultureInfo.InvariantCulture) ?? "n/a";

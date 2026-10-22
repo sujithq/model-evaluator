@@ -107,6 +107,7 @@ public sealed class EvaluationRunner(
 
         return new EvaluationReport
         {
+            BaselineModelId = configuration.Models[0].Id,
             RunId = runId,
             StartedAt = startedAt,
             CompletedAt = DateTimeOffset.UtcNow,

@@ -120,7 +120,9 @@ dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --preset hydrafusion -
 Use at least three repetitions because orchestration choices and routed models can vary by attempt;
 fewer than three evaluable attempts also produces only a provisional rank. Native Copilot
 `usage.json` collection remains enabled, and `reportedModels` captures contributing models or
-subagents when the CLI exports them.
+subagents when the CLI exports them. The preset allows 7,200 seconds for generation because
+multi-pass HydraFusion workflows can exceed the standard 1,800-second scenario budget; the same
+limit applies to all three entries to preserve comparability.
 
 Treat the result as a comparison between a fixed-model baseline and changing orchestration systems,
 not as a controlled model-to-model benchmark. HydraFusion's model pool, workflow, reasoning effort,
@@ -173,10 +175,11 @@ dotnet run --project .\src\ModelEvaluator.Cli -- evaluate --config .\config\eval
 ```
 
 This runs six attempts and writes **per-task rankings** to `report.md` and `results.json`.
-The ranking order is success rate, acceptance accuracy, lower mean AI credits, then faster mean
-total time. Cost is used only when every ranked model has complete credit measurements; missing
-values never become zero. AI credits represent consumption, not necessarily invoice spend.
-Infrastructure failures are excluded from ranking metrics and reported separately.
+The first selected model is the baseline. Reports compare every other model's success, acceptance
+accuracy, mean AI credits and total time with that baseline, then rank models from lowest to highest
+mean AI-credit consumption. A cost rank is not a quality rank. Models without complete credit
+measurements remain visible but unranked; missing values never become zero. AI credits represent
+consumption, not necessarily invoice spend. Infrastructure failures are reported separately.
 
 Use explicit `--models` and `--scenarios` filters to select disabled models. Without `--models`, the
 matrix runs only models whose `enabled` property is `true` (currently GPT-6 Luna). Run

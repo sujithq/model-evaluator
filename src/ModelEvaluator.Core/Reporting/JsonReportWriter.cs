@@ -16,6 +16,7 @@ public static class JsonReportWriter
         var payload = new
         {
             report.RunId,
+            report.BaselineModelId,
             report.StartedAt,
             report.CompletedAt,
             report.Runner,
@@ -57,6 +58,9 @@ public static class JsonReportWriter
                 s.TotalAiCredits,
                 s.TotalEquivalentCostUsd,
                 s.AiCreditsReportedAttempts,
+                s.ObservedAiCredits,
+                s.ObservedEquivalentCostUsd,
+                s.AiCreditsObservedAttempts,
                 s.TotalPremiumRequests,
                 s.TotalApiRequests,
                 s.TotalApiDurationSeconds,

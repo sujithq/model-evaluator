@@ -6,6 +6,7 @@
   "models": [
     {
       "id": "copilot-auto",
+      "enabled": true,
       "adapter": "command-line",
       "description": "Auto routing (not a fixed model) generating projects through GitHub Copilot CLI.",
       "settings": {

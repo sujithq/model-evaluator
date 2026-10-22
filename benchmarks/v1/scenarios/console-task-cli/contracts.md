@@ -5,6 +5,9 @@
 The application is started as `dotnet <app>.dll <command> [arguments]` with the current working directory
 containing (or about to contain) the task store.
 
+The application must emit stdout and stderr as UTF-8 on every platform. Configure the console output encoding
+explicitly so redirected output preserves non-ASCII characters on Windows.
+
 ## Storage
 
 - Tasks are stored in a file named `tasks.json` in the current working directory.

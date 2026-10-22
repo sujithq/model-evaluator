@@ -578,7 +578,7 @@ local structural check, not a provider connectivity test.
 A forced timeout can prevent a runner's final usage export. For Copilot CLI configurations, the
 evaluator may recover completed-call telemetry and a persisted credit checkpoint. Such data is
 marked partial and is never treated as a complete cost total or used for the AI-credit ranking
-tie-breaker.
+order.
 
 ### Exit codes
 

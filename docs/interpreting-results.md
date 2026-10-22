@@ -35,8 +35,11 @@ tests pass.
 
 ## Per-task rankings
 
-Both reports include a ranking for each comparable scenario/benchmark-version/prompt-hash/runner
-and concurrency-limit group. The JSON `rankings` array contains the same ordering and measurements as Markdown.
+Both reports include a cost ranking for each comparable
+scenario/benchmark-version/prompt-hash/runner and concurrency-limit group. The first selected model
+is persisted as `baselineModelId`. Every row identifies whether it is the baseline or a candidate
+and reports baseline-relative deltas for success rate, acceptance accuracy, mean AI credits and
+mean total time. The JSON `rankings` array contains the same ordering and measurements as Markdown.
 Run several models in one evaluation matrix to compare them; individual run reports are not
 automatically merged.
 
@@ -106,7 +109,13 @@ This is the value of consumed credits, not additional billed spend: included all
 Complete credit measurements suppress the misleading `estimatedCostUsd` entry in Markdown's unavailable
 list. Raw adapter `estimatedCostUsd` and summary `totalCostUsd` keep their original meaning and are not
 overwritten; explicit adapter costs are displayed separately. Missing or partial credits never create a
-complete USD total. Partial equivalents appear only in the partial-usage section. Ranking is unchanged.
+complete USD total. Partial equivalents appear only in the partial-usage section and never receive a
+cost rank.
+
+When a run contains partial or missing usage, the Markdown efficiency row still reports
+`observed` AI credits and its attempt coverage, while `totalAiCredits` remains unavailable unless
+every attempt has a complete credit measurement. JSON summaries expose the same distinction through
+`observedAiCredits`, `observedEquivalentCostUsd`, and `aiCreditsObservedAttempts`.
 
 Partial aggregate metrics are shown as unavailable rather than as complete totals. Credit coverage
 counts reveal how many attempts reported the metric, and per-attempt values remain available in JSON.
@@ -116,8 +125,9 @@ Usage collection warnings are printed during execution and included in both repo
 
 * **Overall success rate** - successful attempts over total attempts across the matrix.
   This operational summary includes infrastructure failures in its denominator, unlike ranking success rate.
-* **Per-task rankings** - accuracy-first ordering, cost coverage, mean wall/generation time,
-  infrastructure failures and provisional/excluded rows, grouped by comparable benchmark and runner.
+* **Per-task rankings** - accuracy-first ordering, cost ordering, baseline-relative quality/cost/time deltas, credit
+  coverage, infrastructure failures and provisional/excluded rows, grouped by comparable benchmark
+  and runner.
 * **Per-scenario comparison** - one row per model and scenario with the benchmark version, prompt
   hash, success rate, per-dimension pass counts and efficiency aggregates.
 * **Attempts** - one row per attempt with the outcome, failure reason, acceptance counts and elapsed

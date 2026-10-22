@@ -7,7 +7,7 @@ namespace ModelEvaluator.Core.Tests;
 public sealed class ScenarioRankingTests
 {
     [Fact]
-    public void Rank_UsesSuccessThenAccuracyThenCreditsThenTime()
+    public void Rank_UsesCostAndComparesModelsWithFirstModelBaseline()
     {
         var report = Report(
             Attempt("fast-failure", AttemptOutcome.ModelFailure, 0.01m, 1, passed: 10),
@@ -19,8 +19,18 @@ public sealed class ScenarioRankingTests
         var ranking = Assert.Single(ScenarioRanker.Rank(report));
 
         Assert.True(ranking.UsesAiCredits);
-        Assert.Equal(["winner", "slow", "expensive", "fast-failure", "inaccurate"], ranking.Models.Select(m => m.ModelId));
-        Assert.Equal([1, 2, 3, 4, 5], ranking.Models.Select(m => m.Rank!.Value));
+        Assert.Equal("fast-failure", ranking.BaselineModelId);
+        Assert.Equal(["fast-failure", "inaccurate", "slow", "winner", "expensive"], ranking.Models.Select(m => m.ModelId));
+        Assert.Equal([1, 1, 3, 3, 5], ranking.Models.Select(m => m.Rank!.Value));
+        var baseline = ranking.Models[0];
+        Assert.True(baseline.IsBaseline);
+        Assert.Equal(0m, baseline.AiCreditsDeltaVsBaseline);
+        Assert.Equal(0d, baseline.SuccessRateDeltaVsBaseline);
+        var winner = ranking.Models.Single(model => model.ModelId == "winner");
+        Assert.False(winner.IsBaseline);
+        Assert.Equal(0.99m, winner.AiCreditsDeltaVsBaseline);
+        Assert.Equal(1d, winner.SuccessRateDeltaVsBaseline);
+        Assert.Equal(9d, winner.ElapsedSecondsDeltaVsBaseline);
         Assert.All(ranking.Models, m => Assert.True(m.Provisional));
     }
 
@@ -43,10 +53,13 @@ public sealed class ScenarioRankingTests
         };
         var report = Report(attempt, Attempt("complete", AttemptOutcome.Success, 2m, 10));
         var ranking = Assert.Single(ScenarioRanker.Rank(report));
-        Assert.False(ranking.UsesAiCredits);
+        Assert.True(ranking.UsesAiCredits);
+        Assert.Equal(1, ranking.Models.Single(model => model.ModelId == "complete").Rank);
         var partial = ranking.Models.Single(m => m.ModelId == "partial");
+        Assert.Null(partial.Rank);
         Assert.Null(partial.MeanAiCredits);
         Assert.Equal(0, partial.AiCreditsReportedAttempts);
+        Assert.Equal("Complete AI-credit measurement unavailable.", partial.ExclusionReason);
         var summary = ReportAggregator.Summarise(report).Single(s => s.ModelId == "partial");
         Assert.Null(summary.TotalAiCredits);
         Assert.Null(summary.TotalTokens);
@@ -66,9 +79,12 @@ public sealed class ScenarioRankingTests
             Attempt("partial", AttemptOutcome.Success, 1m, 10),
             Attempt("partial", AttemptOutcome.Success, null, 10))));
 
-        Assert.False(ranking.UsesAiCredits);
-        var partial = ranking.Models[0];
+        Assert.True(ranking.UsesAiCredits);
+        Assert.Equal("complete", ranking.Models[0].ModelId);
+        Assert.Equal(1, ranking.Models[0].Rank);
+        var partial = ranking.Models[1];
         Assert.Equal("partial", partial.ModelId);
+        Assert.Null(partial.Rank);
         Assert.Null(partial.MeanAiCredits);
         Assert.Equal(1, partial.AiCreditsReportedAttempts);
         Assert.Equal(2, partial.EvaluatedAttempts);
@@ -216,10 +232,12 @@ public sealed class ScenarioRankingTests
             using var json = JsonDocument.Parse(File.ReadAllText(path));
             var ranking = json.RootElement.GetProperty("rankings")[0];
             Assert.False(ranking.GetProperty("usesAiCredits").GetBoolean());
-            Assert.Equal(1, ranking.GetProperty("models")[0].GetProperty("rank").GetInt32());
+            Assert.Equal("model", json.RootElement.GetProperty("baselineModelId").GetString());
+            Assert.False(ranking.GetProperty("models")[0].TryGetProperty("rank", out _));
             var markdown = MarkdownReportWriter.Render(report);
             Assert.Contains("## Per-task rankings", markdown);
-            Assert.Contains("AI-credit tie-breaker: disabled", markdown);
+            Assert.Contains("Cost ranking: unavailable", markdown);
+            Assert.Contains("| n/a | model | baseline |", markdown);
             Assert.Contains("## Usage collection warnings", markdown);
             Assert.Contains("Usage file missing.", markdown);
         }
@@ -249,6 +267,7 @@ public sealed class ScenarioRankingTests
 
     private static EvaluationReport Report(params AttemptResult[] attempts) => new()
     {
+        BaselineModelId = attempts.FirstOrDefault()?.ModelId,
         RunId = "run",
         StartedAt = DateTimeOffset.UnixEpoch,
         CompletedAt = DateTimeOffset.UnixEpoch,

@@ -54,6 +54,26 @@ public sealed class CopilotExampleConfigurationTests
     }
 
     [Fact]
+    public void Auto_UsesExactSelectorAndReceivesExplicitUtf8ConsoleContract()
+    {
+        var directory = Path.Combine(RepositoryLocator.Root, "config");
+        var configuration = EvaluationConfiguration.Load(Path.Combine(directory, "evaluation.auto.example.json"));
+        var model = Assert.Single(configuration.Models);
+        var arguments = ArgumentParser.Split(model.GetSetting("arguments")).ToList();
+        var contract = File.ReadAllText(Path.Combine(
+            configuration.BenchmarkRoot,
+            "scenarios",
+            "console-task-cli",
+            "contracts.md"));
+
+        Assert.True(model.Enabled);
+        Assert.Equal("auto", ValueAfter(arguments, "--model"));
+        Assert.Equal("{usageFile}", ValueAfter(arguments, "--usage-output-file"));
+        Assert.Contains("stdout and stderr as UTF-8", contract, StringComparison.Ordinal);
+        Assert.Contains("redirected output", contract, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void HydraFusion_UsesExactSelectorsAndNativeUsageWithAstraBaseline()
     {
         var directory = Path.Combine(RepositoryLocator.Root, "config");
@@ -62,13 +82,15 @@ public sealed class CopilotExampleConfigurationTests
         var expectedSelectors = new Dictionary<string, string>
         {
             ["copilot-gpt-6-astra"] = "gpt-6-astra",
+            ["copilot-auto"] = "auto",
             ["copilot-hydrafusion"] = "hydrafusion",
             ["copilot-hydrafusion-max"] = "hydrafusion-max",
         };
 
-        Assert.Equal(3, configuration.Models.Count);
+        Assert.Equal(4, configuration.Models.Count);
         Assert.Equal(configuration.Models.Count, configuration.Models.Select(model => model.Id).Distinct().Count());
         Assert.All(configuration.Models, model => Assert.True(model.Enabled));
+        Assert.Equal(7200, configuration.Budgets.GenerationTimeoutSeconds);
         Assert.Equal("copilot-gpt-6-astra", configuration.Models[0].Id);
         Assert.Contains("baseline", configuration.Models[0].Description, StringComparison.OrdinalIgnoreCase);
 

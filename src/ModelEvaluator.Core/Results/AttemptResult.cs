@@ -160,6 +160,8 @@ public sealed record AttemptResult
 /// <summary>Full report for one evaluation run (matrix of models x scenarios x repetitions).</summary>
 public sealed record EvaluationReport
 {
+    public string? BaselineModelId { get; init; }
+
     public bool Cancelled { get; init; }
 
     public int? PlannedAttempts { get; init; }

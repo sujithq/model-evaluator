@@ -44,6 +44,7 @@ public sealed class ParallelEvaluationTests : IDisposable
         Assert.Equal(6, report.PlannedAttempts);
         Assert.Equal(0, report.NotStartedAttempts);
         Assert.Equal(maxParallel, report.Environment.MaxParallel);
+        Assert.Equal("one", report.BaselineModelId);
         Assert.Equal(maxParallel, adapter.Peak);
         Assert.Equal(0, adapter.Active);
         Assert.Equal(
@@ -69,6 +70,7 @@ public sealed class ParallelEvaluationTests : IDisposable
         Assert.Equal(maxParallel > 1, messages.Any(m => m.Contains("resource contention", StringComparison.Ordinal)));
         using var json = JsonDocument.Parse(File.ReadAllText(JsonReportWriter.Write(report, Path.Combine(_root, "reports"))));
         Assert.Equal(maxParallel, json.RootElement.GetProperty("environment").GetProperty("maxParallel").GetInt32());
+        Assert.Equal("one", json.RootElement.GetProperty("baselineModelId").GetString());
         Assert.Equal(6, json.RootElement.GetProperty("plannedAttempts").GetInt32());
         Assert.Contains($"Maximum parallel attempts: {maxParallel}", MarkdownReportWriter.Render(report));
     }

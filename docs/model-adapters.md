@@ -170,11 +170,14 @@ The packaged `hydrafusion` preset compares three evaluator entries in the same m
 The selector values are the synthetic IDs exposed by Copilot CLI. HydraFusion and HydraFusion Max
 must not be added to the named-model catalog: GitHub documents them as runtime systems that choose
 execution patterns, reasoning effort, and one or more contributing models. The Astra baseline is
-configured in the preset rather than hard-coded in ranking logic, so a caller-owned copy can change
-the fixed baseline while preserving the shared matrix.
+the first model configured in the preset. Reports preserve that identity as `baselineModelId`, so a
+caller-owned copy can change the fixed baseline by placing another model first while preserving the
+shared matrix.
 
-All three entries use the same `command-line` adapter flags, timeouts, runner name, native usage
-export, and isolation conventions as the Copilot matrix. When `modelMetrics` or telemetry names the
+All three entries use the same `command-line` adapter flags, runner name, native usage export, and
+isolation conventions as the Copilot matrix. The preset raises generation timeout to 7,200 seconds
+for every entry because multi-pass orchestration can exceed the standard scenario budget; applying
+the same limit to Astra preserves comparability. When `modelMetrics` or telemetry names the
 constituent models or subagents, the report retains those names in `reportedModels`.
 
 Run one scenario with sequential attempts and at least three repetitions:
