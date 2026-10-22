@@ -27,9 +27,10 @@ public sealed class AttemptRunner(
         int repetition,
         EvaluationConfiguration configuration,
         EnvironmentInfo environment,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? attemptId = null)
     {
-        var attemptId =
+        attemptId ??=
             $"{scenario.Id}__{Sanitize(model.Id)}__rep{repetition:00}__{Guid.NewGuid():N}";
 
         var startedAt = DateTimeOffset.UtcNow;

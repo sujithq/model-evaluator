@@ -14,7 +14,9 @@ public static class DurableHost
             .AddTasks(tasks =>
             {
                 tasks.AddOrchestrator<EvaluationOrchestration>();
-                tasks.AddActivity<RunEvaluationActivity>();
+                tasks.AddActivity<PrepareEvaluationActivity>();
+                tasks.AddActivity<RunEvaluationAttemptActivity>();
+                tasks.AddActivity<FinalizeEvaluationActivity>();
             })
             .UseDurableTaskScheduler(connectionString ?? DurableSchedulerConnection.FromEnvironment());
         return builder.Build();

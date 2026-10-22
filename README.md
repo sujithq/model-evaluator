@@ -134,8 +134,8 @@ reported runner version when publishing results.
 ### Durable scheduler
 
 The existing CLI remains the default local host. An optional portable Durable Task host reuses
-`ModelEvaluator.Core` and connects to the local Durable Task Scheduler emulator at
-`http://localhost:8080`:
+`ModelEvaluator.Core`, expands each matrix into parallel `scenario x model x repetition`
+activities, and connects to the local Durable Task Scheduler emulator at `http://localhost:8080`:
 
 ```powershell
 # Terminal 1

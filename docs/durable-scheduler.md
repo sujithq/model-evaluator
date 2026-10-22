@@ -4,11 +4,17 @@
 The existing `ModelEvaluator.Cli` remains available and both hosts reuse configuration, execution,
 reporting, and adapter logic from `ModelEvaluator.Core`.
 
-The initial durable boundary is one complete evaluation run. The durable worker executes the same
-matrix and honors the same `maxParallel` setting as the CLI. The scheduler persists orchestration
-state and lets clients disconnect and reconnect, but an interrupted activity can be delivered
-again. External Copilot requests are not transactional, so a worker failure after a request is sent
-can consume credits again.
+The durable host expands an evaluation into one activity for every
+`scenario x model x repetition` attempt. It fans those activities out in batches bounded by the
+existing `maxParallel` setting, waits for each batch, and then fans the results in to write the same
+JSON and Markdown reports as the CLI. Any generic worker connected to the task hub can execute an
+attempt; workers are not assigned to presets or models.
+
+The scheduler persists orchestration state and lets clients disconnect and reconnect. Every
+attempt has a stable logical id, and a redelivered activity reuses a completed `result.json` rather
+than issuing another model request. External Copilot requests are not transactional, however, so a
+worker failure after sending a request but before persisting its result can still consume credits
+again.
 
 ## Local emulator
 
@@ -70,21 +76,21 @@ dotnet run --project .\src\ModelEvaluator.Durable -- submit --preset hydrafusion
 
 That command consumes Copilot credits. Use `smoke-reference` when testing scheduler connectivity.
 
-## Current durability boundary
+## Durability boundary
 
-The scheduler durably tracks the run and activity status. Reports and attempt artifacts are written
-through the same core service as the CLI. The next useful decomposition is attempt-level
-orchestration (`scenario x model x repetition`) with stable logical attempt ids and explicit
-execution ids. That is required before enabling automatic retries for paid model calls, because a
-retry cannot prove that a previous external request did not already consume credits.
+The scheduler durably tracks the run, each attempt activity, and final report aggregation.
+Attempt artifacts are written through the same core runner as the CLI. Completed attempts are
+idempotent when their artifact directory is available to a replacement worker. A crash during an
+external model request remains an unavoidable at-least-once edge case because the model provider
+and Durable Task Scheduler do not share a transaction.
 
 ## Azure
 
 For Azure Durable Task Scheduler, set `DURABLE_TASK_CONNECTION` to the scheduler connection string
 and use an authenticated mode supported by the Azure Managed Durable Task SDK. Host
-`ModelEvaluator.Durable worker` as a continuously running Azure Container App. Persist reports and
-attempt artifacts in shared durable storage before scaling beyond one worker, because local
-container filesystems are not shared.
+`ModelEvaluator.Durable worker` as one or more continuously running Azure Container Apps. Persist
+reports and attempt artifacts in shared durable storage before scaling beyond one worker, because
+local container filesystems are not shared and completed-attempt reuse depends on those artifacts.
 
 Official references:
 

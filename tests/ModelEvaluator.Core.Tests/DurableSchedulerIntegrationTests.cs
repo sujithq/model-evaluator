@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.DurableTask;
 using Microsoft.DurableTask.Client;
 using Microsoft.DurableTask.Client.AzureManaged;
@@ -22,7 +23,7 @@ public sealed class DurableSchedulerIntegrationTests
 
         const string connection =
             "Endpoint=http://localhost:8080;TaskHub=default;Authentication=None";
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromMinutes(6));
         using var worker = DurableHost.BuildWorker(connectionString: connection);
         await worker.StartAsync(cancellation.Token);
         try
@@ -36,7 +37,12 @@ public sealed class DurableSchedulerIntegrationTests
                 nameof(EvaluationOrchestration),
                 new DurableEvaluationRequest
                 {
-                    EvaluationArguments = ["--preset", "smoke-reference"],
+                    EvaluationArguments =
+                    [
+                        "--preset", "smoke-reference",
+                        "--repetitions", "2",
+                        "--max-parallel", "2",
+                    ],
                     WorkingDirectory = RepositoryLocator.Root,
                 },
                 cancellation.Token);
@@ -49,9 +55,21 @@ public sealed class DurableSchedulerIntegrationTests
 
             Assert.Equal(OrchestrationRuntimeStatus.Completed, metadata.RuntimeStatus);
             Assert.NotNull(result);
-            Assert.Equal(2, result.CompletedAttempts);
+            Assert.Equal(4, result.PlannedAttempts);
+            Assert.Equal(4, result.CompletedAttempts);
             Assert.True(File.Exists(result.JsonReportPath));
             Assert.True(File.Exists(result.MarkdownReportPath));
+            using var report = JsonDocument.Parse(await File.ReadAllTextAsync(result.JsonReportPath));
+            var attempts = report.RootElement.GetProperty("attempts").EnumerateArray().ToList();
+            Assert.Equal(4, attempts.Count);
+            Assert.Equal(
+                [1, 2, 1, 2],
+                attempts.Select(attempt => attempt.GetProperty("repetition").GetInt32()));
+            Assert.All(
+                attempts,
+                attempt => Assert.EndsWith(
+                    $"__{result.RunId}",
+                    attempt.GetProperty("attemptId").GetString()));
         }
         finally
         {

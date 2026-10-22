@@ -24,15 +24,7 @@ public sealed class EvaluationRunner(
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (configuration.MaxParallel < 1)
-        {
-            throw new InvalidOperationException("maxParallel must be a positive integer.");
-        }
-
-        if (configuration.Models.Count == 0)
-        {
-            throw new InvalidOperationException("The evaluation configuration contains no models.");
-        }
+        Validate(configuration);
 
         var catalog = ScenarioCatalog.Load(configuration.BenchmarkRoot);
         var scenarios = configuration.Scenarios.Count == 0
@@ -117,6 +109,64 @@ public sealed class EvaluationRunner(
             PlannedAttempts = jobs.Count,
             Attempts = attempts.OfType<AttemptResult>().ToList(),
         };
+    }
+
+    /// <summary>Executes one exact matrix job, optionally using a scheduler-owned stable attempt id.</summary>
+    public async Task<AttemptResult> RunAttemptAsync(
+        EvaluationConfiguration configuration,
+        string scenarioId,
+        string modelId,
+        int repetition,
+        string attemptId,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Validate(configuration);
+        if (repetition < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(repetition), "Repetition must be a positive integer.");
+        }
+
+        var scenario = ScenarioCatalog.Load(configuration.BenchmarkRoot).Get(scenarioId);
+        var model = configuration.Models.SingleOrDefault(
+            candidate => string.Equals(candidate.Id, modelId, StringComparison.Ordinal))
+            ?? throw new KeyNotFoundException($"Model '{modelId}' was not found in the evaluation configuration.");
+        var environment = await ProbeEnvironmentAsync(configuration, cancellationToken).ConfigureAwait(false);
+        var logLock = new object();
+        void Log(string message)
+        {
+            lock (logLock)
+            {
+                _log(message);
+            }
+        }
+
+        Action<string>? debugLog = configuration.Debug ? message => Log($"[debug] {message}") : null;
+        debugLog?.Invoke($"Starting durable attempt {scenario.Id} / {model.Id}, repetition {repetition}.");
+        Directory.CreateDirectory(configuration.OutputDirectory);
+        return await new AttemptRunner(_adapterFactory, _processRunner, Log, debugLog)
+            .RunAsync(
+                scenario,
+                model,
+                repetition,
+                configuration,
+                environment,
+                cancellationToken,
+                attemptId)
+            .ConfigureAwait(false);
+    }
+
+    private static void Validate(EvaluationConfiguration configuration)
+    {
+        if (configuration.MaxParallel < 1)
+        {
+            throw new InvalidOperationException("maxParallel must be a positive integer.");
+        }
+
+        if (configuration.Models.Count == 0)
+        {
+            throw new InvalidOperationException("The evaluation configuration contains no models.");
+        }
     }
 
     private async Task<EnvironmentInfo> ProbeEnvironmentAsync(
