@@ -23,6 +23,8 @@ public sealed record ModelRanking
 
     public double? AcceptanceAccuracy { get; init; }
 
+    public AutomatedQualityScore AutomatedQuality { get; init; } = new();
+
     public int AiCreditsReportedAttempts { get; init; }
 
     public decimal? MeanAiCredits { get; init; }
@@ -144,6 +146,7 @@ public static class ScenarioRanker
             SuccessRate = evaluated.Count == 0 ? null : (double)evaluated.Count(a => a.IsSuccess) / evaluated.Count,
             AcceptanceAccuracy = evaluated.Count == 0 ? null : evaluated.Average(a =>
                 a.Acceptance.Total == 0 ? 0 : (double)a.Acceptance.Passed / a.Acceptance.Total),
+            AutomatedQuality = summary.AutomatedQuality,
             AiCreditsReportedAttempts = coverage,
             MeanAiCredits = evaluated.Count > 0 && coverage == evaluated.Count
                 ? evaluated.Average(a => a.Efficiency.AiCredits!.Value) : null,

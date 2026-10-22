@@ -70,6 +70,7 @@ public static class MarkdownReportWriter
         builder.AppendLine("## Per-task rankings");
         builder.AppendLine();
         builder.AppendLine("Order: lower mean AI-credit consumption. This is a cost ranking, not a quality ranking.");
+        builder.AppendLine("Automated quality score: 0-100 deterministic signal (45% functional, 20% instruction adherence, 15% build/analyzer, 10% generated tests, 10% reliability). It is not a human code review and does not affect cost ranking.");
         builder.AppendLine("The first selected model is the baseline. Quality, consumption and timing deltas compare each model with that baseline.");
         builder.AppendLine("Models without complete AI-credit measurements are shown but not cost-ranked. Infrastructure failures remain visible.");
         builder.AppendLine("AI credits measure consumption, not invoice charges. Premium requests and reported USD are separate units, never substituted for credits.");
@@ -87,14 +88,15 @@ public static class MarkdownReportWriter
                 ? "Cost ranking: enabled for models with complete AI-credit measurements."
                 : "Cost ranking: unavailable for this group because no model has complete AI-credit measurements.");
             builder.AppendLine();
-            builder.AppendLine("| Cost rank | Model | Role | Success | vs baseline | Acceptance accuracy | vs baseline | Mean AI credits | vs baseline | Credit coverage | Mean total / generation seconds | vs baseline total | Infra failures | Notes |");
-            builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+            builder.AppendLine("| Cost rank | Model | Role | Automated quality | Success | vs baseline | Acceptance accuracy | vs baseline | Mean AI credits | vs baseline | Credit coverage | Mean total / generation seconds | vs baseline total | Infra failures | Notes |");
+            builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
             foreach (var model in ranking.Models)
             {
                 builder.AppendLine(Row(
                     Optional(model.Rank),
                     model.ModelId,
                     model.IsBaseline ? "baseline" : "candidate",
+                    FormatQuality(model.AutomatedQuality),
                     $"{model.SuccessfulAttempts}/{model.EvaluatedAttempts}",
                     SignedPercentagePoints(model.SuccessRateDeltaVsBaseline),
                     model.AcceptanceAccuracy is null ? "n/a" : Percent(model.AcceptanceAccuracy.Value),
@@ -120,8 +122,8 @@ public static class MarkdownReportWriter
             builder.AppendLine($"- Prompt hash: `{first.PromptHash}`");
             builder.AppendLine($"- Maximum parallel attempts: {first.MaxParallel}");
             builder.AppendLine();
-            builder.AppendLine("| Model | Build & execution | Functional correctness | Instruction adherence | Code quality | Efficiency | Reliability |");
-            builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- |");
+            builder.AppendLine("| Model | Build & execution | Functional correctness | Instruction adherence | Code quality | Automated quality | Efficiency | Reliability |");
+            builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- |");
 
             foreach (var summary in scenarioGroup)
             {
@@ -143,6 +145,7 @@ public static class MarkdownReportWriter
                     $"{summary.AcceptancePassed} passed / {summary.AcceptanceFailed} failed / {summary.AcceptanceSkipped} skipped",
                     $"{summary.InstructionCompliant}/{summary.TotalAttempts} compliant",
                     $"{summary.CodeQualityPassing}/{summary.TotalAttempts} clean",
+                    FormatQuality(summary.AutomatedQuality),
                     efficiency,
                     $"{Percent(summary.SuccessRate)} over {summary.TotalAttempts} attempts (sd {summary.ElapsedStandardDeviation:0.0} s)"));
             }
@@ -257,6 +260,11 @@ public static class MarkdownReportWriter
 
     private static string OptionalCost(decimal? value) =>
         value is null ? "n/a" : "$" + value.Value.ToString("0.00##########################", CultureInfo.InvariantCulture);
+
+    private static string FormatQuality(AutomatedQualityScore quality) =>
+        quality.Score is null
+            ? quality.Status ?? "n/a"
+            : $"{quality.Score:0.##}/100" + (quality.Provisional ? " (provisional)" : string.Empty);
 
     private static string Value(string? value) => string.IsNullOrWhiteSpace(value) ? "not recorded" : $"`{value}`";
 

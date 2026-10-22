@@ -131,6 +131,54 @@ public sealed class ScenarioRankingTests
     }
 
     [Fact]
+    public void AutomatedQualityScore_UsesWeightedComponentsAndMarksProvisionalRuns()
+    {
+        var attempt = Attempt("model", AttemptOutcome.Success, 1m, 10, passed: 10) with
+        {
+            Checks =
+            [
+                CheckResult.Pass("build.compile", CheckCategory.BuildAndExecution),
+                CheckResult.Pass("instructions.solution-file", CheckCategory.InstructionAdherence),
+                CheckResult.Pass("quality.format", CheckCategory.CodeQuality),
+                CheckResult.Pass("tests.generated", CheckCategory.CodeQuality),
+            ],
+        };
+
+        var model = Assert.Single(Assert.Single(ScenarioRanker.Rank(Report(attempt))).Models);
+
+        Assert.Equal(100, model.AutomatedQuality.Score);
+        Assert.Equal(100, model.AutomatedQuality.FunctionalCorrectness);
+        Assert.Equal(100, model.AutomatedQuality.InstructionAdherence);
+        Assert.Equal(100, model.AutomatedQuality.BuildAndAnalyzer);
+        Assert.Equal(100, model.AutomatedQuality.GeneratedTests);
+        Assert.Equal(100, model.AutomatedQuality.Reliability);
+        Assert.True(model.AutomatedQuality.Provisional);
+        Assert.Equal("provisional", model.AutomatedQuality.Status);
+    }
+
+    [Fact]
+    public void AutomatedQualityScore_CapsAcceptanceFailuresAndLeavesInfrastructureIncomplete()
+    {
+        var failed = Attempt("failed", AttemptOutcome.ModelFailure, 1m, 10, passed: 5) with
+        {
+            Checks =
+            [
+                CheckResult.Pass("build.compile", CheckCategory.BuildAndExecution),
+                CheckResult.Pass("instructions.solution-file", CheckCategory.InstructionAdherence),
+                CheckResult.Pass("quality.format", CheckCategory.CodeQuality),
+                CheckResult.Pass("tests.generated", CheckCategory.CodeQuality),
+            ],
+        };
+        var infrastructure = Attempt("infra", AttemptOutcome.InfrastructureFailure, null, 10);
+        var ranking = ScenarioRanker.Rank(Report(failed, infrastructure)).Single();
+
+        Assert.Equal(60, ranking.Models.Single(model => model.ModelId == "failed").AutomatedQuality.Score);
+        Assert.Null(ranking.Models.Single(model => model.ModelId == "infra").AutomatedQuality.Score);
+        Assert.Equal("incomplete: infrastructure failures only",
+            ranking.Models.Single(model => model.ModelId == "infra").AutomatedQuality.Status);
+    }
+
+    [Fact]
     public void Rank_EqualScoresShareRankWithoutAlphabeticalBias()
     {
         var ranking = Assert.Single(ScenarioRanker.Rank(Report(

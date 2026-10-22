@@ -135,6 +135,8 @@ public sealed record ModelScenarioSummary
     public IReadOnlyList<string> ReportedModels =>
         Attempts.SelectMany(a => a.Efficiency.ReportedModels).Distinct().Order(StringComparer.Ordinal).ToList();
 
+    public AutomatedQualityScore AutomatedQuality => AutomatedQualityScore.Calculate(this);
+
     private static bool AllMandatoryPassed(AttemptResult attempt, CheckCategory category)
     {
         var checks = attempt.ChecksIn(category).Where(c => c.Mandatory).ToList();

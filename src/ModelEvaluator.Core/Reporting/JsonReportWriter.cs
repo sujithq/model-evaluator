@@ -65,6 +65,7 @@ public static class JsonReportWriter
                 s.TotalApiRequests,
                 s.TotalApiDurationSeconds,
                 s.ReportedModels,
+                s.AutomatedQuality,
             }),
             Rankings = ScenarioRanker.Rank(report),
             report.Attempts,

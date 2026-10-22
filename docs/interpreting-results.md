@@ -43,6 +43,25 @@ mean total time. The JSON `rankings` array contains the same ordering and measur
 Run several models in one evaluation matrix to compare them; individual run reports are not
 automatically merged.
 
+### Automated quality score
+
+Reports include an **Automated quality score** from 0 to 100. It is a deterministic signal,
+not a human or AI qualitative code review, and it does not affect cost ranking. The score is
+calculated per model and scenario from evaluator-owned measurements:
+
+* 45% functional correctness: acceptance checks passed per attempt.
+* 20% instruction adherence: mandatory instruction checks passed.
+* 15% build/analyzer cleanliness: the average of mandatory build/execution and code-quality checks.
+* 10% generated-test success: the mandatory `tests.generated` check.
+* 10% reliability: successful attempts among evaluable attempts.
+
+Scores are marked `provisional` when fewer than three evaluable attempts are available. A group
+with only infrastructure failures has an incomplete score rather than a zero. A mandatory build
+failure caps the score at 20; a mandatory acceptance failure caps it at 60. The JSON report
+includes the total and component scores under `automatedQuality`, while Markdown shows the score
+and its provisional/incomplete status. The score is intended to complement, not replace, the
+individual check counts and acceptance results.
+
 `environment.maxParallel` records the configured concurrency limit, not guaranteed simultaneous
 activity or a speed-up factor. Parallel attempts compete for machine resources and provider
 capacity; timing cannot be compared directly with sequential runs. Summaries and rankings keep
