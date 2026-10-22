@@ -56,7 +56,10 @@ public static class Program
 
     private static async Task<int> EvaluateAsync(CommandLineOptions options)
     {
-        var configuration = options.Apply(LoadConfiguration(options));
+        var configuration = EvaluationConfigurationResolver.Resolve(
+            options,
+            Environment.CurrentDirectory,
+            AppContext.BaseDirectory);
 
         if (configuration.Repetitions < 3)
         {
@@ -74,8 +77,10 @@ public static class Program
         EvaluationReport report;
         try
         {
-            var runner = new EvaluationRunner(log: Console.WriteLine);
-            report = await runner.RunAsync(configuration, cancellation.Token).ConfigureAwait(false);
+            var execution = await new EvaluationExecutionService(Console.WriteLine)
+                .RunAsync(configuration, cancellation.Token)
+                .ConfigureAwait(false);
+            report = execution.Report;
         }
         finally
         {
@@ -83,8 +88,8 @@ public static class Program
         }
 
         var outputDirectory = Path.Combine(configuration.OutputDirectory, report.RunId);
-        var jsonPath = JsonReportWriter.Write(report, outputDirectory);
-        var markdownPath = MarkdownReportWriter.Write(report, outputDirectory);
+        var jsonPath = Path.Combine(outputDirectory, "results.json");
+        var markdownPath = Path.Combine(outputDirectory, "report.md");
 
         Console.WriteLine();
         Console.WriteLine($"JSON report:     {jsonPath}");

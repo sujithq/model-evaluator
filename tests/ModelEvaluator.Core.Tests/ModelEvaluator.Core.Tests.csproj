@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ModelEvaluator.Core\ModelEvaluator.Core.csproj" />
+    <ProjectReference Include="..\..\src\ModelEvaluator.Durable\ModelEvaluator.Durable.csproj" />
   </ItemGroup>
 
 </Project>

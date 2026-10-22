@@ -131,6 +131,23 @@ organization policies, research-preview changes, and incomplete provider attribu
 affect comparability. Use one matrix invocation, identical prompts, sequential execution, and the
 reported runner version when publishing results.
 
+### Durable scheduler
+
+The existing CLI remains the default local host. An optional portable Durable Task host reuses
+`ModelEvaluator.Core` and connects to the local Durable Task Scheduler emulator at
+`http://localhost:8080`:
+
+```powershell
+# Terminal 1
+dotnet run --project .\src\ModelEvaluator.Durable -- worker
+
+# Terminal 2: local reference samples only; no model credits
+dotnet run --project .\src\ModelEvaluator.Durable -- submit --preset smoke-reference
+```
+
+See [Durable Task Scheduler host](docs/durable-scheduler.md) for detached submission, status,
+restart behavior, connection settings, and Azure Container Apps guidance.
+
 ### Minimal smoke test across all active models
 
 ```powershell
