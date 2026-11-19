@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "scenarioRoot": "../scenarios/v1",
+  "outputDirectory": "../artifacts/evaluations",
+  "repetitions": 1,
+  "maxParallel": 1,
+  "maxRetries": 0,
+  "timeoutSeconds": 30,
+  "targets": [
+    {
+      "id": "fixture-gpt-5-1",
+      "enabled": true,
+      "adapter": "local-fixture",
+      "apiKind": "local",
+      "modelId": "fixture-gpt-5.1",
+      "authentication": "none",
+      "evidence": {
+        "euDataZone": "unknown",
+        "capacity": "unknown"
+      }
+    },
+    {
+      "id": "fixture-newer-model",
+      "enabled": true,
+      "adapter": "local-fixture",
+      "apiKind": "local",
+      "modelId": "fixture-gpt-newer",
+      "authentication": "none",
+      "evidence": {
+        "euDataZone": "unknown",
+        "capacity": "unknown"
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "offline-model-migration",
+      "baselineTargetId": "fixture-gpt-5-1",
+      "candidateTargetIds": [
+        "fixture-newer-model"
+      ],
+      "intendedVariable": "model"
+    }
+  ]
+}

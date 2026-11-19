@@ -1,0 +1,13 @@
+.vs/
+.idea/
+.vscode/
+
+**/bin/
+**/obj/
+artifacts/
+TestResults/
+config/evaluation.local.json
+
+*.user
+*.suo
+*.DotSettings.user

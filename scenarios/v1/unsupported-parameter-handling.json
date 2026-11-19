@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "unsupported-parameter-handling",
+  "version": "1.0.0",
+  "title": "Explicit unsupported-parameter behavior",
+  "category": "error-handling",
+  "description": "Sends a parameter combination that reasoning models may reject and requires a classified outcome.",
+  "systemPrompt": "Follow the user request exactly.",
+  "turns": [
+    {
+      "user": "Reply with exactly: OK"
+    }
+  ],
+  "parameters": {
+    "maxOutputTokens": 40,
+    "temperature": 0.25
+  },
+  "validation": {
+    "containsAll": [
+      "OK"
+    ],
+    "allowedErrorCategories": [
+      "unsupported-parameter",
+      "invalid-request"
+    ],
+    "allowSuccessfulCompletionWhenErrorAllowed": true
+  },
+  "dryRun": {
+    "calls": [
+      {
+        "turn": 0,
+        "toolRound": 0,
+        "error": {
+          "category": "unsupported-parameter",
+          "code": "unsupported_value",
+          "statusCode": 400,
+          "message": "Deterministic fixture: temperature is not supported by this synthetic reasoning model."
+        }
+      }
+    ]
+  }
+}

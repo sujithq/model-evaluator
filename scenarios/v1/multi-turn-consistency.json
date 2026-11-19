@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "multi-turn-consistency",
+  "version": "1.0.0",
+  "title": "Synthetic multi-turn memory consistency",
+  "category": "multi-turn",
+  "description": "Checks that a harmless synthetic value is retained in conversation history.",
+  "systemPrompt": "This is a synthetic evaluation. Maintain facts from the current conversation exactly.",
+  "turns": [
+    {
+      "user": "Remember this synthetic session key for the next question: BLUE-OWL-17."
+    },
+    {
+      "user": "What synthetic session key did I provide in the preceding turn? Reply with the key only."
+    }
+  ],
+  "parameters": {
+    "maxOutputTokens": 80
+  },
+  "validation": {
+    "containsAll": [
+      "BLUE-OWL-17"
+    ]
+  },
+  "dryRun": {
+    "calls": [
+      {
+        "turn": 0,
+        "toolRound": 0,
+        "text": "I stored the synthetic session key BLUE-OWL-17."
+      },
+      {
+        "turn": 1,
+        "toolRound": 0,
+        "text": "BLUE-OWL-17"
+      }
+    ]
+  }
+}

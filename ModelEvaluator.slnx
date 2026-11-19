@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ModelEvaluator.Cli/ModelEvaluator.Cli.csproj" />
+    <Project Path="src/ModelEvaluator.Core/ModelEvaluator.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ModelEvaluator.Core.Tests/ModelEvaluator.Core.Tests.csproj" />
+  </Folder>
+</Solution>

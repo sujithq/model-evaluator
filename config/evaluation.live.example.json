@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "scenarioRoot": "../scenarios/v1",
+  "outputDirectory": "../artifacts/evaluations",
+  "repetitions": 1,
+  "maxParallel": 1,
+  "maxRetries": 0,
+  "timeoutSeconds": 120,
+  "targets": [
+    {
+      "id": "azure-gpt-5-1-rest",
+      "enabled": true,
+      "adapter": "direct-rest",
+      "apiKind": "azure-openai",
+      "modelId": "replace-with-exact-gpt-5.1-deployment",
+      "endpointEnvironmentVariable": "AZURE_OPENAI_ENDPOINT",
+      "apiKeyEnvironmentVariable": "AZURE_OPENAI_API_KEY",
+      "authentication": "api-key",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "unknown",
+        "capacity": "unknown"
+      }
+    },
+    {
+      "id": "azure-newer-rest",
+      "enabled": true,
+      "adapter": "direct-rest",
+      "apiKind": "azure-openai",
+      "modelId": "replace-with-exact-newer-deployment",
+      "endpointEnvironmentVariable": "AZURE_OPENAI_ENDPOINT",
+      "apiKeyEnvironmentVariable": "AZURE_OPENAI_API_KEY",
+      "authentication": "api-key",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "unknown",
+        "capacity": "unknown"
+      }
+    },
+    {
+      "id": "azure-newer-sdk",
+      "enabled": true,
+      "adapter": "openai-sdk",
+      "apiKind": "azure-openai",
+      "modelId": "replace-with-exact-newer-deployment",
+      "endpointEnvironmentVariable": "AZURE_OPENAI_ENDPOINT",
+      "apiKeyEnvironmentVariable": "AZURE_OPENAI_API_KEY",
+      "authentication": "api-key",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "unknown",
+        "capacity": "unknown"
+      }
+    },
+    {
+      "id": "azure-newer-sdk-entra",
+      "enabled": false,
+      "adapter": "openai-sdk",
+      "apiKind": "azure-openai",
+      "modelId": "replace-with-exact-newer-deployment",
+      "endpointEnvironmentVariable": "AZURE_OPENAI_ENDPOINT",
+      "authentication": "default-credential",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "unknown",
+        "capacity": "unknown"
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "gpt-model-migration",
+      "baselineTargetId": "azure-gpt-5-1-rest",
+      "candidateTargetIds": [
+        "azure-newer-rest"
+      ],
+      "intendedVariable": "model"
+    },
+    {
+      "id": "rest-vs-sdk",
+      "baselineTargetId": "azure-newer-rest",
+      "candidateTargetIds": [
+        "azure-newer-sdk"
+      ],
+      "intendedVariable": "adapter"
+    }
+  ]
+}
