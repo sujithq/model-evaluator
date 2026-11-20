@@ -1,0 +1,37 @@
+{
+  "id": "chatcmpl-tool-fixture",
+  "object": "chat.completion",
+  "created": 1730000000,
+  "model": "test-model",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_test",
+            "type": "function",
+            "function": {
+              "name": "lookup_synthetic_plan",
+              "arguments": "{\"memberId\":\"SYNTH-100\"}"
+            }
+          }
+        ]
+      },
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 21,
+    "completion_tokens": 13,
+    "total_tokens": 34,
+    "prompt_tokens_details": {
+      "cached_tokens": 5
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 7
+    }
+  }
+}

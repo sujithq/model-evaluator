@@ -205,6 +205,20 @@ public sealed class ScenarioRunner
             warnings.Add(
                 "Local fixture results validate the offline harness only; they do not establish live technical compatibility.");
         }
+        else if (executedAdapter.Id == AdapterIds.CopilotCli)
+        {
+            warnings.Add(
+                "GitHub Copilot CLI uses an agent runtime. Tool schemas, tool results, structured output, " +
+                "and max-output-token limits are prompt-mediated and are not evidence of native provider API behavior.");
+        }
+        else if (executedAdapter.Id is AdapterIds.MicrosoftExtensionsAi
+                 or AdapterIds.MicrosoftExtensionsAiResponses
+                 or AdapterIds.SemanticKernel)
+        {
+            warnings.Add(
+                "This adapter uses an abstraction/framework over an OpenAI-compatible client. " +
+                "Compare its result with the corresponding direct/SDK path before attributing differences to the model.");
+        }
 
         return new AttemptResult
         {
@@ -374,6 +388,11 @@ public sealed class ScenarioRunner
             return target.ApiKind == ApiKinds.AzureOpenAi
                 ? target.ApiVersion ?? "v1"
                 : "v1";
+        }
+
+        if (executedAdapter == AdapterIds.CopilotCli)
+        {
+            return "programmatic-cli";
         }
 
         return "v1";

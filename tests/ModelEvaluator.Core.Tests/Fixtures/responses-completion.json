@@ -1,0 +1,42 @@
+{
+  "id": "resp_test",
+  "object": "response",
+  "created_at": 1760000000,
+  "status": "completed",
+  "model": "test-model",
+  "output": [
+    {
+      "id": "fc_test",
+      "type": "function_call",
+      "status": "completed",
+      "call_id": "call_test",
+      "name": "lookup_synthetic_plan",
+      "arguments": "{\"memberId\":\"SYNTH-100\"}"
+    },
+    {
+      "id": "msg_test",
+      "type": "message",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "hello",
+          "annotations": []
+        }
+      ]
+    }
+  ],
+  "output_text": "hello",
+  "usage": {
+    "input_tokens": 21,
+    "input_tokens_details": {
+      "cached_tokens": 4
+    },
+    "output_tokens": 13,
+    "output_tokens_details": {
+      "reasoning_tokens": 7
+    },
+    "total_tokens": 34
+  }
+}

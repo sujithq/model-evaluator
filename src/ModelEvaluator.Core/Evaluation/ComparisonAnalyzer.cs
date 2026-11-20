@@ -129,7 +129,14 @@ public static class ComparisonAnalyzer
                 string.IsNullOrWhiteSpace(target.ApiVersion)
                     ? "v1"
                     : target.ApiVersion.ToLowerInvariant(),
-            AdapterIds.DirectRest or AdapterIds.OpenAiSdk => "v1",
+            AdapterIds.DirectRest
+                or AdapterIds.OpenAiSdk
+                or AdapterIds.DirectRestResponses
+                or AdapterIds.OpenAiSdkResponses
+                or AdapterIds.MicrosoftExtensionsAi
+                or AdapterIds.MicrosoftExtensionsAiResponses
+                or AdapterIds.SemanticKernel => "v1",
+            AdapterIds.CopilotCli => "programmatic-cli",
             _ => "fixture",
         };
 }

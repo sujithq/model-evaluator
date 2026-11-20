@@ -55,6 +55,127 @@ public class ConfigurationTests
     }
 
     [Fact]
+    public void StaticValidationAcceptsCopilotCliSessionTargets()
+    {
+        var configuration = new EvaluationConfiguration
+        {
+            Targets =
+            [
+                new TargetConfiguration
+                {
+                    Id = "copilot-gpt",
+                    Adapter = AdapterIds.CopilotCli,
+                    ApiKind = ApiKinds.GitHubCopilot,
+                    ModelId = "gpt-6.2-sol",
+                    Authentication = AuthenticationKinds.CliSession,
+                },
+            ],
+        };
+
+        var result = ConfigurationValidator.Validate(configuration, requireLiveCredentials: true);
+
+        Assert.True(result.IsValid);
+        Assert.DoesNotContain(result.Errors, error => error.Contains("endpoint", StringComparison.Ordinal));
+        Assert.DoesNotContain(result.Errors, error => error.Contains("API key", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void StaticValidationAcceptsResponsesAdapters()
+    {
+        foreach (var adapter in new[] { AdapterIds.DirectRestResponses, AdapterIds.OpenAiSdkResponses })
+        {
+            var configuration = new EvaluationConfiguration
+            {
+                Targets =
+                [
+                    new TargetConfiguration
+                    {
+                        Id = $"target-{adapter}",
+                        Adapter = adapter,
+                        ApiKind = ApiKinds.AzureOpenAi,
+                        ModelId = "deployment",
+                        Endpoint = "https://example.test/openai/v1",
+                        Authentication = AuthenticationKinds.DefaultCredential,
+                    },
+                ],
+            };
+
+            var result = ConfigurationValidator.Validate(
+                configuration,
+                requireLiveCredentials: true);
+
+            Assert.True(result.IsValid);
+        }
+    }
+
+    [Fact]
+    public void ResponsesAdaptersRejectDatedApiVersions()
+    {
+        foreach (var adapter in new[] { AdapterIds.DirectRestResponses, AdapterIds.OpenAiSdkResponses })
+        {
+            var configuration = new EvaluationConfiguration
+            {
+                Targets =
+                [
+                    new TargetConfiguration
+                    {
+                        Id = $"target-{adapter}",
+                        Adapter = adapter,
+                        ApiKind = ApiKinds.AzureOpenAi,
+                        ModelId = "deployment",
+                        Endpoint = "https://example.test/openai/v1",
+                        Authentication = AuthenticationKinds.DefaultCredential,
+                        ApiVersion = "2024-10-21",
+                    },
+                ],
+            };
+
+            var result = ConfigurationValidator.Validate(
+                configuration,
+                requireLiveCredentials: false);
+
+            Assert.False(result.IsValid);
+            Assert.Contains(
+                result.Errors,
+                error => error.Contains("/openai/v1", StringComparison.Ordinal));
+        }
+    }
+
+    [Fact]
+    public void StaticValidationAcceptsFrameworkAdapters()
+    {
+        foreach (var adapter in new[]
+                 {
+                     AdapterIds.MicrosoftExtensionsAi,
+                     AdapterIds.MicrosoftExtensionsAiResponses,
+                     AdapterIds.SemanticKernel,
+                 })
+        {
+            var configuration = new EvaluationConfiguration
+            {
+                Targets =
+                [
+                    new TargetConfiguration
+                    {
+                        Id = $"target-{adapter}",
+                        Adapter = adapter,
+                        ApiKind = ApiKinds.AzureOpenAi,
+                        ModelId = "deployment",
+                        Endpoint = "https://example.test/openai/v1",
+                        Authentication = AuthenticationKinds.DefaultCredential,
+                    },
+                ],
+            };
+
+            var result = ConfigurationValidator.Validate(
+                configuration,
+                requireLiveCredentials: true);
+
+            Assert.True(result.IsValid);
+        }
+    }
+
+    [Fact]
     public void ComparisonAnalyzerRejectsMultipleChangedDimensions()
     {
         var baseline = ScenarioFactory.Target();

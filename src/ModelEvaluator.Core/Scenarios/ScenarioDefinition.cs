@@ -79,6 +79,8 @@ public sealed class ScenarioValidation
 {
     public List<string> ContainsAll { get; init; } = [];
 
+    public List<ScenarioAlternativeRequirement> ContainsAnyOf { get; init; } = [];
+
     public List<string> DoesNotContain { get; init; } = [];
 
     public JsonElement? ExactJson { get; init; }
@@ -90,6 +92,13 @@ public sealed class ScenarioValidation
     public List<string> AllowedErrorCategories { get; init; } = [];
 
     public bool AllowSuccessfulCompletionWhenErrorAllowed { get; init; } = true;
+}
+
+public sealed class ScenarioAlternativeRequirement
+{
+    public required string Id { get; init; }
+
+    public List<string> Terms { get; init; } = [];
 }
 
 public sealed class DryRunDefinition

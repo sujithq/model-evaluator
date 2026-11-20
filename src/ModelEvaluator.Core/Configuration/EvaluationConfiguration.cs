@@ -5,6 +5,12 @@ public static class AdapterIds
     public const string LocalFixture = "local-fixture";
     public const string DirectRest = "direct-rest";
     public const string OpenAiSdk = "openai-sdk";
+    public const string DirectRestResponses = "direct-rest-responses";
+    public const string OpenAiSdkResponses = "openai-sdk-responses";
+    public const string MicrosoftExtensionsAi = "microsoft-extensions-ai";
+    public const string MicrosoftExtensionsAiResponses = "microsoft-extensions-ai-responses";
+    public const string SemanticKernel = "semantic-kernel";
+    public const string CopilotCli = "copilot-cli";
 }
 
 public static class ApiKinds
@@ -12,6 +18,7 @@ public static class ApiKinds
     public const string Local = "local";
     public const string OpenAi = "openai";
     public const string AzureOpenAi = "azure-openai";
+    public const string GitHubCopilot = "github-copilot";
 }
 
 public static class AuthenticationKinds
@@ -19,6 +26,7 @@ public static class AuthenticationKinds
     public const string None = "none";
     public const string ApiKey = "api-key";
     public const string DefaultCredential = "default-credential";
+    public const string CliSession = "cli-session";
 }
 
 public sealed class EvaluationConfiguration
@@ -67,6 +75,8 @@ public sealed class TargetConfiguration
     public string Authentication { get; init; } = AuthenticationKinds.ApiKey;
 
     public string? ApiVersion { get; init; }
+
+    public string? TenantId { get; init; }
 
     public string TokenScope { get; init; } = "https://cognitiveservices.azure.com/.default";
 

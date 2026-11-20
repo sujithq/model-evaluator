@@ -12,10 +12,25 @@ public sealed class ConfigurationValidationResult
 public static class ConfigurationValidator
 {
     private static readonly HashSet<string> Adapters =
-        [AdapterIds.LocalFixture, AdapterIds.DirectRest, AdapterIds.OpenAiSdk];
+        [
+            AdapterIds.LocalFixture,
+            AdapterIds.DirectRest,
+            AdapterIds.OpenAiSdk,
+            AdapterIds.DirectRestResponses,
+            AdapterIds.OpenAiSdkResponses,
+            AdapterIds.MicrosoftExtensionsAi,
+            AdapterIds.MicrosoftExtensionsAiResponses,
+            AdapterIds.SemanticKernel,
+            AdapterIds.CopilotCli,
+        ];
 
     private static readonly HashSet<string> ApiKinds =
-        [Configuration.ApiKinds.Local, Configuration.ApiKinds.OpenAi, Configuration.ApiKinds.AzureOpenAi];
+        [
+            Configuration.ApiKinds.Local,
+            Configuration.ApiKinds.OpenAi,
+            Configuration.ApiKinds.AzureOpenAi,
+            Configuration.ApiKinds.GitHubCopilot,
+        ];
 
     private static readonly HashSet<string> EvidenceStates =
         ["unknown", "confirmed", "not-confirmed", "not-applicable"];
@@ -133,6 +148,19 @@ public static class ConfigurationValidator
             return;
         }
 
+        if (target.Adapter == AdapterIds.CopilotCli)
+        {
+            if (target.ApiKind != Configuration.ApiKinds.GitHubCopilot
+                || target.Authentication != AuthenticationKinds.CliSession)
+            {
+                result.Errors.Add(
+                    $"Target '{target.Id}' is unsupported: copilot-cli requires " +
+                    "apiKind=github-copilot and authentication=cli-session.");
+            }
+
+            return;
+        }
+
         if (target.ApiKind is not (Configuration.ApiKinds.OpenAi or Configuration.ApiKinds.AzureOpenAi))
         {
             result.Errors.Add(
@@ -198,14 +226,23 @@ public static class ConfigurationValidator
             result.Errors.Add($"Target '{target.Id}' requires an exact Azure deployment id.");
         }
 
-        if (target.Adapter == AdapterIds.OpenAiSdk
-            && target.ApiKind == Configuration.ApiKinds.AzureOpenAi
-            && !string.IsNullOrWhiteSpace(target.ApiVersion)
-            && !string.Equals(target.ApiVersion, "v1", StringComparison.OrdinalIgnoreCase))
+        if (target.Adapter is (
+                AdapterIds.OpenAiSdk
+                or AdapterIds.OpenAiSdkResponses
+                or AdapterIds.DirectRestResponses
+                or AdapterIds.MicrosoftExtensionsAi
+                or AdapterIds.MicrosoftExtensionsAiResponses
+                or AdapterIds.SemanticKernel))
         {
-            result.Errors.Add(
-                $"Target '{target.Id}' selects API version '{target.ApiVersion}', but the openai-sdk adapter " +
-                "uses Azure OpenAI's /openai/v1 surface. Use direct-rest for a deployment-specific apiVersion.");
+            if (target.ApiKind == Configuration.ApiKinds.AzureOpenAi
+                && !string.IsNullOrWhiteSpace(target.ApiVersion)
+                && !string.Equals(target.ApiVersion, "v1", StringComparison.OrdinalIgnoreCase))
+            {
+                result.Errors.Add(
+                    $"Target '{target.Id}' selects API version '{target.ApiVersion}', but adapter " +
+                    $"'{target.Adapter}' uses Azure OpenAI's /openai/v1 surface. Use the " +
+                    "direct-rest Chat Completions adapter for a deployment-specific apiVersion.");
+            }
         }
 
         if (string.Equals(target.Evidence.EuDataZone, "unknown", StringComparison.OrdinalIgnoreCase))

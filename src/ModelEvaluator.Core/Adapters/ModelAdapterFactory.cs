@@ -16,6 +16,12 @@ public sealed class ModelAdapterFactory
             new LocalFixtureAdapter(),
             new DirectRestAdapter(),
             new OpenAiSdkAdapter(),
+            new DirectResponsesAdapter(),
+            new OpenAiResponsesAdapter(),
+            new MicrosoftExtensionsAiAdapter(useResponsesApi: false),
+            new MicrosoftExtensionsAiAdapter(useResponsesApi: true),
+            new SemanticKernelAdapter(),
+            new CopilotCliAdapter(),
         ]);
 
     public IReadOnlyCollection<IModelAdapter> All => _adapters.Values;

@@ -82,6 +82,22 @@ public static class ScenarioValidator
             });
         }
 
+        foreach (var requirement in scenario.Validation.ContainsAnyOf)
+        {
+            var matched = requirement.Terms.FirstOrDefault(
+                term => finalText.Contains(term, StringComparison.OrdinalIgnoreCase));
+            var passed = matched is not null;
+            checks.Add(new ValidationCheck
+            {
+                Id = $"contains-any:{requirement.Id}",
+                Passed = passed,
+                Detail = passed
+                    ? $"The final response satisfies '{requirement.Id}' using '{matched}'."
+                    : $"The final response did not satisfy '{requirement.Id}'. Accepted wording: " +
+                      string.Join(", ", requirement.Terms.Select(term => $"'{term}'")) + ".",
+            });
+        }
+
         foreach (var forbidden in scenario.Validation.DoesNotContain)
         {
             var passed = !finalText.Contains(forbidden, StringComparison.OrdinalIgnoreCase);

@@ -155,7 +155,9 @@ public sealed class OpenAiSdkAdapter(
         if (target.Authentication == AuthenticationKinds.DefaultCredential)
         {
 #pragma warning disable OPENAI001
-            TokenCredential credential = _tokenCredential ?? new DefaultAzureCredential();
+            TokenCredential credential = AdapterUtilities.CreateDefaultCredential(
+                target,
+                _tokenCredential);
             var policy = new BearerTokenPolicy(
                 credential,
                 target.TokenScope);

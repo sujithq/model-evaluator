@@ -84,7 +84,7 @@ public static class Program
             var package = target is null
                 ? ""
                 : $" ({adapter.DescribePackage(target).Name}@{adapter.DescribePackage(target).Version})";
-            Console.WriteLine($"  {adapter.Id,-16} {adapter.DisplayName}{package}");
+            Console.WriteLine($"  {adapter.Id,-32} {adapter.DisplayName}{package}");
         }
 
         return 0;

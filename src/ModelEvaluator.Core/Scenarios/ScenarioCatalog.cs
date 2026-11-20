@@ -159,5 +159,34 @@ public sealed class ScenarioCatalog
         {
             throw new InvalidDataException($"Scenario '{scenario.Id}' has no dry-run fixture calls.");
         }
+
+        var duplicateAlternativeRequirement = scenario.Validation.ContainsAnyOf
+            .GroupBy(requirement => requirement.Id, StringComparer.Ordinal)
+            .FirstOrDefault(group => group.Count() > 1);
+        if (duplicateAlternativeRequirement is not null)
+        {
+            throw new InvalidDataException(
+                $"Scenario '{scenario.Id}' contains duplicate alternative requirement " +
+                $"'{duplicateAlternativeRequirement.Key}'.");
+        }
+
+        foreach (var requirement in scenario.Validation.ContainsAnyOf)
+        {
+            if (string.IsNullOrWhiteSpace(requirement.Id)
+                || !IdentifierPattern.IsMatch(requirement.Id))
+            {
+                throw new InvalidDataException(
+                    $"Scenario '{scenario.Id}' contains an invalid alternative requirement id. " +
+                    "Use lowercase kebab-case.");
+            }
+
+            if (requirement.Terms.Count == 0
+                || requirement.Terms.Any(string.IsNullOrWhiteSpace))
+            {
+                throw new InvalidDataException(
+                    $"Scenario '{scenario.Id}' alternative requirement '{requirement.Id}' " +
+                    "must contain non-empty accepted terms.");
+            }
+        }
     }
 }

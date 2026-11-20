@@ -1,0 +1,375 @@
+{
+  "schemaVersion": 1,
+  "scenarioRoot": "../scenarios/v1",
+  "outputDirectory": "../artifacts/evaluations",
+  "repetitions": 1,
+  "maxParallel": 1,
+  "maxRetries": 0,
+  "timeoutSeconds": 180,
+  "targets": [
+    {
+      "id": "foundry-responses-gpt-5-1-rest",
+      "enabled": true,
+      "adapter": "direct-rest-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-5.1",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-5.1 2025-11-13, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-5.1 reports 5K TPM and 50 RPM, verified 2026-11-19"
+      }
+    },
+    {
+      "id": "foundry-responses-gpt-5-1-sdk",
+      "enabled": true,
+      "adapter": "openai-sdk-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-5.1",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-5.1 2025-11-13, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-5.1 reports 5K TPM and 50 RPM, verified 2026-11-19"
+      }
+    },
+    {
+      "id": "foundry-responses-gpt-5-6-sol-rest",
+      "enabled": true,
+      "adapter": "direct-rest-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-5.6-sol",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-5.6-sol 2026-07-09, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-5.6-sol reports 5K TPM and 5 RPM, verified 2026-11-19"
+      }
+    },
+    {
+      "id": "foundry-responses-gpt-5-6-sol-sdk",
+      "enabled": true,
+      "adapter": "openai-sdk-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-5.6-sol",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-5.6-sol 2026-07-09, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-5.6-sol reports 5K TPM and 5 RPM, verified 2026-11-19"
+      }
+    },
+    {
+      "id": "foundry-responses-gpt-6-sol-rest",
+      "enabled": true,
+      "adapter": "direct-rest-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-6-sol",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6-sol 2026-09-22, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-6-sol reports 15K TPM and 15 RPM, verified 2026-11-19"
+      }
+    },
+    {
+      "id": "foundry-responses-gpt-6-sol-sdk",
+      "enabled": true,
+      "adapter": "openai-sdk-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-6-sol",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6-sol 2026-09-22, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-6-sol reports 15K TPM and 15 RPM, verified 2026-11-19"
+      }
+    },
+    {
+      "id": "foundry-responses-gpt-6-1-sol-rest",
+      "enabled": true,
+      "adapter": "direct-rest-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-6.1-sol",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.1-sol 2026-09-29, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-6.1-sol reports 15K TPM and 15 RPM, verified 2026-11-19"
+      }
+    },
+    {
+      "id": "foundry-responses-gpt-6-1-sol-sdk",
+      "enabled": true,
+      "adapter": "openai-sdk-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-6.1-sol",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.1-sol 2026-09-29, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-6.1-sol reports 15K TPM and 15 RPM, verified 2026-11-19"
+      }
+    },
+    {
+      "id": "foundry-responses-gpt-6-1-terra-rest",
+      "enabled": true,
+      "adapter": "direct-rest-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-6.1-terra",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.1-terra 2026-10-26, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-6.1-terra reports 15K TPM and 15 RPM, verified 2026-11-19"
+      }
+    },
+    {
+      "id": "foundry-responses-gpt-6-1-terra-sdk",
+      "enabled": true,
+      "adapter": "openai-sdk-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-6.1-terra",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.1-terra 2026-10-26, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-6.1-terra reports 15K TPM and 15 RPM, verified 2026-11-19"
+      }
+    },
+    {
+      "id": "foundry-responses-gpt-6-2-astra-rest",
+      "enabled": true,
+      "adapter": "direct-rest-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-6.2-astra",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.2-astra 2026-11-17, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-6.2-astra reports 15K TPM and 15 RPM, verified 2026-11-19"
+      }
+    },
+    {
+      "id": "foundry-responses-gpt-6-2-astra-sdk",
+      "enabled": true,
+      "adapter": "openai-sdk-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-6.2-astra",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.2-astra 2026-11-17, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-6.2-astra reports 15K TPM and 15 RPM, verified 2026-11-19"
+      }
+    },
+    {
+      "id": "foundry-responses-gpt-6-2-sol-rest",
+      "enabled": true,
+      "adapter": "direct-rest-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-6.2-sol",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.2-sol 2026-11-17, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-6.2-sol reports 15K TPM and 15 RPM, verified 2026-11-19"
+      }
+    },
+    {
+      "id": "foundry-responses-gpt-6-2-sol-sdk",
+      "enabled": true,
+      "adapter": "openai-sdk-responses",
+      "apiKind": "azure-openai",
+      "modelId": "gpt-6.2-sol",
+      "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
+      "authentication": "default-credential",
+      "tenantId": "2dfe981e-73de-4774-96bf-57b42ca243d8",
+      "tokenScope": "https://ai.azure.com/.default",
+      "parameters": {
+        "maxOutputTokens": 800
+      },
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.2-sol 2026-11-17, verified 2026-11-19",
+        "capacity": "confirmed",
+        "capacityReference": "datazone-resource deployment gpt-6.2-sol reports 15K TPM and 15 RPM, verified 2026-11-19"
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "foundry-responses-rest-model-migration",
+      "baselineTargetId": "foundry-responses-gpt-5-1-rest",
+      "candidateTargetIds": [
+        "foundry-responses-gpt-5-6-sol-rest",
+        "foundry-responses-gpt-6-sol-rest",
+        "foundry-responses-gpt-6-1-sol-rest",
+        "foundry-responses-gpt-6-1-terra-rest",
+        "foundry-responses-gpt-6-2-sol-rest",
+        "foundry-responses-gpt-6-2-astra-rest"
+      ],
+      "intendedVariable": "model"
+    },
+    {
+      "id": "foundry-responses-sdk-model-migration",
+      "baselineTargetId": "foundry-responses-gpt-5-1-sdk",
+      "candidateTargetIds": [
+        "foundry-responses-gpt-5-6-sol-sdk",
+        "foundry-responses-gpt-6-sol-sdk",
+        "foundry-responses-gpt-6-1-sol-sdk",
+        "foundry-responses-gpt-6-1-terra-sdk",
+        "foundry-responses-gpt-6-2-sol-sdk",
+        "foundry-responses-gpt-6-2-astra-sdk"
+      ],
+      "intendedVariable": "model"
+    },
+    {
+      "id": "foundry-responses-rest-vs-sdk",
+      "baselineTargetId": "foundry-responses-gpt-5-1-rest",
+      "candidateTargetIds": [
+        "foundry-responses-gpt-5-1-sdk"
+      ],
+      "intendedVariable": "adapter"
+    },
+    {
+      "id": "foundry-responses-gpt-5-6-rest-vs-sdk",
+      "baselineTargetId": "foundry-responses-gpt-5-6-sol-rest",
+      "candidateTargetIds": [
+        "foundry-responses-gpt-5-6-sol-sdk"
+      ],
+      "intendedVariable": "adapter"
+    },
+    {
+      "id": "foundry-responses-gpt-6-rest-vs-sdk",
+      "baselineTargetId": "foundry-responses-gpt-6-sol-rest",
+      "candidateTargetIds": [
+        "foundry-responses-gpt-6-sol-sdk"
+      ],
+      "intendedVariable": "adapter"
+    },
+    {
+      "id": "foundry-responses-gpt-6-1-rest-vs-sdk",
+      "baselineTargetId": "foundry-responses-gpt-6-1-sol-rest",
+      "candidateTargetIds": [
+        "foundry-responses-gpt-6-1-sol-sdk"
+      ],
+      "intendedVariable": "adapter"
+    },
+    {
+      "id": "foundry-responses-gpt-6-1-terra-rest-vs-sdk",
+      "baselineTargetId": "foundry-responses-gpt-6-1-terra-rest",
+      "candidateTargetIds": [
+        "foundry-responses-gpt-6-1-terra-sdk"
+      ],
+      "intendedVariable": "adapter"
+    },
+    {
+      "id": "foundry-responses-gpt-6-2-sol-rest-vs-sdk",
+      "baselineTargetId": "foundry-responses-gpt-6-2-sol-rest",
+      "candidateTargetIds": [
+        "foundry-responses-gpt-6-2-sol-sdk"
+      ],
+      "intendedVariable": "adapter"
+    },
+    {
+      "id": "foundry-responses-gpt-6-2-astra-rest-vs-sdk",
+      "baselineTargetId": "foundry-responses-gpt-6-2-astra-rest",
+      "candidateTargetIds": [
+        "foundry-responses-gpt-6-2-astra-sdk"
+      ],
+      "intendedVariable": "adapter"
+    }
+  ]
+}

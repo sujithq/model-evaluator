@@ -16,7 +16,7 @@ public sealed class DirectRestAdapter(
     TokenCredential? tokenCredential = null) : IModelAdapter
 {
     private readonly HttpClient _httpClient = httpClient ?? new HttpClient();
-    private readonly TokenCredential _tokenCredential = tokenCredential ?? new DefaultAzureCredential();
+    private readonly TokenCredential? _tokenCredential = tokenCredential;
 
     public string Id => AdapterIds.DirectRest;
 
@@ -159,7 +159,8 @@ public sealed class DirectRestAdapter(
         }
         else if (target.Authentication == AuthenticationKinds.DefaultCredential)
         {
-            var token = await _tokenCredential.GetTokenAsync(
+            var credential = AdapterUtilities.CreateDefaultCredential(target, _tokenCredential);
+            var token = await credential.GetTokenAsync(
                 new TokenRequestContext([target.TokenScope]),
                 cancellationToken).ConfigureAwait(false);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);

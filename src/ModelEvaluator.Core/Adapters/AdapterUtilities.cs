@@ -1,11 +1,22 @@
 using System.Net;
 using System.Text.Json;
+using Azure.Core;
+using Azure.Identity;
 using ModelEvaluator.Core.Configuration;
 
 namespace ModelEvaluator.Core.Adapters;
 
 internal static class AdapterUtilities
 {
+    public static TokenCredential CreateDefaultCredential(
+        TargetConfiguration target,
+        TokenCredential? injectedCredential = null) =>
+        injectedCredential ?? new DefaultAzureCredential(
+            new DefaultAzureCredentialOptions
+            {
+                TenantId = string.IsNullOrWhiteSpace(target.TenantId) ? null : target.TenantId,
+            });
+
     public static ParsedToolArguments ParseToolArguments(string raw)
     {
         try
@@ -139,7 +150,14 @@ internal static class AdapterUtilities
         TargetConfiguration target,
         bool requireEndpoint = true)
     {
-        if (target.Adapter is not (AdapterIds.DirectRest or AdapterIds.OpenAiSdk))
+        if (target.Adapter is not (
+                AdapterIds.DirectRest
+                or AdapterIds.OpenAiSdk
+                or AdapterIds.DirectRestResponses
+                or AdapterIds.OpenAiSdkResponses
+                or AdapterIds.MicrosoftExtensionsAi
+                or AdapterIds.MicrosoftExtensionsAiResponses
+                or AdapterIds.SemanticKernel))
         {
             return new CompatibilityResult(false, $"Adapter '{target.Adapter}' does not use live configuration.");
         }
