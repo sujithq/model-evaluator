@@ -15,15 +15,15 @@
       "modelId": "gpt-5.1",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-5.1 2025-11-13, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-5.1, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-5.1 reports 5K TPM and 50 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-5.1, state Succeeded, capacity 5, 5K TPM, 50 RPM, verified 2026-11-20"
       }
     },
     {
@@ -34,15 +34,15 @@
       "modelId": "gpt-5.1",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-5.1 2025-11-13, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-5.1, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-5.1 reports 5K TPM and 50 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-5.1, state Succeeded, capacity 5, 5K TPM, 50 RPM, verified 2026-11-20"
       }
     },
     {
@@ -53,15 +53,15 @@
       "modelId": "gpt-5.6-sol",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-5.6-sol 2026-07-09, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-5.6-sol, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-5.6-sol reports 5K TPM and 5 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-5.6-sol, state Succeeded, capacity 5, 5K TPM, 5 RPM, verified 2026-11-20"
       }
     },
     {
@@ -72,15 +72,15 @@
       "modelId": "gpt-5.6-sol",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-5.6-sol 2026-07-09, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-5.6-sol, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-5.6-sol reports 5K TPM and 5 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-5.6-sol, state Succeeded, capacity 5, 5K TPM, 5 RPM, verified 2026-11-20"
       }
     },
     {
@@ -91,15 +91,15 @@
       "modelId": "gpt-6-sol",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6-sol 2026-09-22, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-6-sol, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-6-sol reports 15K TPM and 15 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-6-sol, state Succeeded, capacity 15, 15K TPM, 15 RPM, verified 2026-11-20"
       }
     },
     {
@@ -110,15 +110,15 @@
       "modelId": "gpt-6-sol",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6-sol 2026-09-22, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-6-sol, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-6-sol reports 15K TPM and 15 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-6-sol, state Succeeded, capacity 15, 15K TPM, 15 RPM, verified 2026-11-20"
       }
     },
     {
@@ -129,15 +129,15 @@
       "modelId": "gpt-6.1-sol",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.1-sol 2026-09-29, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-6.1-sol, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-6.1-sol reports 15K TPM and 15 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-6.1-sol, state Succeeded, capacity 15, 15K TPM, 15 RPM, verified 2026-11-20"
       }
     },
     {
@@ -148,15 +148,15 @@
       "modelId": "gpt-6.1-sol",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.1-sol 2026-09-29, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-6.1-sol, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-6.1-sol reports 15K TPM and 15 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-6.1-sol, state Succeeded, capacity 15, 15K TPM, 15 RPM, verified 2026-11-20"
       }
     },
     {
@@ -167,15 +167,15 @@
       "modelId": "gpt-6.1-terra",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.1-terra 2026-10-26, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-6.1-terra, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-6.1-terra reports 15K TPM and 15 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-6.1-terra, state Succeeded, capacity 15, 15K TPM, 15 RPM, verified 2026-11-20"
       }
     },
     {
@@ -186,15 +186,15 @@
       "modelId": "gpt-6.1-terra",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.1-terra 2026-10-26, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-6.1-terra, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-6.1-terra reports 15K TPM and 15 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-6.1-terra, state Succeeded, capacity 15, 15K TPM, 15 RPM, verified 2026-11-20"
       }
     },
     {
@@ -205,15 +205,15 @@
       "modelId": "gpt-6.2-astra",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.2-astra 2026-11-17, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-6.2-astra, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-6.2-astra reports 15K TPM and 15 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-6.2-astra, state Succeeded, capacity 15, 15K TPM, 15 RPM, verified 2026-11-20"
       }
     },
     {
@@ -224,15 +224,15 @@
       "modelId": "gpt-6.2-astra",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.2-astra 2026-11-17, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-6.2-astra, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-6.2-astra reports 15K TPM and 15 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-6.2-astra, state Succeeded, capacity 15, 15K TPM, 15 RPM, verified 2026-11-20"
       }
     },
     {
@@ -243,15 +243,15 @@
       "modelId": "gpt-6.2-sol",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.2-sol 2026-11-17, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-6.2-sol, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-6.2-sol reports 15K TPM and 15 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-6.2-sol, state Succeeded, capacity 15, 15K TPM, 15 RPM, verified 2026-11-20"
       }
     },
     {
@@ -262,15 +262,15 @@
       "modelId": "gpt-6.2-sol",
       "endpointEnvironmentVariable": "FOUNDRY_DATAZONE_ENDPOINT",
       "authentication": "default-credential",
-      "tokenScope": "https://ai.azure.com/.default",
+      "tokenScope": "https://cognitiveservices.azure.com/.default",
       "parameters": {
         "maxOutputTokens": 800
       },
       "evidence": {
         "euDataZone": "confirmed",
-        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, model gpt-6.2-sol 2026-11-17, verified 2026-11-19",
+        "euDataZoneReference": "datazone-resource, Sweden Central, DataZoneStandard, EUR, deployment gpt-6.2-sol, state Succeeded, verified 2026-11-20",
         "capacity": "confirmed",
-        "capacityReference": "datazone-resource deployment gpt-6.2-sol reports 15K TPM and 15 RPM, verified 2026-11-19"
+        "capacityReference": "datazone-resource DataZoneStandard deployment gpt-6.2-sol, state Succeeded, capacity 15, 15K TPM, 15 RPM, verified 2026-11-20"
       }
     }
   ],

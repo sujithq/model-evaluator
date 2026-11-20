@@ -278,6 +278,7 @@ Responses/abstraction paths:
 - [`config/evaluation.copilot.json`](config/evaluation.copilot.json)
 - [`config/evaluation.foundry.example.json`](config/evaluation.foundry.example.json)
 - [`config/evaluation.foundry.responses.example.json`](config/evaluation.foundry.responses.example.json)
+- [`config/evaluation.foundry.responses.deployed.example.json`](config/evaluation.foundry.responses.deployed.example.json)
 - [`config/evaluation.foundry.abstractions.example.json`](config/evaluation.foundry.abstractions.example.json)
 
 Copy an example to `config/evaluation.local.json`, which is ignored, before adding local deployment
@@ -293,6 +294,72 @@ IDs or evidence references. Keep real endpoints and secrets out of Git. Supporte
 
 The direct REST adapters require HTTPS except for loopback contract tests. Comparison reports do not
 include configured endpoint or credential values.
+
+### Foundry Responses model catalog
+
+The all-model [`config/evaluation.foundry.responses.example.json`](config/evaluation.foundry.responses.example.json)
+is the complete selectable active catalog from GPT-5.1 through GPT-6.2:
+
+- GPT-5.1: `gpt-5.1`, `gpt-5.1-codex`, `gpt-5.1-codex-mini`, `gpt-5.1-codex-max`
+- GPT-5.2: `gpt-5.2`, `gpt-5.2-codex`
+- GPT-5.3: `gpt-5.3-codex`
+- GPT-5.4: `gpt-5.4-mini`, `gpt-5.4-nano`, `gpt-5.4`, `gpt-5.4-pro`
+- GPT-5.5: `gpt-5.5`
+- GPT-5.6: `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`
+- GPT-6: `gpt-6-sol`, `gpt-6-astra`, `gpt-6-luna`
+- GPT-6.1: `gpt-6.1-sol`, `gpt-6.1-terra`
+- GPT-6.2: `gpt-6.2-sol`, `gpt-6.2-astra`
+
+Retired `*-chat` snapshots and `gpt-chat-latest` are intentionally excluded. Every model has one
+`direct-rest-responses` and one `openai-sdk-responses` target; both use the exact model ID as the
+deployment ID. The matrix creates one model-only comparison from `gpt-5.1` for each candidate in each
+adapter family and one REST-versus-SDK comparison for each model.
+
+The full catalog is selectable but is not a claim that every deployment exists. Nine Codex, 5.2,
+5.3, mini, nano and pro targets are marked `not-confirmed` for EU Data Zone and capacity with explicit
+catalog-only references.
+
+[`config/evaluation.foundry.responses.deployed.example.json`](config/evaluation.foundry.responses.deployed.example.json)
+contains only the 13 DataZoneStandard deployments currently ready on the EU Data Zone account:
+
+```text
+gpt-5.1
+gpt-5.4
+gpt-5.5
+gpt-5.6-sol, gpt-5.6-terra, gpt-5.6-luna
+gpt-6-sol, gpt-6-astra, gpt-6-luna
+gpt-6.1-sol, gpt-6.1-terra
+gpt-6.2-sol, gpt-6.2-astra
+```
+
+The verified deployment references record Sweden Central, DataZoneStandard, area EUR, Succeeded
+state and the model-specific TPM/RPM limits as of 2026-11-20. This config is the practical live
+starting point; the full 22-model config includes catalog-only candidates and must not be interpreted
+as deployable or capacity-confirmed.
+
+Both matrices use three repetitions, `maxParallel: 1`, zero retries and identical request parameters.
+They use `DefaultAzureCredential`, the Cognitive Services endpoint from
+`FOUNDRY_DATAZONE_ENDPOINT`, and the official
+`https://cognitiveservices.azure.com/.default` scope. No endpoint, key, subscription ID or tenant ID
+is committed. Configure the endpoint locally, then narrow a probe with `--targets` and `--scenarios`
+before running a full live matrix:
+
+```powershell
+$env:FOUNDRY_DATAZONE_ENDPOINT = "https://<account>.cognitiveservices.azure.com/"
+$env:AZURE_TENANT_ID = "<local tenant ID>"
+
+dotnet run --project .\src\ModelEvaluator.Cli -- `
+  compare validate --config .\config\evaluation.foundry.responses.deployed.example.json --live
+
+dotnet run --project .\src\ModelEvaluator.Cli -- `
+  compare run --config .\config\evaluation.foundry.responses.deployed.example.json `
+  --targets foundry-responses-gpt-5-1-rest,foundry-responses-gpt-6-2-sol-rest `
+  --scenarios structured-output
+```
+
+The full catalog matrix is 660 planned scenario attempts (22 models x 2 adapters x 5 scenarios x 3
+repetitions); the deployed-only matrix is 390. Tool-calling attempts can contain follow-up API calls,
+so planned attempt count is not an invoice estimate.
 
 ### One-variable controls and readiness
 
