@@ -8,32 +8,36 @@
 
 | Model | Provider | Release status | Copilot CLI |
 | --- | --- | --- | --- |
-| GPT-5 mini | OpenAI | GA | Not listed |
 | GPT-5.3-Codex | OpenAI | GA | Not listed |
-| GPT-5.4 | OpenAI | GA | Not listed |
-| GPT-5.4 mini | OpenAI | GA | Not listed |
 | GPT-5.4 nano | OpenAI | GA | Not listed |
-| GPT-5.5 | OpenAI | GA | Not listed |
 | GPT-5.6 Luna | OpenAI | GA | Yes |
 | GPT-5.6 Sol | OpenAI | GA | Yes |
-| GPT-5.6 Terra | OpenAI | GA | Yes |
 | GPT-6 Astra | OpenAI | GA | Yes |
 | GPT-6 Luna | OpenAI | GA | Yes |
 | GPT-6 Sol | OpenAI | GA | Yes |
 | GPT-6.1 Sol | OpenAI | GA | Yes |
+| GPT-6.1 Terra | OpenAI | GA | Yes |
+| GPT-6.2 Astra | OpenAI | GA | Yes |
+| GPT-6.2 Sol | OpenAI | GA | Yes |
 | Claude Fable 5 | Anthropic | GA | Not listed |
 | Claude Fable 5.1 | Anthropic | GA | Not listed |
+| Claude Fable 5.2 | Anthropic | GA | Not listed |
 | Claude Haiku 4.5 | Anthropic | GA | Yes |
-| Claude Opus 4.8 | Anthropic | GA | Yes |
+| Claude Haiku 5.5 | Anthropic | GA | Not listed |
+| Claude Opus 4.8 | Anthropic | GA | Not listed |
 | Claude Opus 4.8 (fast mode) (preview) | Anthropic | GA | Not listed |
-| Claude Opus 5 | Anthropic | GA | Yes |
 | Claude Opus 5.5 | Anthropic | GA | Yes |
 | Claude Sonnet 4.6 | Anthropic | GA | Not listed |
 | Claude Sonnet 5 | Anthropic | GA | Yes |
 | Claude Sonnet 5.5 | Anthropic | GA | Yes |
-| Gemini 3.7 Flash | Google | GA | Not listed |
 | Gemini 3.8 Flash | Google | GA | Yes |
+| Gemini 4 Argon | Google | GA | Not listed |
+| Gemini 4 Carbon | Google | GA | Not listed |
+| Gemini 4 Hydrogen | Google | GA | Not listed |
+| Gemini 4 Neon | Google | GA | Not listed |
 | MAI-Code-1.1-Flash | Microsoft | GA | Yes |
+| MAI Code 2 | Microsoft | GA | Yes |
+| MAI Code 2 Flash | Microsoft | GA | Yes |
 | Kimi K3 | Moonshot AI | GA | Not listed |
 | Grok 4.5 | xAI | GA | Not listed |
 | Grok 4.6 | xAI | GA | Not listed |
@@ -43,6 +47,14 @@
 
 | Model | Retirement date | Status | Suggested alternative |
 | --- | --- | --- | --- |
+| Claude Opus 4.8 | 2026-11-16 | Retired | Latest Claude Opus model |
+| Claude Opus 5 | 2026-11-16 | Retired | Latest Claude Opus model |
+| GPT-5.6 Terra | 2026-11-16 | Retired | Latest GPT Terra model |
+| Gemini 3.7 Flash | 2026-10-19 | Retired | Latest Gemini Flash model |
+| GPT-5 mini | 2026-10-19 | Retired | Latest GPT Luna model |
+| GPT-5.4 | 2026-10-19 | Retired | Latest GPT Sol model |
+| GPT-5.4 mini | 2026-10-19 | Retired | Latest GPT Luna model |
+| GPT-5.5 | 2026-10-19 | Retired | Latest GPT Sol model |
 | Claude Opus 4.7 | 2026-10-02 | Retired | Latest Claude Opus model |
 | Gemini 3.5 Flash | 2026-10-02 | Retired | Latest Gemini Flash model |
 | Gemini 3.6 Flash | 2026-10-02 | Retired | Latest Gemini Flash model |
