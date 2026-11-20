@@ -87,7 +87,10 @@ public static class ComparisonAnalyzer
     {
         var changed = new List<string>();
         AddIfChanged(changed, "model", baseline.ModelId, candidate.ModelId);
-        AddIfChanged(changed, "deployment", baseline.DeploymentId, candidate.DeploymentId);
+        if (HasDistinctDeploymentVariable(baseline, candidate))
+        {
+            AddIfChanged(changed, "deployment", baseline.ModelOrDeployment, candidate.ModelOrDeployment);
+        }
         AddIfChanged(changed, "api-kind", baseline.ApiKind, candidate.ApiKind);
         AddIfChanged(changed, "adapter", baseline.Adapter, candidate.Adapter);
         AddIfChanged(changed, "authentication", baseline.Authentication, candidate.Authentication);
@@ -139,4 +142,20 @@ public static class ComparisonAnalyzer
             AdapterIds.CopilotCli => "programmatic-cli",
             _ => "fixture",
         };
+
+    private static bool HasDistinctDeploymentVariable(
+        TargetConfiguration baseline,
+        TargetConfiguration candidate)
+    {
+        var baselineDeploymentAliasesModel =
+            string.IsNullOrWhiteSpace(baseline.DeploymentId)
+            || string.Equals(baseline.DeploymentId, baseline.ModelId, StringComparison.Ordinal);
+        var candidateDeploymentAliasesModel =
+            string.IsNullOrWhiteSpace(candidate.DeploymentId)
+            || string.Equals(candidate.DeploymentId, candidate.ModelId, StringComparison.Ordinal);
+
+        return !baselineDeploymentAliasesModel
+               || !candidateDeploymentAliasesModel
+               || string.Equals(baseline.ModelId, candidate.ModelId, StringComparison.Ordinal);
+    }
 }
