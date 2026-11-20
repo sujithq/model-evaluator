@@ -1,37 +1,13 @@
 {
   "supported": [
     {
-      "name": "GPT-5 mini",
-      "provider": "OpenAI",
-      "releaseStatus": "GA",
-      "copilotCli": "Not listed"
-    },
-    {
       "name": "GPT-5.3-Codex",
       "provider": "OpenAI",
       "releaseStatus": "GA",
       "copilotCli": "Not listed"
     },
     {
-      "name": "GPT-5.4",
-      "provider": "OpenAI",
-      "releaseStatus": "GA",
-      "copilotCli": "Not listed"
-    },
-    {
-      "name": "GPT-5.4 mini",
-      "provider": "OpenAI",
-      "releaseStatus": "GA",
-      "copilotCli": "Not listed"
-    },
-    {
       "name": "GPT-5.4 nano",
-      "provider": "OpenAI",
-      "releaseStatus": "GA",
-      "copilotCli": "Not listed"
-    },
-    {
-      "name": "GPT-5.5",
       "provider": "OpenAI",
       "releaseStatus": "GA",
       "copilotCli": "Not listed"
@@ -44,12 +20,6 @@
     },
     {
       "name": "GPT-5.6 Sol",
-      "provider": "OpenAI",
-      "releaseStatus": "GA",
-      "copilotCli": "Yes"
-    },
-    {
-      "name": "GPT-5.6 Terra",
       "provider": "OpenAI",
       "releaseStatus": "GA",
       "copilotCli": "Yes"
@@ -79,6 +49,24 @@
       "copilotCli": "Yes"
     },
     {
+      "name": "GPT-6.1 Terra",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "GPT-6.2 Astra",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "GPT-6.2 Sol",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
       "name": "Claude Fable 5",
       "provider": "Anthropic",
       "releaseStatus": "GA",
@@ -91,28 +79,34 @@
       "copilotCli": "Not listed"
     },
     {
+      "name": "Claude Fable 5.2",
+      "provider": "Anthropic",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
       "name": "Claude Haiku 4.5",
       "provider": "Anthropic",
       "releaseStatus": "GA",
       "copilotCli": "Yes"
     },
     {
+      "name": "Claude Haiku 5.5",
+      "provider": "Anthropic",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
       "name": "Claude Opus 4.8",
       "provider": "Anthropic",
       "releaseStatus": "GA",
-      "copilotCli": "Yes"
+      "copilotCli": "Not listed"
     },
     {
       "name": "Claude Opus 4.8 (fast mode) (preview)",
       "provider": "Anthropic",
       "releaseStatus": "GA",
       "copilotCli": "Not listed"
-    },
-    {
-      "name": "Claude Opus 5",
-      "provider": "Anthropic",
-      "releaseStatus": "GA",
-      "copilotCli": "Yes"
     },
     {
       "name": "Claude Opus 5.5",
@@ -139,19 +133,49 @@
       "copilotCli": "Yes"
     },
     {
-      "name": "Gemini 3.7 Flash",
-      "provider": "Google",
-      "releaseStatus": "GA",
-      "copilotCli": "Not listed"
-    },
-    {
       "name": "Gemini 3.8 Flash",
       "provider": "Google",
       "releaseStatus": "GA",
       "copilotCli": "Yes"
     },
     {
+      "name": "Gemini 4 Argon",
+      "provider": "Google",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "Gemini 4 Carbon",
+      "provider": "Google",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "Gemini 4 Hydrogen",
+      "provider": "Google",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "Gemini 4 Neon",
+      "provider": "Google",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
       "name": "MAI-Code-1.1-Flash",
+      "provider": "Microsoft",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "MAI Code 2",
+      "provider": "Microsoft",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "MAI Code 2 Flash",
       "provider": "Microsoft",
       "releaseStatus": "GA",
       "copilotCli": "Yes"
@@ -182,6 +206,54 @@
     }
   ],
   "deprecated": [
+    {
+      "name": "Claude Opus 4.8",
+      "retirementDate": "2026-11-16",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Opus model"
+    },
+    {
+      "name": "Claude Opus 5",
+      "retirementDate": "2026-11-16",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Opus model"
+    },
+    {
+      "name": "GPT-5.6 Terra",
+      "retirementDate": "2026-11-16",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT Terra model"
+    },
+    {
+      "name": "Gemini 3.7 Flash",
+      "retirementDate": "2026-10-19",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Gemini Flash model"
+    },
+    {
+      "name": "GPT-5 mini",
+      "retirementDate": "2026-10-19",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT Luna model"
+    },
+    {
+      "name": "GPT-5.4",
+      "retirementDate": "2026-10-19",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT Sol model"
+    },
+    {
+      "name": "GPT-5.4 mini",
+      "retirementDate": "2026-10-19",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT Luna model"
+    },
+    {
+      "name": "GPT-5.5",
+      "retirementDate": "2026-10-19",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT Sol model"
+    },
     {
       "name": "Claude Opus 4.7",
       "retirementDate": "2026-10-02",
