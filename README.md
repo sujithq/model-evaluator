@@ -270,6 +270,10 @@ abstraction preserves native request behavior.
 
 ### Comparison configuration
 
+> **Migration guide:** [GPT-5.1 to GPT-6.2 coding and API migration matrix](docs/gpt-model-coding-migration-matrix.md)
+> covers all 22 active variants, exact Responses/Chat SDK changes, token and reasoning caveats,
+> tool/state migration, per-model effort, EU deployment status, and acceptance criteria.
+
 [`config/evaluation.offline.json`](config/evaluation.offline.json) is the safe local default.
 [`config/evaluation.live.example.json`](config/evaluation.live.example.json) is the minimal migration
 and adapter matrix. Additional examples cover GitHub Copilot, Microsoft Foundry EU Data Zone and the
@@ -498,6 +502,7 @@ failures, and a model exceeding its budget counts as an unsuccessful attempt
 ## Documentation
 
 * [Using model-evaluator: first run through advanced and edge cases](docs/usage-guide.md)
+* [GPT-5.1 to GPT-6.2 coding and API migration matrix](docs/gpt-model-coding-migration-matrix.md)
 * [Adding scenarios](docs/adding-scenarios.md)
 * [Configuring model adapters](docs/model-adapters.md)
 * [GitHub Copilot model catalog](docs/copilot-models.md)
