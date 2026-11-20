@@ -33,6 +33,12 @@ public static class Program
 
     private static async Task<int> RunAsync(string[] args)
     {
+        if (args.Length > 0
+            && string.Equals(args[0], "compare", StringComparison.OrdinalIgnoreCase))
+        {
+            return await ApiComparisonCli.RunMainAsync(args.Skip(1).ToArray()).ConfigureAwait(false);
+        }
+
         if (args.Length == 0 || args[0] is "-h" or "--help" or "help")
         {
             PrintUsage();
@@ -381,6 +387,7 @@ public static class Program
               model-evaluator list-presets              List packaged configuration presets.
               model-evaluator validate [options]        Validate scenario packages and model configuration.
               model-evaluator version                   Print the harness version.
+              model-evaluator compare <command>         Compare model/API/SDK targets with synthetic scenarios.
 
             Options:
               --preset <name>             Use a packaged configuration; see list-presets.

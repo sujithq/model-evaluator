@@ -15,10 +15,11 @@
     <PackageId>Sujithq.ModelEvaluator.Tool</PackageId>
     <PackageOutputPath>..\..\artifacts\packages</PackageOutputPath>
     <Authors>sujithq</Authors>
-    <Description>Evaluate how well AI models create working .NET projects from fixed, versioned instructions.</Description>
-    <PackageTags>dotnet-tool;ai;evaluation;benchmark;copilot</PackageTags>
+    <Description>Evaluate AI-generated .NET projects and compare AI model/API/SDK integrations.</Description>
+    <PackageTags>dotnet-tool;ai;evaluation;benchmark;copilot;openai</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <UserSecretsId>Sujithq.ModelEvaluator.Cli</UserSecretsId>
     <NoDefaultExcludes>true</NoDefaultExcludes>
   </PropertyGroup>
 
@@ -35,6 +36,11 @@
           CopyToOutputDirectory="PreserveNewest"
           CopyToPublishDirectory="PreserveNewest"
           Link="benchmarks\%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="..\..\scenarios\**\*.json"
+          Pack="false"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest"
+          Link="scenarios\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

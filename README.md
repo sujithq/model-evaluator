@@ -1,7 +1,8 @@
 # model-evaluator
 
-An automated framework that evaluates how well different AI models create working .NET projects
-from the same fixed, versioned instructions.
+An automated framework that evaluates how well AI models create working .NET projects and, in a
+separate controlled-comparison mode, compares model behavior across REST APIs, SDKs, abstractions and
+request configurations.
 
 Every model receives identical resolved instructions, identical starting files, identical tools and
 identical time budgets for a scenario. The harness then builds the generated solution, runs the
@@ -9,6 +10,9 @@ model's own tests and runs **evaluator-owned acceptance tests that the model nev
 reports functional correctness, instruction adherence, code quality, efficiency and reliability.
 Every result is traceable to the exact scenario, prompt hash, benchmark version, model configuration,
 runner version and execution environment.
+
+The original .NET project-generation commands remain at the root of the CLI. API/SDK comparisons use
+the `compare` command group so those runs cannot be confused with benchmark code-generation runs.
 
 ## Benchmark scenarios (benchmark v1)
 
@@ -204,6 +208,123 @@ matrix runs only models whose `enabled` property is `true` (currently GPT-6 Luna
 published catalog without launching a model request. Auto routing is
 not in this named-model matrix. See [ranking rules and limitations](docs/interpreting-results.md#per-task-rankings).
 
+## Controlled API/SDK comparison mode
+
+The `compare` command group evaluates identical synthetic prompts through different AI provider APIs,
+SDKs and abstractions. It is intentionally separate from the .NET project-generation benchmark:
+project generation grades built artifacts and acceptance tests; comparison mode records model/API
+behavior, request metadata, timing and readiness evidence.
+
+The versioned [`scenarios/v1`](scenarios/v1) package covers:
+
+| Scenario | Validation |
+| --- | --- |
+| `general-answer-quality` | Grounded insurance guidance without invented eligibility or diagnosis. |
+| `structured-output` | Strict JSON schema adherence. |
+| `deterministic-tool-calling` | Exact deterministic tool invocation and result handling. |
+| `multi-turn-consistency` | Retention of a synthetic value across turns. |
+| `unsupported-parameter-handling` | Explicitly classified unsupported/invalid parameters. |
+
+Run the complete offline path first:
+
+```powershell
+dotnet restore --configfile NuGet.Config
+dotnet build --configuration Release
+dotnet test --configuration Release
+
+dotnet run --project .\src\ModelEvaluator.Cli -- compare list-scenarios
+dotnet run --project .\src\ModelEvaluator.Cli -- compare list-adapters
+dotnet run --project .\src\ModelEvaluator.Cli -- compare validate
+dotnet run --project .\src\ModelEvaluator.Cli -- compare run --dry-run
+```
+
+The dry run makes no external AI request and writes `results.json` plus `report.md` under
+`artifacts/evaluations/<run-id>/`. It validates strict JSON, deterministic tools, multi-turn state,
+error classification and report generation with synthetic fixtures.
+
+When installed as the .NET tool, use:
+
+```powershell
+modelevaluator compare list-adapters
+modelevaluator compare run --dry-run
+modelevaluator compare run --config .\config\evaluation.local.json
+```
+
+### Comparison adapters
+
+| Adapter | Live path |
+| --- | --- |
+| `direct-rest` / `direct-rest-responses` | Direct Chat Completions or Responses API over `HttpClient`. |
+| `openai-sdk` / `openai-sdk-responses` | Official `OpenAI` .NET Chat or Responses client, including Azure `/openai/v1`. |
+| `microsoft-extensions-ai` / `microsoft-extensions-ai-responses` | `IChatClient` over the corresponding OpenAI client. |
+| `semantic-kernel` | Semantic Kernel OpenAI Chat Completions connector. |
+| `copilot-cli` | GitHub Copilot CLI with an explicitly selected model. |
+| `local-fixture` | In-process deterministic responses for offline harness validation. |
+
+The primary package versions are `OpenAI` 2.15.0, `Azure.Identity` 1.21.0,
+`Microsoft.Extensions.AI.OpenAI` 11.0.0 and
+`Microsoft.SemanticKernel.Connectors.OpenAI` 1.82.0. The Azure v1 SDK path intentionally uses the
+coherent OpenAI package rather than mixing the separately versioned `Azure.AI.OpenAI` extension with
+newer OpenAI model types. Framework adapters are comparison surfaces, not assumptions that the
+abstraction preserves native request behavior.
+
+### Comparison configuration
+
+[`config/evaluation.offline.json`](config/evaluation.offline.json) is the safe local default.
+[`config/evaluation.live.example.json`](config/evaluation.live.example.json) is the minimal migration
+and adapter matrix. Additional examples cover GitHub Copilot, Microsoft Foundry EU Data Zone and the
+Responses/abstraction paths:
+
+- [`config/evaluation.copilot.json`](config/evaluation.copilot.json)
+- [`config/evaluation.foundry.example.json`](config/evaluation.foundry.example.json)
+- [`config/evaluation.foundry.responses.example.json`](config/evaluation.foundry.responses.example.json)
+- [`config/evaluation.foundry.abstractions.example.json`](config/evaluation.foundry.abstractions.example.json)
+
+Copy an example to `config/evaluation.local.json`, which is ignored, before adding local deployment
+IDs or evidence references. Keep real endpoints and secrets out of Git. Supported secret sources are:
+
+- target-specific endpoint/API-key environment variables such as `AZURE_OPENAI_ENDPOINT` and
+  `AZURE_OPENAI_API_KEY`;
+- .NET user secrets under the shared `Sujithq.ModelEvaluator.Cli` ID;
+- `MODEL_EVALUATOR_` configuration overrides;
+- `DefaultAzureCredential` for Azure OpenAI, using `AZURE_TENANT_ID` or a local target `tenantId`
+  override plus optional token-scope configuration;
+- the selected GitHub Copilot CLI session or a documented Copilot/GitHub token environment variable.
+
+The direct REST adapters require HTTPS except for loopback contract tests. Comparison reports do not
+include configured endpoint or credential values.
+
+### One-variable controls and readiness
+
+Each comparison group declares a baseline, candidate targets and one intended variable. The analyzer
+detects changes to model, deployment, adapter, API kind/version, authentication, token scope, endpoint
+and effective request parameters. A pair is `controlled` only when exactly one dimension changed and it
+matches the declared variable.
+
+Readiness remains four separate gates:
+
+1. **Technical compatibility** for the selected model, provider and integration.
+2. **Functional validation** against every selected synthetic scenario.
+3. **EU Data Zone deployment** evidence.
+4. **Capacity confirmation** from quota, reservation or deployment evidence.
+
+`unknown` or unreferenced deployment/capacity evidence is never converted into a pass. Dry-run
+results prove the offline harness only and deliberately report live technical compatibility as
+`not-evaluated`.
+
+### Comparison reports
+
+Comparison JSON records the exact model/deployment ID, API kind/version, requested and executed
+adapter, package version, authentication kind, merged request parameters, scenario/request hashes,
+timestamps, latency, TTFB when measurable, retries, finish reason, token usage (including reasoning
+and cached tokens when returned), errors and deterministic tool traces. The Markdown and console
+reports put targets side by side and repeat controlled-comparison and readiness warnings. Missing
+measurements are `null` or explicitly unavailable, never an implied zero.
+
+Live Copilot, Foundry or Azure configuration is not required for the test suite. A live run can incur
+provider charges and does not by itself prove production clinical safety, EU Data Zone deployment or
+capacity; those claims require separately recorded evidence.
+
 ## CLI
 
 ```text
@@ -213,6 +334,7 @@ model-evaluator list-models [options]     List the model ids --models accepts.
 model-evaluator list-presets              List packaged configuration presets.
 model-evaluator validate [options]        Validate scenario packages and model configuration.
 model-evaluator version                   Print the harness version.
+modelevaluator compare ...                Run the API/SDK comparison commands above.
 ```
 
 Options: `--preset`, `--config`, `--benchmark-root`, `--models`, `--scenarios`, `--repetitions`, `--max-parallel`, `--output`,
@@ -319,9 +441,10 @@ failures, and a model exceeding its budget counts as an unsuccessful attempt
 
 ```text
 benchmarks/v1/          Versioned benchmark package: shared instructions, scenarios, acceptance tests
+scenarios/v1/           Synthetic API/SDK comparison scenarios
 config/                 Evaluation configurations
 docs/                   Documentation
-src/ModelEvaluator.Core Harness: scenarios, adapters, evaluation pipeline, reporting
+src/ModelEvaluator.Core Benchmark harness and namespaced ApiComparison.Core subsystem
 src/ModelEvaluator.Cli  Command line interface
 tests/                  Unit tests for the harness
 ```
@@ -333,3 +456,5 @@ tests/                  Unit tests for the harness
 * [`dotnet test`](https://learn.microsoft.com/dotnet/core/tools/dotnet-test)
 * [`dotnet format`](https://learn.microsoft.com/dotnet/core/tools/dotnet-format)
 * [xUnit.net documentation](https://xunit.net/)
+* [Official OpenAI .NET library](https://github.com/openai/openai-dotnet#readme)
+* [Azure OpenAI .NET language support](https://learn.microsoft.com/azure/foundry/openai/supported-languages)

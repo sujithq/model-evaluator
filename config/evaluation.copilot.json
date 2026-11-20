@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "scenarioRoot": "../scenarios/v1",
+  "outputDirectory": "../artifacts/evaluations",
+  "repetitions": 1,
+  "maxParallel": 1,
+  "maxRetries": 0,
+  "timeoutSeconds": 180,
+  "targets": [
+    {
+      "id": "copilot-gpt-6-2-sol",
+      "enabled": true,
+      "adapter": "copilot-cli",
+      "apiKind": "github-copilot",
+      "modelId": "gpt-6.2-sol",
+      "authentication": "cli-session",
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "User-provided EU Data Zone Standard availability screenshot, 2026-11-19",
+        "capacity": "unknown"
+      }
+    },
+    {
+      "id": "copilot-gpt-6-2-astra",
+      "enabled": true,
+      "adapter": "copilot-cli",
+      "apiKind": "github-copilot",
+      "modelId": "gpt-6.2-astra",
+      "authentication": "cli-session",
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "User-provided EU Data Zone Standard availability screenshot, 2026-11-19",
+        "capacity": "unknown"
+      }
+    },
+    {
+      "id": "copilot-gpt-6-1-sol",
+      "enabled": true,
+      "adapter": "copilot-cli",
+      "apiKind": "github-copilot",
+      "modelId": "gpt-6.1-sol",
+      "authentication": "cli-session",
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "User-provided EU Data Zone Standard availability screenshot, 2026-11-19",
+        "capacity": "unknown"
+      }
+    },
+    {
+      "id": "copilot-gpt-6-1-terra",
+      "enabled": true,
+      "adapter": "copilot-cli",
+      "apiKind": "github-copilot",
+      "modelId": "gpt-6.1-terra",
+      "authentication": "cli-session",
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "User-provided EU Data Zone Standard availability screenshot, 2026-11-19",
+        "capacity": "unknown"
+      }
+    },
+    {
+      "id": "copilot-gpt-6-sol",
+      "enabled": true,
+      "adapter": "copilot-cli",
+      "apiKind": "github-copilot",
+      "modelId": "gpt-6-sol",
+      "authentication": "cli-session",
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "User-provided EU Data Zone Standard availability screenshot, 2026-11-19",
+        "capacity": "unknown"
+      }
+    },
+    {
+      "id": "copilot-gpt-5-6-sol",
+      "enabled": true,
+      "adapter": "copilot-cli",
+      "apiKind": "github-copilot",
+      "modelId": "gpt-5.6-sol",
+      "authentication": "cli-session",
+      "evidence": {
+        "euDataZone": "confirmed",
+        "euDataZoneReference": "User-provided EU Data Zone Standard availability screenshot, 2026-11-19",
+        "capacity": "unknown"
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "copilot-model-comparison",
+      "baselineTargetId": "copilot-gpt-5-6-sol",
+      "candidateTargetIds": [
+        "copilot-gpt-6-sol",
+        "copilot-gpt-6-1-sol",
+        "copilot-gpt-6-1-terra",
+        "copilot-gpt-6-2-sol",
+        "copilot-gpt-6-2-astra"
+      ],
+      "intendedVariable": "model"
+    }
+  ]
+}

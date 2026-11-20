@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "id": "structured-output",
+  "version": "1.0.0",
+  "title": "Strict synthetic eligibility payload",
+  "category": "structured-output",
+  "description": "Requires a strict JSON response with no additional properties.",
+  "systemPrompt": "Return exactly one JSON object that follows the supplied schema. Use only the synthetic fact in the user message.",
+  "turns": [
+    {
+      "user": "Synthetic plan fact: service code PREV-100 is eligible and does not require review. Return eligible, requiresHumanReview, and reasonCodes. Use reason code SYNTH_PREVENTIVE."
+    }
+  ],
+  "parameters": {
+    "maxOutputTokens": 300
+  },
+  "responseFormat": {
+    "name": "synthetic_eligibility",
+    "description": "Synthetic eligibility classification.",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "eligible": {
+          "type": "boolean"
+        },
+        "requiresHumanReview": {
+          "type": "boolean"
+        },
+        "reasonCodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "eligible",
+        "requiresHumanReview",
+        "reasonCodes"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "validation": {
+    "exactJson": {
+      "eligible": true,
+      "requiresHumanReview": false,
+      "reasonCodes": [
+        "SYNTH_PREVENTIVE"
+      ]
+    }
+  },
+  "dryRun": {
+    "calls": [
+      {
+        "turn": 0,
+        "toolRound": 0,
+        "text": "{\"eligible\":true,\"requiresHumanReview\":false,\"reasonCodes\":[\"SYNTH_PREVENTIVE\"]}"
+      }
+    ]
+  }
+}

@@ -1,13 +1,22 @@
+## IDE and local tooling
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.DotSettings.user
+
 ## .NET build output
 bin/
 obj/
+**/bin/
+**/obj/
+TestResults/
 
-## Evaluation output
+## Evaluation and generated output
 artifacts/
 .workspaces/
-
-## Tooling
 build/copilot-model-data/
-.vs/
-.idea/
-*.user
+
+## Local secrets/configuration
+config/evaluation.local.json

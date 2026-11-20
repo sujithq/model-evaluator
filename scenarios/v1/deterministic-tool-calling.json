@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "id": "deterministic-tool-calling",
+  "version": "1.0.0",
+  "title": "Deterministic synthetic plan lookup",
+  "category": "tool-calling",
+  "description": "Requires a single deterministic tool call and use of its synthetic result.",
+  "systemPrompt": "For plan lookups, use the provided synthetic tool. Never infer a benefit code.",
+  "turns": [
+    {
+      "user": "Look up the plan for synthetic member SYNTH-100 and report the exact benefit code."
+    }
+  ],
+  "parameters": {
+    "maxOutputTokens": 400
+  },
+  "tools": [
+    {
+      "name": "lookup_synthetic_plan",
+      "description": "Returns a synthetic member plan fixture. This tool has no external effects.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "description": "The synthetic member identifier, for example SYNTH-100."
+          }
+        },
+        "required": [
+          "memberId"
+        ],
+        "additionalProperties": false
+      },
+      "mockResult": {
+        "memberId": "SYNTH-100",
+        "benefitCode": "EVAL-BASIC",
+        "source": "synthetic-fixture-v1"
+      }
+    }
+  ],
+  "maxToolRounds": 2,
+  "validation": {
+    "containsAll": [
+      "EVAL-BASIC"
+    ],
+    "expectedToolName": "lookup_synthetic_plan",
+    "expectedToolArguments": {
+      "memberId": "SYNTH-100"
+    }
+  },
+  "dryRun": {
+    "calls": [
+      {
+        "turn": 0,
+        "toolRound": 0,
+        "toolCalls": [
+          {
+            "id": "call-synthetic-1",
+            "name": "lookup_synthetic_plan",
+            "arguments": {
+              "memberId": "SYNTH-100"
+            }
+          }
+        ]
+      },
+      {
+        "turn": 0,
+        "toolRound": 1,
+        "text": "The deterministic synthetic lookup reports benefit code EVAL-BASIC for member SYNTH-100."
+      }
+    ]
+  }
+}

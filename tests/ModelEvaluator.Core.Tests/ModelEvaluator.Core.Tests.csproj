@@ -23,4 +23,9 @@
     <ProjectReference Include="..\..\src\ModelEvaluator.Durable\ModelEvaluator.Durable.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Fixtures\**\*"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
