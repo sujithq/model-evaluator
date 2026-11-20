@@ -1,0 +1,402 @@
+{
+  "supported": [
+    {
+      "name": "GPT-5 mini",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "GPT-5.3-Codex",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "GPT-5.4",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "GPT-5.4 mini",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "GPT-5.4 nano",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "GPT-5.5",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "GPT-5.6 Luna",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "GPT-5.6 Sol",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "GPT-5.6 Terra",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "GPT-6 Astra",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "GPT-6 Luna",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "GPT-6 Sol",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "GPT-6.1 Sol",
+      "provider": "OpenAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "Claude Fable 5",
+      "provider": "Anthropic",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "Claude Fable 5.1",
+      "provider": "Anthropic",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "Claude Haiku 4.5",
+      "provider": "Anthropic",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "Claude Opus 4.8",
+      "provider": "Anthropic",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "Claude Opus 4.8 (fast mode) (preview)",
+      "provider": "Anthropic",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "Claude Opus 5",
+      "provider": "Anthropic",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "Claude Opus 5.5",
+      "provider": "Anthropic",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "Claude Sonnet 4.6",
+      "provider": "Anthropic",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "Claude Sonnet 5",
+      "provider": "Anthropic",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "Claude Sonnet 5.5",
+      "provider": "Anthropic",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "Gemini 3.7 Flash",
+      "provider": "Google",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "Gemini 3.8 Flash",
+      "provider": "Google",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "MAI-Code-1.1-Flash",
+      "provider": "Microsoft",
+      "releaseStatus": "GA",
+      "copilotCli": "Yes"
+    },
+    {
+      "name": "Kimi K3",
+      "provider": "Moonshot AI",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "Grok 4.5",
+      "provider": "xAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "Grok 4.6",
+      "provider": "xAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    },
+    {
+      "name": "Grok 4.7",
+      "provider": "xAI",
+      "releaseStatus": "GA",
+      "copilotCli": "Not listed"
+    }
+  ],
+  "deprecated": [
+    {
+      "name": "Claude Opus 4.7",
+      "retirementDate": "2026-10-02",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Opus model"
+    },
+    {
+      "name": "Gemini 3.5 Flash",
+      "retirementDate": "2026-10-02",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Gemini Flash model"
+    },
+    {
+      "name": "Gemini 3.6 Flash",
+      "retirementDate": "2026-10-02",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Gemini Flash model"
+    },
+    {
+      "name": "Kimi K2.7 Code",
+      "retirementDate": "2026-10-02",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Kimi model"
+    },
+    {
+      "name": "MAI-Code-1-Flash",
+      "retirementDate": "2026-09-10",
+      "status": "Retired",
+      "suggestedAlternative": "Latest MAI-Code model"
+    },
+    {
+      "name": "Claude Opus 4.5",
+      "retirementDate": "2026-09-01",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Opus model"
+    },
+    {
+      "name": "Claude Opus 4.6",
+      "retirementDate": "2026-09-01",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Opus model"
+    },
+    {
+      "name": "Claude Sonnet 4.5",
+      "retirementDate": "2026-09-01",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Sonnet model"
+    },
+    {
+      "name": "Claude Sonnet 4.6",
+      "retirementDate": "2026-09-01",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Sonnet model"
+    },
+    {
+      "name": "Gemini 3.1 Pro",
+      "retirementDate": "2026-09-01",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Gemini Flash model"
+    },
+    {
+      "name": "Raptor mini",
+      "retirementDate": "2026-09-01",
+      "status": "Retired",
+      "suggestedAlternative": "Latest MAI-Code model"
+    },
+    {
+      "name": "Gemini 2.5 Pro",
+      "retirementDate": "2026-07-31",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Gemini Flash model"
+    },
+    {
+      "name": "Gemini 3 Flash",
+      "retirementDate": "2026-07-31",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Gemini Flash model"
+    },
+    {
+      "name": "Claude Opus 4.6 (fast mode) (preview)",
+      "retirementDate": "2026-06-29",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Opus model in fast mode"
+    },
+    {
+      "name": "GPT-5.2",
+      "retirementDate": "2026-06-05",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT model"
+    },
+    {
+      "name": "GPT-5.2-Codex",
+      "retirementDate": "2026-06-05",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT Codex model"
+    },
+    {
+      "name": "GPT-4.1",
+      "retirementDate": "2026-06-01",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT model"
+    },
+    {
+      "name": "Grok Code Fast 1",
+      "retirementDate": "2026-05-15",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT mini model"
+    },
+    {
+      "name": "Claude Sonnet 4",
+      "retirementDate": "2026-05-01",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Sonnet model"
+    },
+    {
+      "name": "GPT-5.1",
+      "retirementDate": "2026-04-15",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT Codex model"
+    },
+    {
+      "name": "GPT-5.1-Codex",
+      "retirementDate": "2026-04-01",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT Codex model"
+    },
+    {
+      "name": "GPT-5.1-Codex-Max",
+      "retirementDate": "2026-04-01",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT Codex model"
+    },
+    {
+      "name": "GPT-5.1-Codex-Mini",
+      "retirementDate": "2026-04-01",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT Codex model"
+    },
+    {
+      "name": "Gemini 3 Pro",
+      "retirementDate": "2026-03-26",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Gemini Flash model"
+    },
+    {
+      "name": "Claude Opus 4.1",
+      "retirementDate": "2026-02-17",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Opus model"
+    },
+    {
+      "name": "GPT-5",
+      "retirementDate": "2026-02-17",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT model"
+    },
+    {
+      "name": "GPT-5-Codex",
+      "retirementDate": "2026-02-17",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT Codex model"
+    },
+    {
+      "name": "Claude Sonnet 3.5",
+      "retirementDate": "2025-11-06",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Haiku model"
+    },
+    {
+      "name": "Claude Opus 4",
+      "retirementDate": "2025-10-23",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Opus model"
+    },
+    {
+      "name": "Claude Sonnet 3.7",
+      "retirementDate": "2025-10-23",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Sonnet model"
+    },
+    {
+      "name": "Claude Sonnet 3.7 Thinking",
+      "retirementDate": "2025-10-23",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Claude Sonnet model"
+    },
+    {
+      "name": "Gemini 2.0 Flash",
+      "retirementDate": "2025-10-23",
+      "status": "Retired",
+      "suggestedAlternative": "Latest Gemini Flash model"
+    },
+    {
+      "name": "o1-mini",
+      "retirementDate": "2025-10-23",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT mini model"
+    },
+    {
+      "name": "o3",
+      "retirementDate": "2025-10-23",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT model"
+    },
+    {
+      "name": "o3-mini",
+      "retirementDate": "2025-10-23",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT mini model"
+    },
+    {
+      "name": "o4-mini",
+      "retirementDate": "2025-10-23",
+      "status": "Retired",
+      "suggestedAlternative": "Latest GPT mini model"
+    }
+  ]
+}

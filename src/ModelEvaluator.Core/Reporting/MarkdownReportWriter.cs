@@ -1,0 +1,272 @@
+using System.Globalization;
+using System.Text;
+using ModelEvaluator.Core.Results;
+
+namespace ModelEvaluator.Core.Reporting;
+
+/// <summary>Writes the human-readable Markdown comparison report.</summary>
+public static class MarkdownReportWriter
+{
+    public static string Write(EvaluationReport report, string outputDirectory)
+    {
+        Directory.CreateDirectory(outputDirectory);
+        var path = Path.Combine(outputDirectory, "report.md");
+        File.WriteAllText(path, Render(report), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        return path;
+    }
+
+    public static string Render(EvaluationReport report)
+    {
+        var summaries = ReportAggregator.Summarise(report);
+        var builder = new StringBuilder();
+
+        builder.AppendLine("# Model evaluation report");
+        builder.AppendLine();
+        builder.AppendLine($"- Run id: `{report.RunId}`");
+        builder.AppendLine($"- Baseline model: {Value(report.BaselineModelId)}");
+        builder.AppendLine($"- Started: {report.StartedAt:u} / completed: {report.CompletedAt:u}");
+        builder.AppendLine($"- Harness: `{report.Runner.Name}@{report.Runner.Version}`");
+        builder.AppendLine($"- Environment: {report.Environment.OperatingSystem}, {report.Environment.Architecture}, " +
+                           $".NET SDK {report.Environment.DotnetSdkVersion}");
+        builder.AppendLine($"- Execution image: {Value(report.Environment.ExecutionImage)}");
+        builder.AppendLine($"- Git commit: {Value(report.Environment.GitCommit)}");
+        builder.AppendLine($"- Maximum parallel attempts: {report.Environment.MaxParallel}");
+        if (report.Environment.MaxParallel > 1)
+        {
+            builder.AppendLine("- Timing caveat: concurrent attempts share machine/provider resources; do not compare timing directly with sequential runs.");
+        }
+        if (report.Cancelled)
+        {
+            builder.AppendLine($"- **Cancelled run: partial results.** {report.Attempts.Count} started / {Optional(report.PlannedAttempts)} planned; {Optional(report.NotStartedAttempts)} not started.");
+        }
+        builder.AppendLine();
+
+        if (summaries.Count == 0)
+        {
+            builder.AppendLine("No attempts were executed.");
+            return builder.ToString();
+        }
+
+        builder.AppendLine("## Overall success rate");
+        builder.AppendLine();
+        builder.AppendLine("| Scenario | Benchmark | Model | Runner | Success | Rate | Model failures | Budget exceeded | Infra failures |");
+        builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+        foreach (var summary in summaries)
+        {
+            builder.AppendLine(Row(
+                summary.ScenarioId,
+                summary.BenchmarkVersion,
+                summary.ModelId,
+                $"`{summary.RunnerLabel}`",
+                $"{summary.SuccessfulAttempts}/{summary.TotalAttempts}",
+                Percent(summary.SuccessRate),
+                summary.ModelFailures.ToString(CultureInfo.InvariantCulture),
+                summary.BudgetExceeded.ToString(CultureInfo.InvariantCulture),
+                summary.InfrastructureFailures.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        builder.AppendLine();
+
+        builder.AppendLine("## Per-task rankings");
+        builder.AppendLine();
+        builder.AppendLine("Order: lower mean AI-credit consumption. This is a cost ranking, not a quality ranking.");
+        builder.AppendLine("Automated quality score: 0-100 deterministic signal (45% functional, 20% instruction adherence, 15% build/analyzer, 10% generated tests, 10% reliability). It is not a human code review and does not affect cost ranking.");
+        builder.AppendLine("The first selected model is the baseline. Quality, consumption and timing deltas compare each model with that baseline.");
+        builder.AppendLine("Models without complete AI-credit measurements are shown but not cost-ranked. Infrastructure failures remain visible.");
+        builder.AppendLine("AI credits measure consumption, not invoice charges. Premium requests and reported USD are separate units, never substituted for credits.");
+        builder.AppendLine("USD equivalent = AI credits x $0.01, per [GitHub's published rate](https://docs.github.com/en/copilot/concepts/billing-and-usage/organizations-and-enterprises/billing#what-are-github-ai-credits). Included credits do not incur an additional charge; this is not actual billed spend.");
+        builder.AppendLine("Ranks based on fewer than three evaluable attempts are provisional. Equal scores share a rank; reference samples are not ranked.");
+        builder.AppendLine();
+        foreach (var ranking in ScenarioRanker.Rank(report))
+        {
+            builder.AppendLine($"### `{ranking.ScenarioId}` ({ranking.BenchmarkVersion}, `{ranking.RunnerLabel}`)");
+            builder.AppendLine();
+            builder.AppendLine($"Prompt hash: `{ranking.PromptHash}`");
+            builder.AppendLine($"Maximum parallel attempts: {ranking.MaxParallel}");
+            builder.AppendLine($"Baseline: {Value(ranking.BaselineModelId)}");
+            builder.AppendLine(ranking.UsesAiCredits
+                ? "Cost ranking: enabled for models with complete AI-credit measurements."
+                : "Cost ranking: unavailable for this group because no model has complete AI-credit measurements.");
+            builder.AppendLine();
+            builder.AppendLine("| Cost rank | Model | Role | Automated quality | Success | vs baseline | Acceptance accuracy | vs baseline | Mean AI credits | vs baseline | Credit coverage | Mean total / generation seconds | vs baseline total | Infra failures | Notes |");
+            builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+            foreach (var model in ranking.Models)
+            {
+                builder.AppendLine(Row(
+                    Optional(model.Rank),
+                    model.ModelId,
+                    model.IsBaseline ? "baseline" : "candidate",
+                    FormatQuality(model.AutomatedQuality),
+                    $"{model.SuccessfulAttempts}/{model.EvaluatedAttempts}",
+                    SignedPercentagePoints(model.SuccessRateDeltaVsBaseline),
+                    model.AcceptanceAccuracy is null ? "n/a" : Percent(model.AcceptanceAccuracy.Value),
+                    SignedPercentagePoints(model.AcceptanceAccuracyDeltaVsBaseline),
+                    Optional(model.MeanAiCredits),
+                    Signed(model.AiCreditsDeltaVsBaseline),
+                    $"{model.AiCreditsReportedAttempts}/{model.EvaluatedAttempts}",
+                    $"{Seconds(model.MeanElapsedSeconds)} / {Seconds(model.MeanGenerationSeconds)}",
+                    SignedSeconds(model.ElapsedSecondsDeltaVsBaseline),
+                    model.InfrastructureFailures.ToString(CultureInfo.InvariantCulture),
+                    model.ExclusionReason ?? (model.Provisional ? "provisional" : "-")));
+            }
+
+            builder.AppendLine();
+        }
+
+        foreach (var scenarioGroup in summaries.GroupBy(s => (s.ScenarioId, s.BenchmarkVersion, s.PromptHash, s.RunnerLabel, s.MaxParallel)))
+        {
+            var first = scenarioGroup.First();
+            builder.AppendLine($"## Scenario `{scenarioGroup.Key.ScenarioId}`");
+            builder.AppendLine();
+            builder.AppendLine($"- Benchmark version: `{first.BenchmarkVersion}`");
+            builder.AppendLine($"- Prompt hash: `{first.PromptHash}`");
+            builder.AppendLine($"- Maximum parallel attempts: {first.MaxParallel}");
+            builder.AppendLine();
+            builder.AppendLine("| Model | Build & execution | Functional correctness | Instruction adherence | Code quality | Automated quality | Efficiency | Reliability |");
+            builder.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- |");
+
+            foreach (var summary in scenarioGroup)
+            {
+                var efficiency =
+                    $"{summary.MeanElapsedSeconds:0.0} s avg; tokens {Optional(summary.TotalTokens)} " +
+                    $"(in {Optional(summary.TotalInputTokens)}, out {Optional(summary.TotalOutputTokens)}, " +
+                    $"cache read {Optional(summary.TotalCacheReadTokens)}, cache write {Optional(summary.TotalCacheWriteTokens)}, " +
+                    $"reasoning {Optional(summary.TotalReasoningTokens)}); " +
+                    $"tool calls {Optional(summary.TotalToolCalls)}; USD equivalent {OptionalCost(summary.TotalEquivalentCostUsd)}; " +
+                    (summary.TotalCostUsd is not null ? $"adapter-reported USD {OptionalCost(summary.TotalCostUsd)}; " : "") +
+                    $"AI credits {Optional(summary.TotalAiCredits)} ({summary.AiCreditsReportedAttempts}/{summary.TotalAttempts} complete attempts; " +
+                    $"observed {Optional(summary.ObservedAiCredits)} across {summary.AiCreditsObservedAttempts}/{summary.TotalAttempts}); " +
+                    $"premium requests {Optional(summary.TotalPremiumRequests)}; API requests {Optional(summary.TotalApiRequests)} " +
+                    $"({Optional(summary.TotalApiDurationSeconds)} API seconds)";
+
+                builder.AppendLine(Row(
+                    summary.ModelId,
+                    $"{summary.BuildSuccesses}/{summary.TotalAttempts} attempts built and ran",
+                    $"{summary.AcceptancePassed} passed / {summary.AcceptanceFailed} failed / {summary.AcceptanceSkipped} skipped",
+                    $"{summary.InstructionCompliant}/{summary.TotalAttempts} compliant",
+                    $"{summary.CodeQualityPassing}/{summary.TotalAttempts} clean",
+                    FormatQuality(summary.AutomatedQuality),
+                    efficiency,
+                    $"{Percent(summary.SuccessRate)} over {summary.TotalAttempts} attempts (sd {summary.ElapsedStandardDeviation:0.0} s)"));
+            }
+
+            builder.AppendLine();
+            foreach (var summary in scenarioGroup.Where(s => s.ReportedModels.Count > 0))
+            {
+                builder.AppendLine($"- `{summary.ModelId}` reported contributing models: {string.Join(", ", summary.ReportedModels.Select(m => $"`{m}`"))}.");
+            }
+
+            builder.AppendLine();
+            builder.AppendLine("### Attempts");
+            builder.AppendLine();
+            builder.AppendLine("| Attempt | Model | Rep | Outcome | Failing checks | Notes |");
+            builder.AppendLine("| --- | --- | --- | --- | --- | --- |");
+
+            foreach (var attempt in scenarioGroup.SelectMany(s => s.Attempts).OrderBy(a => a.ModelId).ThenBy(a => a.Repetition))
+            {
+                var failing = attempt.Checks
+                    .Where(c => c.Status is CheckStatus.Failed or CheckStatus.Error
+                                || (c.Mandatory && c.Status == CheckStatus.Skipped))
+                    .Select(c => c.Id)
+                    .ToList();
+
+                builder.AppendLine(Row(
+                    $"`{attempt.AttemptId}`",
+                    attempt.ModelId,
+                    attempt.Repetition.ToString(CultureInfo.InvariantCulture),
+                    attempt.Outcome.ToString(),
+                    failing.Count == 0 ? "none" : string.Join(", ", failing),
+                    Escape(attempt.FailureReason ?? "-")));
+            }
+
+            builder.AppendLine();
+        }
+
+        var partialUsage = report.Attempts.Where(a => a.Efficiency.UsageIsPartial).ToList();
+        if (partialUsage.Count > 0)
+        {
+            builder.AppendLine("## Partial usage measurements");
+            builder.AppendLine();
+            builder.AppendLine("Observed usage only, not final totals. In-flight calls may be missing. Excluded from complete consumption totals and AI-credit ranking.");
+            builder.AppendLine();
+            builder.AppendLine("| Attempt | Observed AI credits | Partial USD equivalent | Input tokens | Output tokens | API requests |");
+            builder.AppendLine("| --- | --- | --- | --- | --- | --- |");
+            foreach (var attempt in partialUsage)
+            {
+                builder.AppendLine(Row($"`{attempt.AttemptId}`", Optional(attempt.Efficiency.AiCredits),
+                    OptionalCost(attempt.Efficiency.AiCredits * 0.01m),
+                    Optional(attempt.Efficiency.InputTokens), Optional(attempt.Efficiency.OutputTokens),
+                    Optional(attempt.Efficiency.ApiRequests)));
+            }
+            builder.AppendLine();
+        }
+
+        var unavailable = report.Attempts
+            .SelectMany(a => a.Efficiency.UnavailableMetrics
+                .Where(m => m != "estimatedCostUsd" || a.Efficiency.AiCredits is null || a.Efficiency.UsageIsPartial)
+                .Select(m => (a.ModelId, Metric: m)))
+            .GroupBy(x => x.ModelId)
+            .ToList();
+
+        if (unavailable.Count > 0)
+        {
+            builder.AppendLine("## Unavailable measurements");
+            builder.AppendLine();
+            foreach (var group in unavailable)
+            {
+                builder.AppendLine($"- `{group.Key}`: {string.Join(", ", group.Select(g => g.Metric).Distinct())} not reported by the adapter.");
+            }
+
+            builder.AppendLine();
+        }
+
+        var usageWarnings = report.Attempts.Where(a => a.Efficiency.UsageWarnings.Count > 0).ToList();
+        if (usageWarnings.Count > 0)
+        {
+            builder.AppendLine("## Usage collection warnings");
+            builder.AppendLine();
+            foreach (var attempt in usageWarnings)
+            {
+                foreach (var warning in attempt.Efficiency.UsageWarnings)
+                {
+                    builder.AppendLine($"- `{attempt.AttemptId}`: {Escape(warning)}");
+                }
+            }
+
+            builder.AppendLine();
+        }
+
+        builder.AppendLine("Optional qualitative review is intentionally excluded from these automated results.");
+        return builder.ToString();
+    }
+
+    private static string Row(params string[] cells) => "| " + string.Join(" | ", cells) + " |";
+
+    private static string Percent(double value) => (value * 100).ToString("0.#", CultureInfo.InvariantCulture) + "%";
+
+    private static string Seconds(double? value) => value?.ToString("0.0", CultureInfo.InvariantCulture) ?? "n/a";
+
+    private static string SignedSeconds(double? value) =>
+        value is null ? "n/a" : value.Value.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture) + " s";
+
+    private static string SignedPercentagePoints(double? value) =>
+        value is null ? "n/a" : (value.Value * 100).ToString("+0.#;-0.#;0", CultureInfo.InvariantCulture) + " pp";
+
+    private static string Signed(decimal? value) =>
+        value is null ? "n/a" : value.Value.ToString("+0.############################;-0.############################;0", CultureInfo.InvariantCulture);
+
+    private static string Optional<T>(T? value) where T : struct =>
+        value is null ? "n/a" : Convert.ToString(value.Value, CultureInfo.InvariantCulture) ?? "n/a";
+
+    private static string OptionalCost(decimal? value) =>
+        value is null ? "n/a" : "$" + value.Value.ToString("0.00##########################", CultureInfo.InvariantCulture);
+
+    private static string FormatQuality(AutomatedQualityScore quality) =>
+        quality.Score is null
+            ? quality.Status ?? "n/a"
+            : $"{quality.Score:0.##}/100" + (quality.Provisional ? " (provisional)" : string.Empty);
+
+    private static string Value(string? value) => string.IsNullOrWhiteSpace(value) ? "not recorded" : $"`{value}`";
+
+    private static string Escape(string value) => value.Replace("|", "\\|", StringComparison.Ordinal).ReplaceLineEndings(" ");
+}

@@ -1,0 +1,65 @@
+@page "/tasks"
+@using System.Linq
+@inject TaskStore Store
+
+@* BROKEN: the completed marker is [X] instead of the required [x]. *@
+
+<h1>Tasks</h1>
+
+<form method="post" action="/tasks/add">
+    <label>
+        New task
+        <input name="title" type="text" />
+    </label>
+    <button type="submit">Add</button>
+</form>
+
+<nav>
+    <a href="/tasks?status=all">All</a> |
+    <a href="/tasks?status=pending">Pending</a> |
+    <a href="/tasks?status=completed">Completed</a>
+</nav>
+
+@{
+    var filtered = Store.Load()
+        .Where(t => Status switch
+        {
+            "pending" => !t.Completed,
+            "completed" => t.Completed,
+            _ => true,
+        })
+        .OrderBy(t => t.Id)
+        .ToList();
+}
+
+@if (filtered.Count == 0)
+{
+    <p>No tasks found.</p>
+}
+else
+{
+    <ul>
+        @foreach (var task in filtered)
+        {
+            <li id="task-@task.Id">
+                <span class="status">@(task.Completed ? "[X]" : "[ ]")</span>
+                <span class="title">@task.Title</span>
+                <form method="post" action="/tasks/@task.Id/complete">
+                    <button type="submit">Complete</button>
+                </form>
+                <form method="post" action="/tasks/@task.Id/edit">
+                    <input name="title" type="text" value="@task.Title" />
+                    <button type="submit">Save</button>
+                </form>
+                <form method="post" action="/tasks/@task.Id/delete">
+                    <button type="submit">Delete</button>
+                </form>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "status")]
+    public string? Status { get; set; }
+}

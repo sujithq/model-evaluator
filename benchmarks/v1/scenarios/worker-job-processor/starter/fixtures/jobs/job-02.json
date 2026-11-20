@@ -1,0 +1,5 @@
+{
+  "id": "beta",
+  "payload": "retry me",
+  "failuresBeforeSuccess": 2
+}

@@ -1,0 +1,43 @@
+{
+  "benchmarkRoot": "../benchmarks/v1",
+  "outputDirectory": "../artifacts/evaluations",
+  "repetitions": 3,
+  "scenarios": [],
+  "models": [
+    {
+      "id": "reference-good",
+      "adapter": "local-sample",
+      "description": "Known-good reference implementation, used to verify the harness itself.",
+      "settings": {
+        "variant": "good"
+      }
+    },
+    {
+      "id": "agent-cli-model-a",
+      "adapter": "command-line",
+      "description": "Example agent runner configuration. Replace command/arguments with your runner.",
+      "settings": {
+        "command": "my-agent",
+        "arguments": "--model gpt-x --prompt-file {promptFile} --workdir {workspace} --usage-json {usageFile} --timeout {timeoutSeconds}",
+        "runnerName": "my-agent",
+        "runnerVersion": "1.4.2",
+        "usageFile": "usage.json"
+      },
+      "environment": {
+        "MY_AGENT_TELEMETRY": "off"
+      }
+    },
+    {
+      "id": "agent-cli-model-b",
+      "adapter": "command-line",
+      "description": "Second model driven by the same runner so comparisons stay runner-consistent.",
+      "settings": {
+        "command": "my-agent",
+        "arguments": "--model claude-y --prompt-file {promptFile} --workdir {workspace} --usage-json {usageFile} --timeout {timeoutSeconds}",
+        "runnerName": "my-agent",
+        "runnerVersion": "1.4.2",
+        "usageFile": "usage.json"
+      }
+    }
+  ]
+}

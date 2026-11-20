@@ -1,0 +1,48 @@
+{
+  "id": "blazor-task-app",
+  "name": "Blazor task-management app",
+  "projectType": "BlazorWebApp",
+  "benchmarkVersion": "1.0.0",
+  "targetFramework": "net10.0",
+  "sdkVersion": "10.0.100",
+  "instructionsFile": "instructions.md",
+  "contractsFile": "contracts.md",
+  "starterDirectory": "starter",
+  "acceptanceProject": "acceptance/BlazorTaskApp.Acceptance.csproj",
+  "allowedPackages": [
+    "Microsoft.NET.Test.Sdk",
+    "Microsoft.AspNetCore.Mvc.Testing",
+    "xunit",
+    "xunit.runner.visualstudio",
+    "coverlet.collector",
+    "bunit"
+  ],
+  "requiredGlobs": [
+    "*.sln",
+    "src/**/*.csproj",
+    "tests/**/*.csproj",
+    "README.md"
+  ],
+  "preservedPaths": [
+    "global.json",
+    ".editorconfig",
+    "BENCHMARK.md"
+  ],
+  "budget": {
+    "generationTimeoutSeconds": 1800,
+    "buildTimeoutSeconds": 900,
+    "testTimeoutSeconds": 900,
+    "acceptanceTimeoutSeconds": 1200
+  },
+  "samples": {
+    "good": {
+      "path": "samples/good",
+      "description": "Reference implementation that satisfies the full Blazor SSR contract."
+    },
+    "broken": {
+      "path": "samples/good",
+      "overlay": "samples/broken-overlay",
+      "description": "Reference implementation with deliberate contract violations (delete does not persist, wrong status marker, missing title-length validation on add)."
+    }
+  }
+}
