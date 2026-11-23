@@ -3,9 +3,9 @@
 **Last reviewed:** 2026-11-20
 
 This matrix describes the 22 active GPT model IDs in
-[`config/evaluation.foundry.responses.example.json`](../config/evaluation.foundry.responses.example.json)
+[`config/evaluation.foundry.responses.example.json`](https://github.com/sujithq/model-evaluator/blob/main/config/evaluation.foundry.responses.example.json)
 and the 13 deployed EU Data Zone targets in
-[`config/evaluation.foundry.responses.deployed.example.json`](../config/evaluation.foundry.responses.deployed.example.json).
+[`config/evaluation.foundry.responses.deployed.example.json`](https://github.com/sujithq/model-evaluator/blob/main/config/evaluation.foundry.responses.deployed.example.json).
 It is a migration aid, not an assertion that catalog availability proves deployment availability,
 capacity, or production suitability.
 
@@ -116,8 +116,8 @@ Completions, Responses, streaming, verbosity, and GPT-6-family reasoning control
 | Reasoning state | Not represented as an assistant tool result alone. | Preserve encrypted reasoning items and original output-item order for stateless tool loops. Their contents stay opaque to the application. |
 
 The repository's
-[`OpenAiResponsesAdapter`](../src/ModelEvaluator.Core/Adapters/OpenAiResponsesAdapter.cs) and
-[`DirectResponsesAdapter`](../src/ModelEvaluator.Core/Adapters/DirectResponsesAdapter.cs) demonstrate the
+[`OpenAiResponsesAdapter`](https://github.com/sujithq/model-evaluator/blob/main/src/ModelEvaluator.Core/Adapters/OpenAiResponsesAdapter.cs) and
+[`DirectResponsesAdapter`](https://github.com/sujithq/model-evaluator/blob/main/src/ModelEvaluator.Core/Adapters/DirectResponsesAdapter.cs) demonstrate the
 wire and .NET request mapping used by the evaluation matrix. The current evaluation state intentionally
 stores visible conversation messages, function calls and function outputs; it does not yet preserve
 opaque encrypted reasoning items. Therefore, the harness validates deterministic tool-loop behavior,

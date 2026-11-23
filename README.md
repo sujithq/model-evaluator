@@ -495,13 +495,31 @@ failures, and a model exceeding its budget counts as an unsuccessful attempt
   that known-good samples pass and deliberately broken variants fail. A separate reference smoke
   job validates and runs `smoke-add` with both local samples and retains its artifacts for 14 days.
   It makes no AI calls; the all-model smoke configuration remains opt-in because it consumes credits
-  and requires Copilot CLI authentication and model access.
+  and requires Copilot CLI authentication and model access. The documentation job runs a strict
+  MkDocs build so broken internal links fail CI.
 * [`.github/workflows/evaluate.yml`](.github/workflows/evaluate.yml) runs a selected evaluation
   matrix on demand and retains the reports and attempt artifacts.
 
 ## Documentation
 
+The documentation is published as a MkDocs Material site. Run it locally from the repository root:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install `
+  --index-url https://packagefeedproxy.microsoft.io/pypi/simple `
+  --requirement requirements-docs.txt
+.\.venv\Scripts\python.exe -m mkdocs serve
+```
+
+Open `http://127.0.0.1:8000/`. Validate the complete site with
+`.\.venv\Scripts\python.exe -m mkdocs build --strict`.
+
+* [Documentation home](docs/index.md)
 * [Using model-evaluator: first run through advanced and edge cases](docs/usage-guide.md)
+* [Benchmark suites](docs/benchmarks/index.md)
+* [Configuration reference](docs/configuration/index.md)
+* [Architecture and source guide](docs/development/architecture.md)
 * [GPT-5.1 to GPT-6.2 coding and API migration matrix](docs/gpt-model-coding-migration-matrix.md)
 * [Adding scenarios](docs/adding-scenarios.md)
 * [Configuring model adapters](docs/model-adapters.md)
@@ -516,6 +534,8 @@ benchmarks/v1/          Versioned benchmark package: shared instructions, scenar
 scenarios/v1/           Synthetic API/SDK comparison scenarios
 config/                 Evaluation configurations
 docs/                   Documentation
+mkdocs.yml              MkDocs Material site definition
+requirements-docs.txt   Pinned documentation tool dependency
 src/ModelEvaluator.Core Benchmark harness and namespaced ApiComparison.Core subsystem
 src/ModelEvaluator.Cli  Command line interface
 tests/                  Unit tests for the harness

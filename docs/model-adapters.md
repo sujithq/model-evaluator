@@ -80,7 +80,7 @@ organization policy, geography, rollout, or installed CLI version permits a mode
 
 #### GitHub Copilot CLI
 
-[`config/evaluation.copilot-matrix.example.json`](../config/evaluation.copilot-matrix.example.json)
+[`config/evaluation.copilot-matrix.example.json`](https://github.com/sujithq/model-evaluator/blob/main/config/evaluation.copilot-matrix.example.json)
 is the canonical Copilot CLI configuration. It contains the supported named model IDs and the
 shared runner settings; select only the models you want to compare with `--models`.
 
@@ -190,7 +190,7 @@ HydraFusion is a research preview and requires the corresponding Copilot CLI/acc
 Validation checks the preset without starting Copilot or consuming credits.
 
 For a shared per-task ranking, use
-[`evaluation.copilot-matrix.example.json`](../config/evaluation.copilot-matrix.example.json) and
+[`evaluation.copilot-matrix.example.json`](https://github.com/sujithq/model-evaluator/blob/main/config/evaluation.copilot-matrix.example.json) and
 explicitly select the model IDs your CLI account supports:
 
 ```powershell
@@ -313,7 +313,7 @@ generated code, the harness strips environment variables whose names start with 
 prefixes (`ProcessRunner.CredentialVariablePrefixes`, for example `OPENAI_`, `AZURE_OPENAI_`,
 `ANTHROPIC_`, `GITHUB_TOKEN`), so generated projects and acceptance tests execute without
 model-provider credentials. Never commit credentials: pass them through CI secrets as shown in
-[`.github/workflows/evaluate.yml`](../.github/workflows/evaluate.yml).
+[`.github/workflows/evaluate.yml`](https://github.com/sujithq/model-evaluator/blob/main/.github/workflows/evaluate.yml).
 
 ## Writing a new adapter
 

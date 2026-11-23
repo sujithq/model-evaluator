@@ -20,8 +20,9 @@ benchmarks/v1/scenarios/<scenario-id>/
   samples/broken-overlay/ Files copied over the good sample to create a failing variant
 ```
 
-Copy [`console-task-cli`](../benchmarks/v1/scenarios/console-task-cli) as the template; it is the
-reference implementation of every convention described here.
+Copy
+[`console-task-cli`](https://github.com/sujithq/model-evaluator/tree/main/benchmarks/v1/scenarios/console-task-cli)
+as the template; it is the reference implementation of every convention described here.
 
 ## 2. Write the prompt
 
@@ -82,7 +83,8 @@ the runner sets:
 | `EVAL_FIXTURES` | Scenario fixtures directory |
 | `EVAL_SCENARIO` | Scenario id |
 
-Use the shared helpers in [`benchmarks/v1/acceptance-shared`](../benchmarks/v1/acceptance-shared):
+Use the shared helpers in
+[`benchmarks/v1/acceptance-shared`](https://github.com/sujithq/model-evaluator/tree/main/benchmarks/v1/acceptance-shared):
 `EvaluationContext` (locates the built assembly for a project), `AppRunner` (runs a console/worker
 app and captures output and exit code) and `WebAppHost` (starts a web app on a free port and waits
 for readiness). Reference them with the conditional include used by every shipped acceptance

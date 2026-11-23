@@ -1,0 +1,81 @@
+site_name: model-evaluator
+site_description: Repeatable benchmarks and controlled comparisons for AI models
+repo_url: https://github.com/sujithq/model-evaluator
+repo_name: sujithq/model-evaluator
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  language: en
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.action.edit
+    - content.code.copy
+    - navigation.footer
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.suggest
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Usage guide: usage-guide.md
+      - Reproducing runs: reproducing-runs.md
+  - Running evaluations:
+      - Model adapters: model-adapters.md
+      - Configuration reference: configuration/index.md
+      - Interpreting results: interpreting-results.md
+      - Durable scheduler: durable-scheduler.md
+  - Benchmarks:
+      - Overview: benchmarks/index.md
+      - Adding a scenario: adding-scenarios.md
+  - Reference:
+      - GitHub Copilot models: copilot-models.md
+      - GPT coding migration matrix: gpt-model-coding-migration-matrix.md
+  - Development:
+      - Architecture: development/architecture.md

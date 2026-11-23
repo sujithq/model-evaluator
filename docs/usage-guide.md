@@ -30,7 +30,7 @@ way to learn the tool and verify the harness. Real models use the `command-line`
 
 Install:
 
-- the .NET SDK selected by [`global.json`](../global.json) (currently .NET 10);
+- the .NET SDK selected by [`global.json`](https://github.com/sujithq/model-evaluator/blob/main/global.json) (currently .NET 10);
 - Git, if you want the report to record the current commit;
 - the external agent CLI and its authentication only when evaluating a real model.
 

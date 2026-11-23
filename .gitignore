@@ -2,6 +2,7 @@
 .vs/
 .idea/
 .vscode/
+.venv/
 *.user
 *.suo
 *.DotSettings.user
@@ -17,6 +18,7 @@ TestResults/
 artifacts/
 .workspaces/
 build/copilot-model-data/
+site/
 
 ## Local secrets/configuration
 config/evaluation.local.json
