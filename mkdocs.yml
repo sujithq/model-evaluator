@@ -69,6 +69,7 @@ nav:
   - Running evaluations:
       - Model adapters: model-adapters.md
       - Configuration reference: configuration/index.md
+      - Test a Foundry deployment: foundry-scenario-test.md
       - Interpreting results: interpreting-results.md
       - Durable scheduler: durable-scheduler.md
   - Benchmarks:

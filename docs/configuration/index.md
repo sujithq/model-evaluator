@@ -106,6 +106,10 @@ Use the environment variable names appropriate for your provider and machine. Th
 evidence and may be included in diagnostic output, so literals such as API keys should never be
 stored there.
 
+For an end-to-end walkthrough that adds a new prompt scenario, registers an already-deployed Foundry
+model, sets it as the comparison baseline, and runs a controlled live probe, see
+[Test a new prompt against a Foundry deployment](../foundry-scenario-test.md).
+
 ## Where to make changes
 
 | Change | Source of truth |

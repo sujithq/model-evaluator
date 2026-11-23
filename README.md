@@ -361,6 +361,10 @@ dotnet run --project .\src\ModelEvaluator.Cli -- `
   --scenarios structured-output
 ```
 
+For a complete workflow that adds a new scenario, registers a newly deployed Foundry model, changes
+the comparison baseline with `baselineTargetId`, and verifies one-variable controls, see
+[Test a new prompt against a Foundry deployment](docs/foundry-scenario-test.md).
+
 The full catalog matrix is 660 planned scenario attempts (22 models x 2 adapters x 5 scenarios x 3
 repetitions); the deployed-only matrix is 390. Tool-calling attempts can contain follow-up API calls,
 so planned attempt count is not an invoice estimate.
@@ -517,6 +521,7 @@ Open `http://127.0.0.1:8000/`. Validate the complete site with
 
 * [Documentation home](docs/index.md)
 * [Using model-evaluator: first run through advanced and edge cases](docs/usage-guide.md)
+* [Test a new prompt against a Foundry deployment](docs/foundry-scenario-test.md)
 * [Benchmark suites](docs/benchmarks/index.md)
 * [Configuration reference](docs/configuration/index.md)
 * [Architecture and source guide](docs/development/architecture.md)
